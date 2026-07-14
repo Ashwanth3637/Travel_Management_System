@@ -1,0 +1,106 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "email": "admin@travels.com",
+      "password": "$2a$10$p34AmmWi29T75sRI1x2sHOjQuRQE69QVHufcuBm/30QPFsN77bWAO",
+      "role": "admin",
+      "name": "Super Admin"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "v1",
+      "name": "Swift Dzire",
+      "plateNumber": "TN-37-AB-1234",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 12
+    },
+    {
+      "id": "v2",
+      "name": "Innova Crysta",
+      "plateNumber": "TN-37-CD-5678",
+      "type": "SUV",
+      "acpreference": "AC",
+      "capacity": 7,
+      "status": "Available",
+      "ratePerKm": 18
+    },
+    {
+      "id": "v3",
+      "name": "Tempo Traveller",
+      "plateNumber": "TN-37-EF-9012",
+      "type": "Minivan",
+      "acpreference": "AC",
+      "capacity": 12,
+      "status": "Available",
+      "ratePerKm": 25
+    },
+    {
+      "id": "v_d04p2i5kf",
+      "name": "CAR",
+      "plateNumber": "TN-33CC-37748",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 12
+    }
+  ],
+  "drivers": [
+    {
+      "id": "d1",
+      "name": "Rajesh Kumar",
+      "phone": "+91 98765 43210",
+      "licenseNumber": "DL-12345TN",
+      "status": "Available"
+    },
+    {
+      "id": "d2",
+      "name": "Priya Sharma",
+      "phone": "+91 98765 43211",
+      "licenseNumber": "DL-67890TN",
+      "status": "Available"
+    },
+    {
+      "id": "d3",
+      "name": "Ramesh Patel",
+      "phone": "+91 98765 43212",
+      "licenseNumber": "DL-54321TN",
+      "status": "Available"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b1",
+      "customerName": "Ashwanth S",
+      "pickupLocation": "Coimbatore Airport",
+      "dropLocation": "Ooty Bus Stand",
+      "pickupDateTime": "2026-07-15T08:15:00.054Z",
+      "vehicleType": "SUV",
+      "status": "Pending",
+      "assignedVehicleId": null,
+      "assignedDriverId": null,
+      "notes": "Requires luggage rack",
+      "fareEstimated": 2500,
+      "createdAt": "2026-07-14T08:15:00.054Z"
+    },
+    {
+      "id": "b2",
+      "customerName": "Nandhini Devi",
+      "pickupLocation": "Salem Bus Stand",
+      "dropLocation": "Yercaud Hills",
+      "pickupDateTime": "2026-07-16T08:15:00.054Z",
+      "vehicleType": "Sedan",
+      "status": "Confirmed",
+      "assignedVehicleId": "v1",
+      "assignedDriverId": "d1",
+      "notes": "Sightseeing trip",
+      "fareEstimated": 1200,
+      "createdAt": "2026-07-14T07:15:00.054Z"
+    }
+  ]
+}
