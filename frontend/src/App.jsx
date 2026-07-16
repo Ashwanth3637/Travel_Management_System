@@ -116,7 +116,7 @@ function CustomerLayout({ customer, customers, onSelectCustomer, handleLogout, c
         onSelectCustomer={onSelectCustomer} 
         handleLogout={handleLogout} 
       />
-      <main style={{ padding: '20px 40px' }} className="animate-fade-in">
+      <main style={{ padding: '0 20px 20px' }} className="animate-fade-in">
         {children}
       </main>
     </>
@@ -265,6 +265,7 @@ function App() {
                     setActiveTab={setActiveTab}
                     activeTrackBooking={activeTrackBooking}
                     setActiveTrackBooking={setActiveTrackBooking}
+                    handleLogout={handleCustomerLogout}
                   />
                 </CustomerLayout>
               ) : (

@@ -54,9 +54,6 @@ function CustomerNavbar({ customer, customers = [], onSelectCustomer, handleLogo
         <span style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-main)' }}>
           {customer ? customer.name : 'Rider'}
         </span>
-        <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '8px 16px' }}>
-          Logout
-        </button>
       </div>
     </nav>
   );
