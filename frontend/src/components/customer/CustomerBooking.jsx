@@ -267,31 +267,72 @@ function CustomerBooking({ token, customer }) {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div className="form-group">
-                <label className="form-label">Travel Date & Time</label>
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={dateTime}
-                  onChange={(e) => setDateTime(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="form-group">
+              <label className="form-label">Travel Date & Time</label>
+              <input
+                type="datetime-local"
+                className="form-input"
+                value={dateTime}
+                onChange={(e) => setDateTime(e.target.value)}
+                required
+              />
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">Vehicle Category</label>
-                <select
-                  className="form-select"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  required
-                >
-                  <option value="Hatchback">Hatchback (₹10/km)</option>
-                  <option value="Sedan">Sedan (₹12/km)</option>
-                  <option value="SUV">SUV (₹18/km)</option>
-                  <option value="Minivan">Minivan (₹25/km)</option>
-                </select>
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label className="form-label" style={{ display: 'block', marginBottom: '10px', textAlign: 'left' }}>Select Vehicle Category</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px' }}>
+                {[
+                  { key: "Hatchback", label: "Hatchback", desc: "4 Seats", rate: 10, icon: "🚗" },
+                  { key: "Sedan", label: "Sedan", desc: "4 Seats", rate: 12, icon: "🚘" },
+                  { key: "SUV", label: "SUV", desc: "6 Seats", rate: 18, icon: "🚙" },
+                  { key: "Minivan", label: "Minivan", desc: "8 Seats", rate: 25, icon: "🚐" }
+                ].map((item) => {
+                  const isSelected = category === item.key;
+                  return (
+                    <div
+                      key={item.key}
+                      onClick={() => setCategory(item.key)}
+                      style={{
+                        padding: '16px 8px',
+                        borderRadius: '12px',
+                        border: isSelected ? '2px solid var(--color-primary)' : '1px solid rgba(255,255,255,0.08)',
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)',
+                        boxShadow: isSelected ? '0 0 15px rgba(16, 185, 129, 0.15)' : 'none',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease-in-out',
+                        transform: isSelected ? 'translateY(-2px)' : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                        }
+                      }}
+                    >
+                      <div style={{ fontSize: '28px', marginBottom: '6px' }}>{item.icon}</div>
+                      <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', marginBottom: '3px' }}>{item.label}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>{item.desc}</div>
+                      <div style={{ 
+                        fontSize: '11px', 
+                        fontWeight: '800', 
+                        color: isSelected ? 'var(--color-primary)' : 'var(--text-muted)',
+                        backgroundColor: isSelected ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.03)',
+                        padding: '3px 6px',
+                        borderRadius: '10px',
+                        display: 'inline-block'
+                      }}>
+                        ₹{item.rate}/km
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
