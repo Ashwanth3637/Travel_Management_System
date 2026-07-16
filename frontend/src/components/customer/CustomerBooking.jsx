@@ -1,32 +1,37 @@
 import { useEffect, useState } from "react";
 
-// Car name → public image path mapping (name normalised: lowercase, no spaces)
+// Car name → public image path (key = vehicle name lowercased, no spaces)
 const CAR_IMAGES = {
   "swiftdzire":      "/cars/swift_dzire.png",
   "innovacrysta":    "/cars/innova_crysta.png",
+  "tempotravellar":  "/cars/tempo_traveller.png",
   "tempotraveller":  "/cars/tempo_traveller.png",
-  "mahindrasCorpio": "/cars/mahindra_scorpio.png",
-  "mahindra scorpio":"/cars/mahindra_scorpio.png",
+  "mahindrascorpio": "/cars/mahindra_scorpio.png",
+  "scorpio":         "/cars/mahindra_scorpio.png",
   "fortuner":        "/cars/toyota_fortuner.png",
+  "vitarabreeza":    "/cars/vitara_brezza.png",
   "vitarabrezza":    "/cars/vitara_brezza.png",
-  "renaulduster":    "/cars/renault_duster.png",
-  "renaulduster":    "/cars/renault_duster.png",
+  "renaultduster":   "/cars/renault_duster.png",
+  "duster":          "/cars/renault_duster.png",
   "urbania":         "/cars/force_urbania.png",
+  "aura":            "/cars/hyundai_aura.png",
   "hyundaiaura":     "/cars/hyundai_aura.png",
   "grandvitara":     "/cars/grand_vitara.png",
 };
 
+// Partial-match helper — handles any spelling variation
 function getCarImage(name) {
   if (!name) return null;
   const key = name.toLowerCase().replace(/\s+/g, "");
-  // exact match
   if (CAR_IMAGES[key]) return CAR_IMAGES[key];
-  // partial match
   for (const k of Object.keys(CAR_IMAGES)) {
     if (key.includes(k) || k.includes(key)) return CAR_IMAGES[k];
   }
   return null;
 }
+
+
+
 
 // Pre-defined cities list
 const cities = [
@@ -280,7 +285,7 @@ function CustomerBooking({ token, customer }) {
                             <img
                               src={img}
                               alt={vehicle.name}
-                              style={{ width: '100%', height: '80px', objectFit: 'contain', marginBottom: '6px', borderRadius: '6px', display: 'block' }}
+                              style={{ width: '100%', height: '90px', objectFit: 'cover', marginBottom: '6px', borderRadius: '8px', display: 'block', background: 'rgba(0,0,0,0.3)' }}
                               onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }}
                             />
                           ) : null;
