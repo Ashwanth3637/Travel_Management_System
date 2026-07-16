@@ -1,5 +1,33 @@
 import { useEffect, useState } from "react";
 
+// Car name → public image path mapping (name normalised: lowercase, no spaces)
+const CAR_IMAGES = {
+  "swiftdzire":      "/cars/swift_dzire.png",
+  "innovacrysta":    "/cars/innova_crysta.png",
+  "tempotraveller":  "/cars/tempo_traveller.png",
+  "mahindrasCorpio": "/cars/mahindra_scorpio.png",
+  "mahindra scorpio":"/cars/mahindra_scorpio.png",
+  "fortuner":        "/cars/toyota_fortuner.png",
+  "vitarabrezza":    "/cars/vitara_brezza.png",
+  "renaulduster":    "/cars/renault_duster.png",
+  "renaulduster":    "/cars/renault_duster.png",
+  "urbania":         "/cars/force_urbania.png",
+  "hyundaiaura":     "/cars/hyundai_aura.png",
+  "grandvitara":     "/cars/grand_vitara.png",
+};
+
+function getCarImage(name) {
+  if (!name) return null;
+  const key = name.toLowerCase().replace(/\s+/g, "");
+  // exact match
+  if (CAR_IMAGES[key]) return CAR_IMAGES[key];
+  // partial match
+  for (const k of Object.keys(CAR_IMAGES)) {
+    if (key.includes(k) || k.includes(key)) return CAR_IMAGES[k];
+  }
+  return null;
+}
+
 // Pre-defined cities list
 const cities = [
   "Bangalore","Chennai","Coimbatore","Erode","Hosur","Kanyakumari",
@@ -246,7 +274,18 @@ function CustomerBooking({ token, customer }) {
                         onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; } }}
                         onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; } }}
                       >
-                        <div style={{ fontSize: '30px', marginBottom: '6px' }}>{TYPE_ICONS[vehicle.type] || "🚘"}</div>
+                      {(() => {
+                          const img = getCarImage(vehicle.name);
+                          return img ? (
+                            <img
+                              src={img}
+                              alt={vehicle.name}
+                              style={{ width: '100%', height: '80px', objectFit: 'contain', marginBottom: '6px', borderRadius: '6px', display: 'block' }}
+                              onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }}
+                            />
+                          ) : null;
+                        })()}
+                        <div style={{ fontSize: '30px', marginBottom: '6px', display: getCarImage(vehicle.name) ? 'none' : 'block' }}>{TYPE_ICONS[vehicle.type] || "🚘"}</div>
                         <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', marginBottom: '3px' }}>{vehicle.name}</div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{vehicle.type} • {vehicle.capacity} Seats</div>
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px' }}>{vehicle.plateNumber}</div>
@@ -353,7 +392,16 @@ function CustomerBooking({ token, customer }) {
                 ✅ Selected Car
               </h3>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '36px', marginBottom: '8px' }}>{TYPE_ICONS[selectedVehicle.type] || "🚘"}</div>
+                {getCarImage(selectedVehicle.name) ? (
+                  <img
+                    src={getCarImage(selectedVehicle.name)}
+                    alt={selectedVehicle.name}
+                    style={{ width: '100%', height: '100px', objectFit: 'contain', marginBottom: '8px', borderRadius: '8px' }}
+                    onError={(e) => { e.target.style.display='none'; }}
+                  />
+                ) : (
+                  <div style={{ fontSize: '36px', marginBottom: '8px' }}>{TYPE_ICONS[selectedVehicle.type] || "🚘"}</div>
+                )}
                 <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-main)', marginBottom: '4px' }}>{selectedVehicle.name}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>{selectedVehicle.plateNumber}</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>{selectedVehicle.capacity} Seats · {selectedVehicle.acpreference}</div>
