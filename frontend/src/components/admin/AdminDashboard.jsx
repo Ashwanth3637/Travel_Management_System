@@ -203,6 +203,42 @@ function AdminDashboard({ token, handleLogout }) {
           </NavLink>
 
           <NavLink 
+            to="/admin/profile" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
+              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>👤</span>
+            <span>My Profile</span>
+          </NavLink>
+
+          <NavLink 
             to="/admin/bookings" 
             style={({ isActive }) => ({
               display: 'flex',
@@ -306,7 +342,7 @@ function AdminDashboard({ token, handleLogout }) {
               }
             }}
           >
-            <span style={{ fontSize: '18px' }}>👤</span>
+            <span style={{ fontSize: '18px' }}>👥</span>
             <span>Customer Profiles</span>
           </NavLink>
 
@@ -378,7 +414,7 @@ function AdminDashboard({ token, handleLogout }) {
               }
             }}
           >
-            <span style={{ fontSize: '18px' }}>👤</span>
+            <span style={{ fontSize: '18px' }}>👨‍✈️</span>
             <span>Manage Drivers</span>
           </NavLink>
 
@@ -417,42 +453,6 @@ function AdminDashboard({ token, handleLogout }) {
             <span style={{ fontSize: '18px' }}>📊</span>
             <span>Reports & Analytics</span>
           </NavLink>
-
-          <NavLink 
-            to="/admin/profile" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
-            })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>⚙️</span>
-            <span>Admin Profile</span>
-            </NavLink>
           </div>
 
           {/* Logout Section at the bottom */}
