@@ -21,25 +21,45 @@ function AdminLayout({ handleLogout, children }) {
         <div className="nav-user">
           <Link 
             to="/admin/profile" 
-            className="badge badge-confirmed" 
             style={{ 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.05em', 
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
               textDecoration: 'none', 
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              display: 'inline-block'
+              padding: '4px 10px',
+              borderRadius: '20px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255,255,255,0.08)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.4)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
             }}
           >
-            Admin
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              color: '#fff',
+              fontSize: '11px',
+              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
+            }}>
+              A
+            </div>
+            <span className="badge badge-confirmed" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              Admin
+            </span>
           </Link>
         </div>
       </nav>
