@@ -19,6 +19,8 @@ const CAR_IMAGES = {
   "grandvitara":     "/cars/grand_vitara.png",
   "thar":            "/cars/mahindra_thar.png",
   "mahindrathar":    "/cars/mahindra_thar.png",
+  "baleno":          "/cars/suzuki_baleno.png",
+  "marutibaleno":    "/cars/suzuki_baleno.png",
 };
 
 // Partial-match helper — handles any spelling variation
