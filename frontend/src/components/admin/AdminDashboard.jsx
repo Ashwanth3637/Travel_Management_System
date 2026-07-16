@@ -5,6 +5,8 @@ import AdminVehicles from './AdminVehicles';
 import AdminDrivers from './AdminDrivers';
 import AdminReports from './AdminReports';
 import AdminCustomers from './AdminCustomers';
+import AdminOverview from './AdminOverview';
+import AdminProfile from './AdminProfile';
 
 function AdminDashboard({ token }) {
   const API_URL = 'http://localhost:5001/api';
@@ -161,6 +163,42 @@ function AdminDashboard({ token }) {
           }}>
             Admin Menu
           </div>
+
+          <NavLink 
+            to="/admin/overview" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
+              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🏠</span>
+            <span>Dashboard Details</span>
+          </NavLink>
 
           <NavLink 
             to="/admin/bookings" 
@@ -377,6 +415,42 @@ function AdminDashboard({ token }) {
             <span style={{ fontSize: '18px' }}>📊</span>
             <span>Reports & Analytics</span>
           </NavLink>
+
+          <NavLink 
+            to="/admin/profile" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
+              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>⚙️</span>
+            <span>Admin Profile</span>
+          </NavLink>
         </div>
 
         {/* Right Side Main Content Area */}
@@ -432,7 +506,19 @@ function AdminDashboard({ token }) {
                 refresh={fetchData}
               />
             } />
-            <Route path="*" element={<Navigate to="bookings" replace />} />
+            <Route path="overview" element={
+              <AdminOverview 
+                token={token} 
+                toast={triggerToast} 
+              />
+            } />
+            <Route path="profile" element={
+              <AdminProfile 
+                token={token} 
+                toast={triggerToast} 
+              />
+            } />
+            <Route path="*" element={<Navigate to="overview" replace />} />
           </Routes>
         </div>
 
