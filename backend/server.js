@@ -432,7 +432,7 @@ app.get('/api/customer/assigned-resources/:bookingId', authenticateToken, async 
 async function start() {
   await db.connectDB();
   await db.seedIfEmpty();
-  app.listen(5002, () => {
+  app.listen(PORT, () => {
     console.log(`✅ Travel Management System Backend listening on port ${PORT}`);
   });
 }
