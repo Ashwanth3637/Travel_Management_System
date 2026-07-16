@@ -2,25 +2,25 @@ import { useEffect, useState } from "react";
 
 // Car name → public image path (key = vehicle name lowercased, no spaces)
 const CAR_IMAGES = {
-  "swiftdzire":      "/cars/swift_dzire.png",
-  "innovacrysta":    "/cars/innova_crysta.png",
-  "tempotravellar":  "/cars/tempo_traveller.png",
-  "tempotraveller":  "/cars/tempo_traveller.png",
+  "swiftdzire": "/cars/swift_dzire.png",
+  "innovacrysta": "/cars/innova_crysta.png",
+  "tempotravellar": "/cars/tempo_traveller.png",
+  "tempotraveller": "/cars/tempo_traveller.png",
   "mahindrascorpio": "/cars/mahindra_scorpio.png",
-  "scorpio":         "/cars/mahindra_scorpio.png",
-  "fortuner":        "/cars/toyota_fortuner.png",
-  "vitarabreeza":    "/cars/vitara_brezza.png",
-  "vitarabrezza":    "/cars/vitara_brezza.png",
-  "renaultduster":   "/cars/renault_duster.png",
-  "duster":          "/cars/renault_duster.png",
-  "urbania":         "/cars/force_urbania.png",
-  "aura":            "/cars/hyundai_aura.png",
-  "hyundaiaura":     "/cars/hyundai_aura.png",
-  "grandvitara":     "/cars/grand_vitara.png",
-  "thar":            "/cars/mahindra_thar.png",
-  "mahindrathar":    "/cars/mahindra_thar.png",
-  "baleno":          "/cars/suzuki_baleno.png",
-  "marutibaleno":    "/cars/suzuki_baleno.png",
+  "scorpio": "/cars/mahindra_scorpio.png",
+  "fortuner": "/cars/toyota_fortuner.png",
+  "vitarabreeza": "/cars/vitara_brezza.png",
+  "vitarabrezza": "/cars/vitara_brezza.png",
+  "renaultduster": "/cars/renault_duster.png",
+  "duster": "/cars/renault_duster.png",
+  "urbania": "/cars/force_urbania.png",
+  "aura": "/cars/hyundai_aura.png",
+  "hyundaiaura": "/cars/hyundai_aura.png",
+  "grandvitara": "/cars/grand_vitara.png",
+  "thar": "/cars/mahindra_thar.png",
+  "mahindrathar": "/cars/mahindra_thar.png",
+  "baleno": "/cars/suzuki_baleno.png",
+  "marutibaleno": "/cars/suzuki_baleno.png",
 };
 
 // Partial-match helper — handles any spelling variation
@@ -39,10 +39,10 @@ function getCarImage(name) {
 
 // Pre-defined cities list
 const cities = [
-  "Bangalore","Chennai","Coimbatore","Erode","Hosur","Kanyakumari",
-  "Kodaikanal","Madurai","Mysore","Nagercoil","Ooty","Pondicherry",
-  "Salem","Thoothukudi (Tuticorin)","Tiruchirappalli (Trichy)",
-  "Tirunelveli","Tiruppur","Valparai","Vellore"
+  "Bangalore", "Chennai", "Coimbatore", "Erode", "Hosur", "Kanyakumari",
+  "Kodaikanal", "Madurai", "Mysore", "Nagercoil", "Ooty", "Pondicherry",
+  "Salem", "Thoothukudi (Tuticorin)", "Tiruchirappalli (Trichy)",
+  "Tirunelveli", "Tiruppur", "Valparai", "Vellore"
 ].sort();
 
 const cityCoordinates = {
@@ -167,7 +167,7 @@ function CustomerBooking({ token, customer }) {
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '28px', alignItems: 'start' }}>
-        
+
         {/* ── Left: Booking Form ── */}
         <div className="glass-panel" style={{ padding: '28px' }}>
           {error && (
@@ -283,14 +283,14 @@ function CustomerBooking({ token, customer }) {
                         onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; } }}
                         onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; } }}
                       >
-                      {(() => {
+                        {(() => {
                           const img = getCarImage(vehicle.name);
                           return img ? (
                             <img
                               src={img}
                               alt={vehicle.name}
                               style={{ width: '100%', height: '90px', objectFit: 'cover', marginBottom: '6px', borderRadius: '8px', display: 'block', background: 'rgba(0,0,0,0.3)' }}
-                              onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }}
+                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                             />
                           ) : null;
                         })()}
@@ -406,7 +406,7 @@ function CustomerBooking({ token, customer }) {
                     src={getCarImage(selectedVehicle.name)}
                     alt={selectedVehicle.name}
                     style={{ width: '100%', height: '100px', objectFit: 'contain', marginBottom: '8px', borderRadius: '8px' }}
-                    onError={(e) => { e.target.style.display='none'; }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
                   <div style={{ fontSize: '36px', marginBottom: '8px' }}>{TYPE_ICONS[selectedVehicle.type] || "🚘"}</div>
