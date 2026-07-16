@@ -16,7 +16,7 @@
       "type": "Sedan",
       "acpreference": "AC",
       "capacity": 4,
-      "status": "Out of Service",
+      "status": "Available",
       "ratePerKm": 13
     },
     {
@@ -26,7 +26,7 @@
       "type": "SUV",
       "acpreference": "AC",
       "capacity": 7,
-      "status": "Assigned",
+      "status": "Available",
       "ratePerKm": 17
     },
     {
@@ -46,8 +46,68 @@
       "type": "SUV",
       "acpreference": "AC",
       "capacity": 6,
-      "status": "Assigned",
+      "status": "Available",
       "ratePerKm": 18
+    },
+    {
+      "id": "v5",
+      "name": "Fortuner",
+      "plateNumber": "TN-33-CC-5999",
+      "type": "SUV",
+      "acpreference": "AC",
+      "capacity": 6,
+      "status": "Assigned",
+      "ratePerKm": 20
+    },
+    {
+      "id": "v6",
+      "name": "Vitara Breeza",
+      "plateNumber": "TN-86-A-1001",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 14
+    },
+    {
+      "id": "v7",
+      "name": "Renault Duster",
+      "plateNumber": "TN-86-Y-2525",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 13
+    },
+    {
+      "id": "v8",
+      "name": "Urbania",
+      "plateNumber": "TN-86-C-8899",
+      "type": "Minivan",
+      "acpreference": "AC",
+      "capacity": 16,
+      "status": "Available",
+      "ratePerKm": 30
+    },
+    {
+      "id": "v9",
+      "name": "Aura",
+      "plateNumber": "TN-33-CA-6061",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 12
+    },
+    {
+      "id": "v10",
+      "name": "Grand Vitara",
+      "plateNumber": "TN-33-CA-3344",
+      "type": "Sedan",
+      "acpreference": "AC",
+      "capacity": 4,
+      "status": "Available",
+      "ratePerKm": 15
     }
   ],
   "drivers": [
@@ -62,21 +122,66 @@
     },
     {
       "id": "d2",
-      "name": "Priya Sharma",
-      "phone": "+91 98765 43211",
-      "licenseNumber": "DL-67890TN",
-      "status": "Available",
-      "email": "priya@travels.com",
-      "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
+      "name": "Dinesh",
+      "phone": "+919345265434",
+      "licenseNumber": "DL-45678TN",
+      "status": "Available"
     },
     {
       "id": "d3",
-      "name": "Ramesh Patel",
-      "phone": "+91 98765 43212",
-      "licenseNumber": "DL-54321TN",
-      "status": "Available",
-      "email": "ramesh@travels.com",
-      "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
+      "name": "Suresh",
+      "phone": "+919633553636",
+      "licenseNumber": "DL-23456TN",
+      "status": "Inactive"
+    },
+    {
+      "id": "d4",
+      "name": "Ramesh",
+      "phone": "+917373034445",
+      "licenseNumber": "DL-23456TN",
+      "status": "Available"
+    },
+    {
+      "id": "d5",
+      "name": "Rohit",
+      "phone": "+916345623456",
+      "licenseNumber": "DL-78965TN",
+      "status": "Available"
+    },
+    {
+      "id": "d6",
+      "name": "Axar",
+      "phone": "+918989002345",
+      "licenseNumber": "DL-77889TN",
+      "status": "Available"
+    },
+    {
+      "id": "d7",
+      "name": "Karupu",
+      "phone": "+917010123560",
+      "licenseNumber": "DL-66778TN",
+      "status": "Available"
+    },
+    {
+      "id": "d8",
+      "name": "Antony",
+      "phone": "+917012354023",
+      "licenseNumber": "DL-22334TN",
+      "status": "Available"
+    },
+    {
+      "id": "d9",
+      "name": "Rocket Raja",
+      "phone": "+919010123540",
+      "licenseNumber": "DL-11223TN",
+      "status": "Available"
+    },
+    {
+      "id": "d10",
+      "name": "Philips",
+      "phone": "+91901045633",
+      "licenseNumber": "DL-44557TN",
+      "status": "Available"
     }
   ],
   "bookings": [
@@ -87,7 +192,7 @@
       "dropLocation": "Ooty Bus Stand",
       "pickupDateTime": "2026-07-15T08:15:00.054Z",
       "vehicleType": "SUV",
-      "status": "Confirmed",
+      "status": "In Progress",
       "assignedVehicleId": "v2",
       "assignedDriverId": "d1",
       "notes": "Requires luggage rack",
@@ -213,12 +318,40 @@
       "dropLocation": "Chennai",
       "pickupDateTime": "2026-07-25T10:30",
       "vehicleType": "SUV",
-      "status": "Pending",
+      "status": "Cancelled",
       "assignedVehicleId": null,
       "assignedDriverId": null,
       "notes": "",
       "fareEstimated": 612,
       "createdAt": "2026-07-16T05:02:49.984Z"
+    },
+    {
+      "id": "b11",
+      "customerName": "Sam",
+      "pickupLocation": "Madurai",
+      "dropLocation": "Hosur",
+      "pickupDateTime": "2026-07-16T12:15",
+      "vehicleType": "SUV",
+      "status": "Confirmed",
+      "assignedVehicleId": "v5",
+      "assignedDriverId": "d9",
+      "notes": "meeting",
+      "fareEstimated": 1278,
+      "createdAt": "2026-07-16T06:46:00.828Z"
+    },
+    {
+      "id": "b12",
+      "customerName": "Ajay",
+      "pickupLocation": "erode arts college",
+      "dropLocation": "madurai",
+      "pickupDateTime": "2026-07-16T12:18",
+      "vehicleType": "Sedan",
+      "status": "Pending",
+      "assignedVehicleId": null,
+      "assignedDriverId": null,
+      "notes": "",
+      "fareEstimated": 792,
+      "createdAt": "2026-07-16T06:48:58.757Z"
     }
   ],
   "customers": [

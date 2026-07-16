@@ -1,271 +1,240 @@
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const dbPath = path.join(__dirname, 'db.json');
+// ─── Mongoose Connection ──────────────────────────────────────────────────────
 
-// Initialize database with default Admin, Vehicles, Drivers and Bookings
-function initDb() {
-  if (!fs.existsSync(dbPath)) {
-    const salt = bcrypt.genSaltSync(10);
-    const adminPasswordHash = bcrypt.hashSync('admin123', salt);
+let isConnected = false;
 
-    const defaultData = {
-      users: [
-        {
-          id: 'u1',
-          email: 'admin@travels.com',
-          password: adminPasswordHash,
-          role: 'admin',
-          name: 'Super Admin'
-        }
-      ],
-      vehicles: [
-        {
-          id: 'v1',
-          name: 'Swift Dzire',
-          plateNumber: 'TN-37-AB-1234',
-          type: 'Sedan',
-          acpreference: 'AC',
-          capacity: 4,
-          status: 'Available',
-          ratePerKm: 12
-        },
-        {
-          id: 'v2',
-          name: 'Innova Crysta',
-          plateNumber: 'TN-37-CD-5678',
-          type: 'SUV',
-          acpreference: 'AC',
-          capacity: 7,
-          status: 'Available',
-          ratePerKm: 18
-        },
-        {
-          id: 'v3',
-          name: 'Tempo Traveller',
-          plateNumber: 'TN-37-EF-9012',
-          type: 'Minivan',
-          acpreference: 'AC',
-          capacity: 12,
-          status: 'Available',
-          ratePerKm: 25
-        }
-      ],
-      drivers: [
-       {
-  id: 'd1',
-  name: 'Rajesh Kumar',
-  email: 'rajesh@travels.com',
-  password: bcrypt.hashSync('driver123', 10),
-  phone: '+91 9876543210',
-  licenseNumber: 'DL-12345TN',
-  status: 'Available'
-},
-       {
-  id: 'd2',
-  name: 'Priya Sharma',
-  email: 'priya@travels.com',
-  password: bcrypt.hashSync('driver123', 10),
-  phone: '+91 9876543211',
-  licenseNumber: 'DL-67890TN',
-  status: 'Available'
-},
-{
-  id: 'd3',
-  name: 'Ramesh Patel',
-  email: 'ramesh@travels.com',
-  password: bcrypt.hashSync('driver123', 10),
-  phone: '+91 9876543212',
-  licenseNumber: 'DL-54321TN',
-  status: 'Available'
+async function connectDB() {
+  if (isConnected) return;
+  await mongoose.connect(process.env.MONGODB_URI);
+  isConnected = true;
+  console.log('✅ Connected to MongoDB Atlas');
 }
-      ],
-      bookings: [
-        {
-          id: 'b1',
-          customerName: 'Ashwanth S',
-          pickupLocation: 'Coimbatore Airport',
-          dropLocation: 'Ooty Bus Stand',
-          pickupDateTime: new Date(Date.now() + 86400000).toISOString(),
-          vehicleType: 'SUV',
-          status: 'Pending',
-          assignedVehicleId: null,
-          assignedDriverId: null,
-          notes: 'Requires luggage rack',
-          fareEstimated: 2500,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'b2',
-          customerName: 'Nandhini Devi',
-          pickupLocation: 'Salem Bus Stand',
-          dropLocation: 'Yercaud Hills',
-          pickupDateTime: new Date(Date.now() + 172800000).toISOString(),
-          vehicleType: 'Sedan',
-          status: 'Confirmed',
-          assignedVehicleId: 'v1',
-          assignedDriverId: 'd1',
-          notes: 'Sightseeing trip',
-          fareEstimated: 1200,
-          createdAt: new Date(Date.now() - 3600000).toISOString()
-        }
-      ]
-    };
 
-    saveDb(defaultData);
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+
+const UserSchema = new mongoose.Schema({
+  id:       { type: String, required: true, unique: true },
+  email:    { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role:     { type: String, default: 'admin' },
+  name:     { type: String, required: true }
+}, { timestamps: true });
+
+const VehicleSchema = new mongoose.Schema({
+  id:          { type: String, required: true, unique: true },
+  name:        { type: String, required: true },
+  plateNumber: { type: String, required: true },
+  type:        { type: String, required: true },
+  acpreference:{ type: String, default: 'AC' },
+  capacity:    { type: Number, required: true },
+  status:      { type: String, default: 'Available' },
+  ratePerKm:   { type: Number, required: true }
+}, { timestamps: true });
+
+const DriverSchema = new mongoose.Schema({
+  id:            { type: String, required: true, unique: true },
+  name:          { type: String, required: true },
+  phone:         { type: String, required: true },
+  licenseNumber: { type: String, required: true },
+  email:         { type: String },
+  password:      { type: String },
+  status:        { type: String, default: 'Available' }
+}, { timestamps: true });
+
+const BookingSchema = new mongoose.Schema({
+  id:                { type: String, required: true, unique: true },
+  customerName:      { type: String, required: true },
+  pickupLocation:    { type: String, required: true },
+  dropLocation:      { type: String, required: true },
+  pickupDateTime:    { type: String, required: true },
+  vehicleType:       { type: String, required: true },
+  status:            { type: String, default: 'Pending' },
+  assignedVehicleId: { type: String, default: null },
+  assignedDriverId:  { type: String, default: null },
+  notes:             { type: String, default: '' },
+  fareEstimated:     { type: Number, default: 0 },
+  createdAt:         { type: String }
+});
+
+const CustomerSchema = new mongoose.Schema({
+  id:       { type: String, required: true, unique: true },
+  name:     { type: String, required: true },
+  email:    { type: String, required: true, unique: true },
+  phone:    { type: String, required: true },
+  password: { type: String, required: true },
+  role:     { type: String, default: 'customer' }
+}, { timestamps: true });
+
+// ─── Models (guard re-compile) ────────────────────────────────────────────────
+
+const User     = mongoose.models.User     || mongoose.model('User',     UserSchema);
+const Vehicle  = mongoose.models.Vehicle  || mongoose.model('Vehicle',  VehicleSchema);
+const Driver   = mongoose.models.Driver   || mongoose.model('Driver',   DriverSchema);
+const Booking  = mongoose.models.Booking  || mongoose.model('Booking',  BookingSchema);
+const Customer = mongoose.models.Customer || mongoose.model('Customer', CustomerSchema);
+
+// ─── Seed default data (only if collections empty) ───────────────────────────
+
+async function seedIfEmpty() {
+  await connectDB();
+
+  const userCount = await User.countDocuments();
+  if (userCount === 0) {
+    const hash = bcrypt.hashSync('admin123', 10);
+    await User.create({ id: 'u1', email: 'admin@travels.com', password: hash, role: 'admin', name: 'Super Admin' });
+    console.log('🌱 Seeded admin user');
+  }
+
+  const vehicleCount = await Vehicle.countDocuments();
+  if (vehicleCount === 0) {
+    await Vehicle.insertMany([
+      { id: 'v1', name: 'Swift Dzire',     plateNumber: 'TN-37-AB-1234', type: 'Sedan',   acpreference: 'AC', capacity: 4,  status: 'Available', ratePerKm: 12 },
+      { id: 'v2', name: 'Innova Crysta',   plateNumber: 'TN-37-CD-5678', type: 'SUV',     acpreference: 'AC', capacity: 7,  status: 'Available', ratePerKm: 18 },
+      { id: 'v3', name: 'Tempo Traveller', plateNumber: 'TN-37-EF-9012', type: 'Minivan', acpreference: 'AC', capacity: 12, status: 'Available', ratePerKm: 25 }
+    ]);
+    console.log('🌱 Seeded vehicles');
+  }
+
+  const driverCount = await Driver.countDocuments();
+  if (driverCount === 0) {
+    const hash = bcrypt.hashSync('driver123', 10);
+    await Driver.insertMany([
+      { id: 'd1', name: 'Rajesh Kumar', email: 'rajesh@travels.com', password: hash, phone: '+91 9876543210', licenseNumber: 'DL-12345TN', status: 'Available' },
+      { id: 'd2', name: 'Priya Sharma', email: 'priya@travels.com',  password: hash, phone: '+91 9876543211', licenseNumber: 'DL-67890TN', status: 'Available' },
+      { id: 'd3', name: 'Ramesh Patel', email: 'ramesh@travels.com', password: hash, phone: '+91 9876543212', licenseNumber: 'DL-54321TN', status: 'Available' }
+    ]);
+    console.log('🌱 Seeded drivers');
   }
 }
 
-// Read database
-function readDb() {
-  initDb();
-  try {
-    const rawData = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(rawData);
-  } catch (error) {
-    console.error('Error reading db.json:', error);
-    return { users: [], vehicles: [], drivers: [], bookings: [] };
-  }
+// ─── Helper: serialize mongoose doc to plain object ──────────────────────────
+
+function toPlain(doc) {
+  if (!doc) return null;
+  const obj = doc.toObject ? doc.toObject() : { ...doc };
+  delete obj._id;
+  delete obj.__v;
+  delete obj.createdAt;
+  delete obj.updatedAt;
+  return obj;
 }
 
-// Save database atomically
-function saveDb(data) {
-  const tempPath = `${dbPath}.tmp`;
-  try {
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8');
-    fs.renameSync(tempPath, dbPath);
-  } catch (error) {
-    console.error('Error saving db.json:', error);
-    if (fs.existsSync(tempPath)) {
-      try { fs.unlinkSync(tempPath); } catch (_) {}
-    }
-    throw error;
-  }
-}
+// ─── DB API (all async) ───────────────────────────────────────────────────────
 
 module.exports = {
-  getUsers: () => readDb().users,
+  connectDB,
+  seedIfEmpty,
 
-  getVehicles: () => readDb().vehicles,
-  addVehicle: (vehicle) => {
-    const db = readDb();
-    db.vehicles.push(vehicle);
-    saveDb(db);
-    return vehicle;
+  // Users
+  getUsers: async () => {
+    await connectDB();
+    const docs = await User.find({});
+    return docs.map(toPlain);
   },
-  updateVehicle: (id, updatedFields) => {
-    const db = readDb();
-    const idx = db.vehicles.findIndex(v => v.id === id);
-    if (idx !== -1) {
-      db.vehicles[idx] = { ...db.vehicles[idx], ...updatedFields };
-      saveDb(db);
-      return db.vehicles[idx];
-    }
-    return null;
+
+  // Vehicles
+  getVehicles: async () => {
+    await connectDB();
+    const docs = await Vehicle.find({});
+    return docs.map(toPlain);
   },
-  deleteVehicle: (id) => {
-    const db = readDb();
-    db.vehicles = db.vehicles.filter(v => v.id !== id);
-    saveDb(db);
+  addVehicle: async (vehicle) => {
+    await connectDB();
+    const doc = await Vehicle.create(vehicle);
+    return toPlain(doc);
+  },
+  updateVehicle: async (id, fields) => {
+    await connectDB();
+    const doc = await Vehicle.findOneAndUpdate({ id }, fields, { new: true });
+    return toPlain(doc);
+  },
+  deleteVehicle: async (id) => {
+    await connectDB();
+    await Vehicle.deleteOne({ id });
     return true;
   },
 
-  getDrivers: () => readDb().drivers,
-  addDriver: (driver) => {
-    const db = readDb();
-    db.drivers.push(driver);
-    saveDb(db);
-    return driver;
+  // Drivers
+  getDrivers: async () => {
+    await connectDB();
+    const docs = await Driver.find({});
+    return docs.map(toPlain);
   },
-  updateDriver: (id, updatedFields) => {
-    const db = readDb();
-    const idx = db.drivers.findIndex(d => d.id === id);
-    if (idx !== -1) {
-      db.drivers[idx] = { ...db.drivers[idx], ...updatedFields };
-      saveDb(db);
-      return db.drivers[idx];
-    }
-    return null;
+  addDriver: async (driver) => {
+    await connectDB();
+    const doc = await Driver.create(driver);
+    return toPlain(doc);
   },
-  deleteDriver: (id) => {
-    const db = readDb();
-    db.drivers = db.drivers.filter(d => d.id !== id);
-    saveDb(db);
+  updateDriver: async (id, fields) => {
+    await connectDB();
+    const doc = await Driver.findOneAndUpdate({ id }, fields, { new: true });
+    return toPlain(doc);
+  },
+  deleteDriver: async (id) => {
+    await connectDB();
+    await Driver.deleteOne({ id });
     return true;
   },
 
-  getBookings: () => readDb().bookings,
-  addBooking: (booking) => {
-    const db = readDb();
-    db.bookings.push(booking);
-    saveDb(db);
-    return booking;
+  // Bookings
+  getBookings: async () => {
+    await connectDB();
+    const docs = await Booking.find({});
+    return docs.map(toPlain);
   },
-  updateBooking: (id, updatedFields) => {
-    const db = readDb();
-    const idx = db.bookings.findIndex(b => b.id === id);
-    if (idx !== -1) {
-      const oldBooking = db.bookings[idx];
-      const newStatus = updatedFields.status || oldBooking.status;
+  addBooking: async (booking) => {
+    await connectDB();
+    const doc = await Booking.create(booking);
+    return toPlain(doc);
+  },
+  updateBooking: async (id, fields) => {
+    await connectDB();
 
-      // release drivers and vehicles on complete or cancel
-      if (newStatus === 'Completed' || newStatus === 'Cancelled') {
-        const vehicleId = updatedFields.assignedVehicleId || oldBooking.assignedVehicleId;
-        const driverId = updatedFields.assignedDriverId || oldBooking.assignedDriverId;
+    const old = await Booking.findOne({ id });
+    if (!old) return null;
 
-        if (vehicleId) {
-          const vIdx = db.vehicles.findIndex(v => v.id === vehicleId);
-          if (vIdx !== -1) db.vehicles[vIdx].status = 'Available';
-        }
-        if (driverId) {
-          const dIdx = db.drivers.findIndex(d => d.id === driverId);
-          if (dIdx !== -1) db.drivers[dIdx].status = 'Available';
-        }
-      }
+    const newStatus = fields.status || old.status;
 
-      // assign driver and vehicle status updates
-      if (newStatus === 'Confirmed') {
-        const vehicleId = updatedFields.assignedVehicleId || oldBooking.assignedVehicleId;
-        const driverId = updatedFields.assignedDriverId || oldBooking.assignedDriverId;
-
-        if (vehicleId) {
-          const vIdx = db.vehicles.findIndex(v => v.id === vehicleId);
-          if (vIdx !== -1) db.vehicles[vIdx].status = 'Assigned';
-        }
-        if (driverId) {
-          const dIdx = db.drivers.findIndex(d => d.id === driverId);
-          if (dIdx !== -1) db.drivers[dIdx].status = 'Available'; // trip not started
-        }
-      }
-
-      if (newStatus === 'In Progress') {
-        const vehicleId = updatedFields.assignedVehicleId || oldBooking.assignedVehicleId;
-        const driverId = updatedFields.assignedDriverId || oldBooking.assignedDriverId;
-
-        if (vehicleId) {
-          const vIdx = db.vehicles.findIndex(v => v.id === vehicleId);
-          if (vIdx !== -1) db.vehicles[vIdx].status = 'Assigned';
-        }
-        if (driverId) {
-          const dIdx = db.drivers.findIndex(d => d.id === driverId);
-          if (dIdx !== -1) db.drivers[dIdx].status = 'On Trip';
-        }
-      }
-
-      db.bookings[idx] = { ...db.bookings[idx], ...updatedFields };
-      saveDb(db);
-      return db.bookings[idx];
+    // Release resources on completion/cancellation
+    if (newStatus === 'Completed' || newStatus === 'Cancelled') {
+      const vehicleId = fields.assignedVehicleId || old.assignedVehicleId;
+      const driverId  = fields.assignedDriverId  || old.assignedDriverId;
+      if (vehicleId) await Vehicle.findOneAndUpdate({ id: vehicleId }, { status: 'Available' });
+      if (driverId)  await Driver.findOneAndUpdate({ id: driverId },   { status: 'Available' });
     }
-    return null;
+
+    // Mark as assigned on confirmation
+    if (newStatus === 'Confirmed') {
+      const vehicleId = fields.assignedVehicleId || old.assignedVehicleId;
+      const driverId  = fields.assignedDriverId  || old.assignedDriverId;
+      if (vehicleId) await Vehicle.findOneAndUpdate({ id: vehicleId }, { status: 'Assigned' });
+      if (driverId)  await Driver.findOneAndUpdate({ id: driverId },   { status: 'Assigned' });
+    }
+
+    // Mark as on trip when In Progress
+    if (newStatus === 'In Progress') {
+      const vehicleId = fields.assignedVehicleId || old.assignedVehicleId;
+      const driverId  = fields.assignedDriverId  || old.assignedDriverId;
+      if (vehicleId) await Vehicle.findOneAndUpdate({ id: vehicleId }, { status: 'Assigned' });
+      if (driverId)  await Driver.findOneAndUpdate({ id: driverId },   { status: 'On Trip' });
+    }
+
+    const doc = await Booking.findOneAndUpdate({ id }, fields, { new: true });
+    return toPlain(doc);
   },
 
-  getCustomers: () => readDb().customers || [],
-  addCustomer: (customer) => {
-    const db = readDb();
-    if (!db.customers) db.customers = [];
-    db.customers.push(customer);
-    saveDb(db);
-    return customer;
+  // Customers
+  getCustomers: async () => {
+    await connectDB();
+    const docs = await Customer.find({});
+    return docs.map(toPlain);
+  },
+  addCustomer: async (customer) => {
+    await connectDB();
+    const doc = await Customer.create(customer);
+    return toPlain(doc);
   }
 };

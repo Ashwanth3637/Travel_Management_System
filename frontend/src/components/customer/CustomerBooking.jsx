@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Pre-defined cities list (alphabetical order)
 const cities = [
@@ -65,6 +65,11 @@ function CustomerBooking({ token, customer }) {
   const [showDropSuggestions, setShowDropSuggestions] = useState(false);
   const [dateTime, setDateTime] = useState("");
   const [category, setCategory] = useState("Sedan");
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [selectedDriverId, setSelectedDriverId] = useState("");
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [notes, setNotes] = useState("");
 
   const [error, setError] = useState("");
@@ -76,6 +81,36 @@ function CustomerBooking({ token, customer }) {
   const filteredDropCities = cities.filter(city =>
     city.toLowerCase().includes(dropSearch.toLowerCase())
   );
+  const availableVehiclesByCategory = vehicles.filter(vehicle => vehicle.type === category);
+  const selectedVehicle = vehicles.find(vehicle => vehicle.id === selectedVehicleId);
+  const selectedDriver = drivers.find(driver => driver.id === selectedDriverId);
+
+  const fetchBookingOptions = async () => {
+    setOptionsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/customer/booking-options`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to load cars and drivers.");
+      }
+
+      setVehicles(data.vehicles || []);
+      setDrivers(data.drivers || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setOptionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) fetchBookingOptions();
+  }, [token]);
 
   // Derived states via Haversine formula
   const distance = (() => {
@@ -99,7 +134,7 @@ function CustomerBooking({ token, customer }) {
     return Math.round(R * c);
   })();
 
-  const ratePerKm = rates[category] || 12;
+  const ratePerKm = selectedVehicle?.ratePerKm || rates[category] || 12;
   const estimatedFare = distance * ratePerKm;
 
   const handleBooking = async (e) => {
@@ -107,7 +142,7 @@ function CustomerBooking({ token, customer }) {
     setError("");
     setSuccess("");
 
-    if (!pickup || !drop || !dateTime || !category) {
+    if (!pickup || !drop || !dateTime || !category || !selectedVehicleId || !selectedDriverId) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -129,6 +164,8 @@ function CustomerBooking({ token, customer }) {
           dropLocation: drop,
           pickupDateTime: dateTime,
           vehicleType: category,
+          assignedVehicleId: selectedVehicleId,
+          assignedDriverId: selectedDriverId,
           notes,
           customerName: customer ? customer.name : undefined
         })
@@ -148,7 +185,10 @@ function CustomerBooking({ token, customer }) {
       setDropSearch("");
       setDateTime("");
       setCategory("Sedan");
+      setSelectedVehicleId("");
+      setSelectedDriverId("");
       setNotes("");
+      fetchBookingOptions();
     } catch (err) {
       setError(err.message);
     }
@@ -291,7 +331,10 @@ function CustomerBooking({ token, customer }) {
                   return (
                     <div
                       key={item.key}
-                      onClick={() => setCategory(item.key)}
+                      onClick={() => {
+                        setCategory(item.key);
+                        setSelectedVehicleId("");
+                      }}
                       style={{
                         padding: '16px 8px',
                         borderRadius: '12px',
@@ -336,6 +379,56 @@ function CustomerBooking({ token, customer }) {
               </div>
             </div>
 
+            <div className="form-group">
+              <label className="form-label">Select Car Model</label>
+              <select
+                className="form-input"
+                value={selectedVehicleId}
+                onChange={(e) => setSelectedVehicleId(e.target.value)}
+                required
+                disabled={optionsLoading}
+              >
+                <option value="">
+                  {optionsLoading ? "Loading available cars..." : `Choose an available ${category}`}
+                </option>
+                {availableVehiclesByCategory.map((vehicle) => (
+                  <option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.name} - {vehicle.plateNumber} ({vehicle.capacity} seats, {vehicle.acpreference}, ₹{vehicle.ratePerKm}/km)
+                  </option>
+                ))}
+              </select>
+              {!optionsLoading && availableVehiclesByCategory.length === 0 && (
+                <div style={{ color: 'var(--status-cancelled)', fontSize: '12px', marginTop: '8px', textAlign: 'left' }}>
+                  No available cars found for {category}. Please choose another category.
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Select Driver</label>
+              <select
+                className="form-input"
+                value={selectedDriverId}
+                onChange={(e) => setSelectedDriverId(e.target.value)}
+                required
+                disabled={optionsLoading}
+              >
+                <option value="">
+                  {optionsLoading ? "Loading available drivers..." : "Choose an available driver"}
+                </option>
+                {drivers.map((driver) => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.name} - {driver.phone}
+                  </option>
+                ))}
+              </select>
+              {!optionsLoading && drivers.length === 0 && (
+                <div style={{ color: 'var(--status-cancelled)', fontSize: '12px', marginTop: '8px', textAlign: 'left' }}>
+                  No available drivers found right now.
+                </div>
+              )}
+            </div>
+
             <div className="form-group" style={{ marginBottom: '25px' }}>
               <label className="form-label">Special Notes / Special Requests (Optional)</label>
               <textarea
@@ -367,6 +460,14 @@ function CustomerBooking({ token, customer }) {
               <div className="details-row">
                 <span className="details-label">Cab Class</span>
                 <span className="details-value">{category}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Car Model</span>
+                <span className="details-value">{selectedVehicle ? selectedVehicle.name : '—'}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Driver</span>
+                <span className="details-value">{selectedDriver ? selectedDriver.name : '—'}</span>
               </div>
               <div className="details-row">
                 <span className="details-label">Estimated Distance</span>
@@ -408,6 +509,22 @@ function CustomerBooking({ token, customer }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', paddingBottom: '2px' }}>
                 <span>🚐 Minivan</span>
                 <span style={{ color: 'var(--text-muted)' }}>8 Seats | ₹25/km</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '20px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 15px 0', textAlign: 'left' }}>
+              Current Selection
+            </h3>
+            <div className="details-list">
+              <div className="details-row">
+                <span className="details-label">Vehicle</span>
+                <span className="details-value">{selectedVehicle ? selectedVehicle.plateNumber : 'Not selected'}</span>
+              </div>
+              <div className="details-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+                <span className="details-label">Driver Phone</span>
+                <span className="details-value">{selectedDriver ? selectedDriver.phone : 'Not selected'}</span>
               </div>
             </div>
           </div>

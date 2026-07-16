@@ -158,6 +158,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                   <label className="form-label">Status</label>
                   <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
                     <option value="Available">Available</option>
+                    <option value="Assigned">Assigned</option>
                     <option value="On Trip">On Trip</option>
                     <option value="Inactive">Inactive</option>
                   </select>
