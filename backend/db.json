@@ -56,21 +56,27 @@
       "name": "Rajesh Kumar",
       "phone": "+91 98765 43210",
       "licenseNumber": "DL-12345TN",
-      "status": "Available"
+      "status": "Available",
+      "email": "rajesh@travels.com",
+      "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
     },
     {
       "id": "d2",
       "name": "Priya Sharma",
       "phone": "+91 98765 43211",
       "licenseNumber": "DL-67890TN",
-      "status": "Available"
+      "status": "Available",
+      "email": "priya@travels.com",
+      "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
     },
     {
       "id": "d3",
       "name": "Ramesh Patel",
       "phone": "+91 98765 43212",
       "licenseNumber": "DL-54321TN",
-      "status": "Available"
+      "status": "Available",
+      "email": "ramesh@travels.com",
+      "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
     }
   ],
   "bookings": [
@@ -81,9 +87,9 @@
       "dropLocation": "Ooty Bus Stand",
       "pickupDateTime": "2026-07-15T08:15:00.054Z",
       "vehicleType": "SUV",
-      "status": "Pending",
-      "assignedVehicleId": null,
-      "assignedDriverId": null,
+      "status": "Confirmed",
+      "assignedVehicleId": "v2",
+      "assignedDriverId": "d1",
       "notes": "Requires luggage rack",
       "fareEstimated": 2500,
       "createdAt": "2026-07-14T08:15:00.054Z"
@@ -95,7 +101,7 @@
       "dropLocation": "Yercaud Hills",
       "pickupDateTime": "2026-07-16T08:15:00.054Z",
       "vehicleType": "Sedan",
-      "status": "Confirmed",
+      "status": "Cancelled",
       "assignedVehicleId": "v1",
       "assignedDriverId": "d1",
       "notes": "Sightseeing trip",

@@ -53,27 +53,33 @@ function initDb() {
         }
       ],
       drivers: [
-        {
-          id: 'd1',
-          name: 'Rajesh Kumar',
-          phone: '+91 98765 43210',
-          licenseNumber: 'DL-12345TN',
-          status: 'Available'
-        },
-        {
-          id: 'd2',
-          name: 'Priya Sharma',
-          phone: '+91 98765 43211',
-          licenseNumber: 'DL-67890TN',
-          status: 'Available'
-        },
-        {
-          id: 'd3',
-          name: 'Ramesh Patel',
-          phone: '+91 98765 43212',
-          licenseNumber: 'DL-54321TN',
-          status: 'Available'
-        }
+       {
+  id: 'd1',
+  name: 'Rajesh Kumar',
+  email: 'rajesh@travels.com',
+  password: bcrypt.hashSync('driver123', 10),
+  phone: '+91 9876543210',
+  licenseNumber: 'DL-12345TN',
+  status: 'Available'
+},
+       {
+  id: 'd2',
+  name: 'Priya Sharma',
+  email: 'priya@travels.com',
+  password: bcrypt.hashSync('driver123', 10),
+  phone: '+91 9876543211',
+  licenseNumber: 'DL-67890TN',
+  status: 'Available'
+},
+{
+  id: 'd3',
+  name: 'Ramesh Patel',
+  email: 'ramesh@travels.com',
+  password: bcrypt.hashSync('driver123', 10),
+  phone: '+91 9876543212',
+  licenseNumber: 'DL-54321TN',
+  status: 'Available'
+}
       ],
       bookings: [
         {

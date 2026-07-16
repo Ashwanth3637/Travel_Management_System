@@ -1,85 +1,71 @@
-import React, { useState, useEffect } from 'react';
-import AdminLogin from './components/admin/AdminLogin';
-import AdminDashboard from './components/admin/AdminDashboard';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState } from "react";
+
+// Admin
+import AdminLogin from "./components/admin/AdminLogin";
+import AdminDashboard from "./components/admin/AdminDashboard";
+
+// Driver
+import DriverLogin from "./components/driver/pages/driver/DriverLogin";
+import DriverDashboard from "./components/driver/pages/driver/DriverDashboard";
+import DriverProfile from "./components/driver/pages/driver/DriverProfile";
+import AssignedTrips from "./components/driver/pages/driver/AssignedTrips";
+import TripHistory from "./components/driver/pages/driver/TripHistory";
+import Availability from "./components/driver/pages/driver/Availability";
+
+import DriverLayout from "./components/driver/layouts/DriverLayout";
+import ProtectedRoute from "./components/driver/driver/ProtectedRoute";
+
+function AdminRoute() {
+  const [token, setToken] = useState(localStorage.getItem("adminToken") || "");
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("adminUser")) || null; } catch { return null; }
+  });
+
+  const handleLogin = (t, u) => {
+    localStorage.setItem("adminToken", t);
+    localStorage.setItem("adminUser", JSON.stringify(u));
+    setToken(t);
+    setUser(u);
+  };
+
+  if (!token) {
+    return <AdminLogin onLogin={handleLogin} />;
+  }
+  return <AdminDashboard token={token} />;
+}
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // load auth state from local storage
-  useEffect(() => {
-    const savedToken = localStorage.getItem('travel_token');
-    const savedUser = localStorage.getItem('travel_user');
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const handleLogin = (loginToken, loginUser) => {
-    localStorage.setItem('travel_token', loginToken);
-    localStorage.setItem('travel_user', JSON.stringify(loginUser));
-    setToken(loginToken);
-    setUser(loginUser);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('travel_token');
-    localStorage.removeItem('travel_user');
-    setToken(null);
-    setUser(null);
-  };
-
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        height: '100vh',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '20px',
-        fontWeight: 'bold',
-        color: '#10b981'
-      }}>
-        Loading Admin System...
-      </div>
-    );
-  }
-
   return (
-    <div className="app-container">
-      {token && user ? (
-        <>
-          <nav className="navbar">
-            <div className="nav-logo">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2z"></path>
-                <path d="M18 18h4a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4"></path>
-                <circle cx="7" cy="17" r="2"></circle>
-                <circle cx="17" cy="17" r="2"></circle>
-              </svg>
-              Travels Cab Admin
-            </div>
-            <div className="nav-user">
-              <span className="badge badge-confirmed">
-                Admin
-              </span>
-              <span style={{ fontWeight: '600', fontSize: '15px' }}>{user.name}</span>
-              <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '8px 16px' }}>
-                Logout
-              </button>
-            </div>
-          </nav>
-          <main style={{ padding: '40px' }} className="animate-fade-in">
-            <AdminDashboard token={token} />
-          </main>
-        </>
-      ) : (
-        <AdminLogin onLogin={handleLogin} />
-      )}
-    </div>
+    <BrowserRouter>
+      <Routes>
+
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={<AdminRoute />} />
+        <Route path="/admin/login" element={<AdminRoute />} />
+
+        {/* Driver Routes */}
+        <Route path="/driver/login" element={<DriverLogin />} />
+        <Route
+          path="/driver"
+          element={
+            <ProtectedRoute>
+              <DriverLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<DriverDashboard />} />
+          <Route path="profile" element={<DriverProfile />} />
+          <Route path="trips" element={<AssignedTrips />} />
+          <Route path="history" element={<TripHistory />} />
+          <Route path="availability" element={<Availability />} />
+        </Route>
+
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/admin" replace />} />
+
+      </Routes>
+    </BrowserRouter>
   );
 }
 
