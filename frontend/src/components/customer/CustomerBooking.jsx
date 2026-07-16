@@ -37,55 +37,49 @@ function getCarImage(name) {
 
 
 
-// Pre-defined cities list
-const cities = [
-  "Bangalore", "Chennai", "Coimbatore", "Erode", "Hosur", "Kanyakumari",
-  "Kodaikanal", "Madurai", "Mysore", "Nagercoil", "Ooty", "Pondicherry",
-  "Salem", "Thoothukudi (Tuticorin)", "Tiruchirappalli (Trichy)",
-  "Tirunelveli", "Tiruppur", "Valparai", "Vellore"
-].sort();
-
-const cityCoordinates = {
-  Bangalore: { lat: 12.9716, lng: 77.5946 }, Chennai: { lat: 13.0827, lng: 80.2707 },
-  Coimbatore: { lat: 11.0168, lng: 76.9558 }, Erode: { lat: 11.3410, lng: 77.7172 },
-  Hosur: { lat: 12.7409, lng: 77.8253 }, Kanyakumari: { lat: 8.0883, lng: 77.5385 },
-  Kodaikanal: { lat: 10.2381, lng: 77.4892 }, Madurai: { lat: 9.9252, lng: 78.1198 },
-  Mysore: { lat: 12.2958, lng: 76.6394 }, Nagercoil: { lat: 8.1833, lng: 77.4119 },
-  Ooty: { lat: 11.4102, lng: 76.6950 }, Pondicherry: { lat: 11.9416, lng: 79.8083 },
-  Salem: { lat: 11.6643, lng: 78.1460 }, "Thoothukudi (Tuticorin)": { lat: 8.7642, lng: 78.1348 },
-  "Tiruchirappalli (Trichy)": { lat: 10.7905, lng: 78.7047 }, Tirunelveli: { lat: 8.7139, lng: 77.7567 },
-  Tiruppur: { lat: 11.1085, lng: 77.3411 }, Valparai: { lat: 10.3275, lng: 76.9554 },
-  Vellore: { lat: 12.9165, lng: 79.1325 }
-};
+// Color markers for Leaflet map (Green for Pickup, Red for Drop)
+const greenIconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
+const redIconUrl = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png";
+const markerShadowUrl = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png";
 
 const TYPE_ICONS = { Hatchback: "🚗", Sedan: "🚘", SUV: "🚙", Minivan: "🚐" };
 
-function haversine(p, d) {
-  const c1 = cityCoordinates[p], c2 = cityCoordinates[d];
+function getDistance(c1, c2) {
   if (!c1 || !c2) return 0;
-  const R = 6371;
+  const R = 6371; // Earth's radius in km
   const dLat = ((c2.lat - c1.lat) * Math.PI) / 180;
   const dLng = ((c2.lng - c1.lng) * Math.PI) / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos((c1.lat * Math.PI) / 180) * Math.cos((c2.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+// Nominatim reverse geocoding helper
+const reverseGeocode = async (lat, lng, callback) => {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+    const data = await res.json();
+    if (data && data.display_name) {
+      callback(data.display_name);
+    } else {
+      callback(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
+  } catch (error) {
+    callback(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+  }
+};
+
 function CustomerBooking({ token, customer }) {
   const API_URL = "http://localhost:5001/api";
 
-  const [pickup, setPickup] = useState("");
-  const [drop, setDrop] = useState("");
-  const [pickupSearch, setPickupSearch] = useState("");
-  const [dropSearch, setDropSearch] = useState("");
-  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
-  const [showDropSuggestions, setShowDropSuggestions] = useState(false);
+  const [pickup, setPickup] = useState("Coimbatore, Tamil Nadu, India");
+  const [drop, setDrop] = useState("Chennai, Tamil Nadu, India");
+  const [pickupCoords, setPickupCoords] = useState({ lat: 11.0168, lng: 76.9558 }); // Coimbatore
+  const [dropCoords, setDropCoords] = useState({ lat: 13.0827, lng: 80.2707 }); // Chennai
   const [dateTime, setDateTime] = useState("");
   const [notes, setNotes] = useState("");
 
   const [vehicles, setVehicles] = useState([]);
-  const [drivers, setDrivers] = useState([]);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [selectedDriverId, setSelectedDriverId] = useState("");
   const [optionsLoading, setOptionsLoading] = useState(true);
 
   // Filter type
@@ -101,9 +95,8 @@ function CustomerBooking({ token, customer }) {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load cars and drivers.");
+      if (!res.ok) throw new Error(data.error || "Failed to load cars.");
       setVehicles(data.vehicles || []);
-      setDrivers(data.drivers || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -115,11 +108,100 @@ function CustomerBooking({ token, customer }) {
     if (token) fetchBookingOptions();
   }, [token]);
 
-  const distance = haversine(pickup, drop);
+  // Leaflet Map Initialization
+  useEffect(() => {
+    if (!window.L) return;
+    const L = window.L;
+
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer || mapContainer._leaflet_id) return;
+
+    // Center map around South India region
+    const map = L.map('map-container').setView([12.0, 78.6], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const greenIcon = new L.Icon({
+      iconUrl: greenIconUrl,
+      shadowUrl: markerShadowUrl,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    const redIcon = new L.Icon({
+      iconUrl: redIconUrl,
+      shadowUrl: markerShadowUrl,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    // Create markers
+    const pickupMarker = L.marker([pickupCoords.lat, pickupCoords.lng], { icon: greenIcon, draggable: true })
+      .addTo(map)
+      .bindPopup("<b>Pickup Location</b><br>Drag me!")
+      .openPopup();
+
+    const dropMarker = L.marker([dropCoords.lat, dropCoords.lng], { icon: redIcon, draggable: true })
+      .addTo(map)
+      .bindPopup("<b>Drop Location</b><br>Drag me!");
+
+    // Set bounds
+    const bounds = L.latLngBounds([pickupCoords.lat, pickupCoords.lng], [dropCoords.lat, dropCoords.lng]);
+    map.fitBounds(bounds, { padding: [40, 40] });
+
+    // Initial reverse geocode setup
+    reverseGeocode(pickupCoords.lat, pickupCoords.lng, setPickup);
+    reverseGeocode(dropCoords.lat, dropCoords.lng, setDrop);
+
+    // Event listeners
+    pickupMarker.on('dragend', () => {
+      const pos = pickupMarker.getLatLng();
+      const newCoords = { lat: pos.lat, lng: pos.lng };
+      setPickupCoords(newCoords);
+      reverseGeocode(pos.lat, pos.lng, setPickup);
+    });
+
+    dropMarker.on('dragend', () => {
+      const pos = dropMarker.getLatLng();
+      const newCoords = { lat: pos.lat, lng: pos.lng };
+      setDropCoords(newCoords);
+      reverseGeocode(pos.lat, pos.lng, setDrop);
+    });
+
+    // Clicking map moves nearest marker
+    map.on('click', (e) => {
+      const clickLatLng = e.latlng;
+      const pickupLatLng = pickupMarker.getLatLng();
+      const dropLatLng = dropMarker.getLatLng();
+      
+      const distToPickup = clickLatLng.distanceTo(pickupLatLng);
+      const distToDrop = clickLatLng.distanceTo(dropLatLng);
+
+      if (distToPickup < distToDrop) {
+        pickupMarker.setLatLng(clickLatLng);
+        setPickupCoords({ lat: clickLatLng.lat, lng: clickLatLng.lng });
+        reverseGeocode(clickLatLng.lat, clickLatLng.lng, setPickup);
+      } else {
+        dropMarker.setLatLng(clickLatLng);
+        setDropCoords({ lat: clickLatLng.lat, lng: clickLatLng.lng });
+        reverseGeocode(clickLatLng.lat, clickLatLng.lng, setDrop);
+      }
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, []);
+
+  const distance = getDistance(pickupCoords, dropCoords);
   const ratePerKm = selectedVehicle?.ratePerKm || 12;
   const estimatedFare = distance * ratePerKm;
-
-  const selectedDriver = drivers.find(d => d.id === selectedDriverId);
 
   // Unique vehicle types present in fetched vehicles
   const availableTypes = ["All", ...Array.from(new Set(vehicles.map(v => v.type)))];
@@ -129,11 +211,14 @@ function CustomerBooking({ token, customer }) {
     e.preventDefault();
     setError(""); setSuccess("");
 
-    if (!pickup || !drop || !dateTime || !selectedVehicle || !selectedDriverId) {
-      setError("Please fill out all required fields, select a car and a driver.");
+    if (!pickup || !drop || !dateTime || !selectedVehicle) {
+      setError("Please fill out all required fields and select a car model.");
       return;
     }
-    if (pickup === drop) { setError("Pickup and drop locations cannot be the same place."); return; }
+    if (distance === 0) {
+      setError("Pickup and Drop locations cannot be the same coordinates.");
+      return;
+    }
 
     try {
       const res = await fetch(`${API_URL}/customer/bookings`, {
@@ -143,7 +228,6 @@ function CustomerBooking({ token, customer }) {
           pickupLocation: pickup, dropLocation: drop, pickupDateTime: dateTime,
           vehicleType: selectedVehicle.type,
           assignedVehicleId: selectedVehicle.id,
-          assignedDriverId: selectedDriverId,
           notes,
           customerName: customer ? customer.name : undefined
         })
@@ -152,8 +236,7 @@ function CustomerBooking({ token, customer }) {
       if (!res.ok) throw new Error(data.error || "Booking creation failed.");
 
       setSuccess(`✅ Booking confirmed! Your Booking ID is ${data.id}.`);
-      setPickup(""); setDrop(""); setPickupSearch(""); setDropSearch("");
-      setDateTime(""); setSelectedVehicle(null); setSelectedDriverId(""); setNotes("");
+      setDateTime(""); setSelectedVehicle(null); setNotes("");
       fetchBookingOptions();
     } catch (err) {
       setError(err.message);
@@ -182,44 +265,52 @@ function CustomerBooking({ token, customer }) {
           )}
 
           <form onSubmit={handleBooking}>
-            {/* Pickup */}
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label className="form-label">Pickup Location</label>
-              <input
-                type="text" className="form-input" placeholder="Type or search pickup location..."
-                value={pickupSearch}
-                onChange={(e) => { setPickupSearch(e.target.value); setShowPickupSuggestions(true); if (pickup !== e.target.value) setPickup(""); }}
-                onFocus={() => setShowPickupSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowPickupSuggestions(false), 200)}
-                required
-              />
-              {showPickupSuggestions && cities.filter(c => c.toLowerCase().includes(pickupSearch.toLowerCase())).length > 0 && (
-                <ul className="suggestions-list">
-                  {cities.filter(c => c.toLowerCase().includes(pickupSearch.toLowerCase())).map(city => (
-                    <li key={city} onMouseDown={() => { setPickup(city); setPickupSearch(city); setShowPickupSuggestions(false); }}>{city}</li>
-                  ))}
-                </ul>
-              )}
+            {/* Map Selection Container */}
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Select Route on Map</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Drag pins to adjust</span>
+              </label>
+              <div 
+                id="map-container" 
+                style={{ 
+                  height: '280px', 
+                  width: '100%', 
+                  borderRadius: '12px', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  marginBottom: '10px', 
+                  overflow: 'hidden',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+              ></div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px', lineHeight: '1.4' }}>
+                📍 <span style={{ color: '#10b981', fontWeight: '600' }}>Green pin</span> is Pickup. <span style={{ color: '#ef4444', fontWeight: '600' }}>Red pin</span> is Drop. Drag them or click the map to set your route.
+              </div>
             </div>
 
-            {/* Drop */}
-            <div className="form-group" style={{ position: 'relative' }}>
-              <label className="form-label">Drop Location</label>
+            {/* Pickup Address Display */}
+            <div className="form-group">
+              <label className="form-label">Pickup Address</label>
               <input
-                type="text" className="form-input" placeholder="Type or search drop location..."
-                value={dropSearch}
-                onChange={(e) => { setDropSearch(e.target.value); setShowDropSuggestions(true); if (drop !== e.target.value) setDrop(""); }}
-                onFocus={() => setShowDropSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowDropSuggestions(false), 200)}
+                type="text" className="form-input" 
+                value={pickup} 
+                readOnly
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
                 required
               />
-              {showDropSuggestions && cities.filter(c => c.toLowerCase().includes(dropSearch.toLowerCase())).length > 0 && (
-                <ul className="suggestions-list">
-                  {cities.filter(c => c.toLowerCase().includes(dropSearch.toLowerCase())).map(city => (
-                    <li key={city} onMouseDown={() => { setDrop(city); setDropSearch(city); setShowDropSuggestions(false); }}>{city}</li>
-                  ))}
-                </ul>
-              )}
+            </div>
+
+            {/* Drop Address Display */}
+            <div className="form-group">
+              <label className="form-label">Drop Address</label>
+              <input
+                type="text" className="form-input" 
+                value={drop} 
+                readOnly
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                required
+              />
             </div>
 
             {/* Date/Time */}
@@ -316,27 +407,7 @@ function CustomerBooking({ token, customer }) {
               )}
             </div>
 
-            {/* Driver selector */}
-            <div className="form-group">
-              <label className="form-label">Select Driver</label>
-              <select
-                className="form-input" value={selectedDriverId}
-                onChange={(e) => setSelectedDriverId(e.target.value)}
-                required disabled={optionsLoading}
-              >
-                <option value="">{optionsLoading ? "Loading drivers..." : "Choose an available driver"}</option>
-                {drivers.map((driver) => (
-                  <option key={driver.id} value={driver.id}>
-                    {driver.name} — {driver.phone}
-                  </option>
-                ))}
-              </select>
-              {!optionsLoading && drivers.length === 0 && (
-                <div style={{ color: 'var(--status-cancelled)', fontSize: '12px', marginTop: '6px' }}>
-                  ⚠ No available drivers right now.
-                </div>
-              )}
-            </div>
+
 
             {/* Notes */}
             <div className="form-group" style={{ marginBottom: '24px' }}>
@@ -371,10 +442,7 @@ function CustomerBooking({ token, customer }) {
                 <span className="details-label">Plate</span>
                 <span className="details-value">{selectedVehicle ? selectedVehicle.plateNumber : '—'}</span>
               </div>
-              <div className="details-row">
-                <span className="details-label">Driver</span>
-                <span className="details-value">{selectedDriver ? selectedDriver.name : '—'}</span>
-              </div>
+
               <div className="details-row">
                 <span className="details-label">Distance</span>
                 <span className="details-value">{distance > 0 ? `${distance} km` : '—'}</span>

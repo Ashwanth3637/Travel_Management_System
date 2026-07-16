@@ -356,7 +356,7 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
   try {
     const { pickupLocation, dropLocation, pickupDateTime, vehicleType, assignedVehicleId, assignedDriverId, notes, customerName } = req.body;
     if (!pickupLocation || !dropLocation || !pickupDateTime || !vehicleType) return res.status(400).json({ error: 'Missing booking details.' });
-    if (!assignedVehicleId || !assignedDriverId) return res.status(400).json({ error: 'Please select both a car model and driver.' });
+    if (!assignedVehicleId) return res.status(400).json({ error: 'Please select a car model.' });
 
     const [vehicles, drivers] = await Promise.all([db.getVehicles(), db.getDrivers()]);
 
@@ -365,7 +365,16 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
     if (selectedVehicle.status !== 'Available') return res.status(400).json({ error: 'Selected car is no longer available.' });
     if (selectedVehicle.type !== vehicleType) return res.status(400).json({ error: 'Selected car does not match the requested category.' });
 
-    const selectedDriver = drivers.find(d => d.id === assignedDriverId);
+    let finalDriverId = assignedDriverId;
+    if (!finalDriverId) {
+      const availableDrivers = drivers.filter(d => d.status === 'Available');
+      if (availableDrivers.length === 0) {
+        return res.status(400).json({ error: 'No available drivers right now. Please try again in a few minutes.' });
+      }
+      finalDriverId = availableDrivers[0].id;
+    }
+
+    const selectedDriver = drivers.find(d => d.id === finalDriverId);
     if (!selectedDriver) return res.status(404).json({ error: 'Selected driver was not found.' });
     if (selectedDriver.status !== 'Available') return res.status(400).json({ error: 'Selected driver is no longer available.' });
 
@@ -377,7 +386,7 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
     bookings.forEach(b => { const m = b.id.match(/^b(\d+)$/); if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]); });
     const nextId = 'b' + (maxNum + 1);
 
-    const newBooking = { id: nextId, customerName: customerName || req.user.name, pickupLocation, dropLocation, pickupDateTime, vehicleType, status: 'Pending', assignedVehicleId, assignedDriverId, notes: notes || '', fareEstimated, createdAt: new Date().toISOString() };
+    const newBooking = { id: nextId, customerName: customerName || req.user.name, pickupLocation, dropLocation, pickupDateTime, vehicleType, status: 'Pending', assignedVehicleId, assignedDriverId: finalDriverId, notes: notes || '', fareEstimated, createdAt: new Date().toISOString() };
     await db.addBooking(newBooking);
     const confirmed = await db.updateBooking(nextId, { status: 'Confirmed' });
     res.status(201).json(confirmed || newBooking);

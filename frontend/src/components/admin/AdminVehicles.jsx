@@ -176,6 +176,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                 <select className="form-select" value={type} onChange={(e) => setType(e.target.value)}>
                   <option value="Sedan">Sedan</option>
                   <option value="SUV">SUV</option>
+                  <option value="Luxury">Luxury</option>
                   <option value="Minivan">Minivan</option>
                 </select>
               </div>
