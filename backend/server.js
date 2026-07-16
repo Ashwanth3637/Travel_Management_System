@@ -120,6 +120,86 @@ app.post('/api/auth/driver/login', (req, res) => {
   });
 });
 
+// Customer Registration API
+app.post('/api/customers/register', (req, res) => {
+  const { name, email, phone, password } = req.body;
+  if (!name || !email || !phone || !password) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+
+  const customers = db.getCustomers();
+  const exists = customers.find(c => c.email.toLowerCase() === email.toLowerCase());
+  if (exists) {
+    return res.status(400).json({ error: 'Email is already registered.' });
+  }
+
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync(password, salt);
+
+  const newCustomer = {
+    id: 'c' + (customers.length + 1),
+    name,
+    email,
+    phone,
+    password: passwordHash,
+    role: 'customer'
+  };
+
+  db.addCustomer(newCustomer);
+
+  res.status(201).json({
+    message: 'Registration successful',
+    customer: { id: newCustomer.id, name: newCustomer.name, email: newCustomer.email, phone: newCustomer.phone }
+  });
+});
+
+// Customer Login API
+app.post('/api/customers/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const customers = db.getCustomers();
+  const customer = customers.find(c => c.email.toLowerCase() === email.toLowerCase());
+
+  if (!customer || !bcrypt.compareSync(password, customer.password)) {
+    return res.status(400).json({ error: 'Invalid email or password.' });
+  }
+
+  const token = jwt.sign(
+    { id: customer.id, name: customer.name, email: customer.email, role: 'customer' },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  res.json({
+    token,
+    customer: { id: customer.id, name: customer.name, email: customer.email, phone: customer.phone }
+  });
+});
+
+// Get all customers (registered + booking names)
+app.get('/api/customers', authenticateToken, (req, res) => {
+  const registered = db.getCustomers();
+  const bookings = db.getBookings();
+  
+  const all = [...registered];
+  bookings.forEach(b => {
+    if (!all.some(c => c.name.toLowerCase() === b.customerName.toLowerCase())) {
+      all.push({
+        id: 'c_temp_' + (all.length + 1),
+        name: b.customerName,
+        email: `${b.customerName.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        phone: '—',
+        role: 'customer'
+      });
+    }
+  });
+  
+  res.json(all);
+});
+
 // Vehicles REST APIs
 app.get('/api/vehicles', authenticateToken, requireAdmin, (req, res) => {
   res.json(db.getVehicles());
@@ -131,8 +211,19 @@ app.post('/api/vehicles', authenticateToken, requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'All vehicle fields are required.' });
   }
 
+  const vehicles = db.getVehicles();
+  let maxNum = 0;
+  vehicles.forEach(v => {
+    const match = v.id.match(/^v(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextId = 'v' + (maxNum + 1);
+
   const newVehicle = {
-    id: 'v_' + Math.random().toString(36).substr(2, 9),
+    id: nextId,
     name,
     plateNumber,
     type,
@@ -173,8 +264,19 @@ app.post('/api/drivers', authenticateToken, requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'All driver fields are required.' });
   }
 
+  const drivers = db.getDrivers();
+  let maxNum = 0;
+  drivers.forEach(d => {
+    const match = d.id.match(/^d(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextId = 'd' + (maxNum + 1);
+
   const newDriver = {
-    id: 'd_' + Math.random().toString(36).substr(2, 9),
+    id: nextId,
     name,
     phone,
     licenseNumber,
@@ -219,8 +321,19 @@ app.post('/api/bookings', authenticateToken, requireAdmin, (req, res) => {
   const simulatedDistance = Math.floor(Math.random() * 80) + 20;
   const fareEstimated = simulatedDistance * baseRate;
 
+  const bookings = db.getBookings();
+  let maxNum = 0;
+  bookings.forEach(b => {
+    const match = b.id.match(/^b(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextId = 'b' + (maxNum + 1);
+
   const newBooking = {
-    id: 'b_' + Math.random().toString(36).substr(2, 9),
+    id: nextId,
     customerName,
     pickupLocation,
     dropLocation,
@@ -365,6 +478,107 @@ app.put('/api/driver/availability', authenticateToken, requireDriver, (req, res)
   }
 
   res.json({ message: 'Availability updated.', status: updated.status });
+});
+
+// Customer Bookings APIs
+app.get('/api/customer/bookings', authenticateToken, (req, res) => {
+  const bookings = db.getBookings();
+  const targetName = req.query.customerName || req.user.name;
+  const customerBookings = bookings.filter(b => b.customerName.toLowerCase() === targetName.toLowerCase());
+  res.json(customerBookings);
+});
+
+app.post('/api/customer/bookings', authenticateToken, (req, res) => {
+  const { pickupLocation, dropLocation, pickupDateTime, vehicleType, notes, customerName } = req.body;
+  if (!pickupLocation || !dropLocation || !pickupDateTime || !vehicleType) {
+    return res.status(400).json({ error: 'Missing booking details.' });
+  }
+
+  let baseRate = 12;
+  if (vehicleType === 'SUV') baseRate = 18;
+  if (vehicleType === 'Minivan') baseRate = 25;
+
+  const simulatedDistance = Math.floor(Math.random() * 80) + 20;
+  const fareEstimated = simulatedDistance * baseRate;
+
+  const bookings = db.getBookings();
+  let maxNum = 0;
+  bookings.forEach(b => {
+    const match = b.id.match(/^b(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextId = 'b' + (maxNum + 1);
+
+  const newBooking = {
+    id: nextId,
+    customerName: customerName || req.user.name,
+    pickupLocation,
+    dropLocation,
+    pickupDateTime,
+    vehicleType,
+    status: 'Pending',
+    assignedVehicleId: null,
+    assignedDriverId: null,
+    notes: notes || '',
+    fareEstimated,
+    createdAt: new Date().toISOString()
+  };
+
+  db.addBooking(newBooking);
+  res.status(201).json(newBooking);
+});
+
+app.post('/api/customer/bookings/:id/cancel', authenticateToken, (req, res) => {
+  const bookings = db.getBookings();
+  const booking = bookings.find(b => b.id === req.params.id);
+
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found.' });
+  }
+
+  const targetName = req.body.customerName || req.user.name;
+  if (booking.customerName.toLowerCase() !== targetName.toLowerCase()) {
+    return res.status(403).json({ error: 'Access denied. You do not own this booking.' });
+  }
+
+  if (booking.status !== 'Pending' && booking.status !== 'Confirmed') {
+    return res.status(400).json({ error: 'Booking cannot be cancelled in its current state.' });
+  }
+
+  const updated = db.updateBooking(req.params.id, { status: 'Cancelled' });
+  res.json(updated);
+});
+
+app.get('/api/customer/assigned-resources/:bookingId', authenticateToken, (req, res) => {
+  const bookings = db.getBookings();
+  const booking = bookings.find(b => b.id === req.params.bookingId);
+
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found.' });
+  }
+
+  const targetName = req.query.customerName || req.user.name;
+  if (booking.customerName.toLowerCase() !== targetName.toLowerCase()) {
+    return res.status(403).json({ error: 'Access denied.' });
+  }
+
+  let driver = null;
+  let vehicle = null;
+
+  if (booking.assignedDriverId) {
+    driver = db.getDrivers().find(d => d.id === booking.assignedDriverId);
+  }
+  if (booking.assignedVehicleId) {
+    vehicle = db.getVehicles().find(v => v.id === booking.assignedVehicleId);
+  }
+
+  res.json({
+    driver: driver ? { name: driver.name, phone: driver.phone } : null,
+    vehicle: vehicle ? { name: vehicle.name, plateNumber: vehicle.plateNumber, type: vehicle.type } : null
+  });
 });
 
 app.listen(PORT, () => {

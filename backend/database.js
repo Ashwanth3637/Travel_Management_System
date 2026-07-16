@@ -258,5 +258,14 @@ module.exports = {
       return db.bookings[idx];
     }
     return null;
+  },
+
+  getCustomers: () => readDb().customers || [],
+  addCustomer: (customer) => {
+    const db = readDb();
+    if (!db.customers) db.customers = [];
+    db.customers.push(customer);
+    saveDb(db);
+    return customer;
   }
 };

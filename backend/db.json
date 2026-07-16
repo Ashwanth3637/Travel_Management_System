@@ -12,49 +12,49 @@
     {
       "id": "v1",
       "name": "Swift Dzire",
-      "plateNumber": "TN-37-AB-1234",
+      "plateNumber": "TN-33-CC-2567",
       "type": "Sedan",
       "acpreference": "AC",
       "capacity": 4,
-      "status": "Available",
-      "ratePerKm": 12
+      "status": "Out of Service",
+      "ratePerKm": 13
     },
     {
       "id": "v2",
       "name": "Innova Crysta",
-      "plateNumber": "TN-37-CD-5678",
+      "plateNumber": "TN-33-CC-5005",
       "type": "SUV",
       "acpreference": "AC",
       "capacity": 7,
-      "status": "Available",
-      "ratePerKm": 18
+      "status": "Assigned",
+      "ratePerKm": 17
     },
     {
       "id": "v3",
-      "name": "Tempo Traveller",
-      "plateNumber": "TN-37-EF-9012",
+      "name": "Tempo Travellar",
+      "plateNumber": "TN-33-CC-5115",
       "type": "Minivan",
-      "acpreference": "AC",
+      "acpreference": "Non-AC",
       "capacity": 12,
       "status": "Available",
       "ratePerKm": 25
     },
     {
-      "id": "v_d04p2i5kf",
-      "name": "CAR",
-      "plateNumber": "TN-33CC-37748",
-      "type": "Sedan",
+      "id": "v4",
+      "name": "Mahindra Scorpio",
+      "plateNumber": "TN-33-CC-7071",
+      "type": "SUV",
       "acpreference": "AC",
-      "capacity": 4,
-      "status": "Available",
-      "ratePerKm": 12
+      "capacity": 6,
+      "status": "Assigned",
+      "ratePerKm": 18
     }
   ],
   "drivers": [
     {
       "id": "d1",
-      "name": "Rajesh Kumar",
-      "phone": "+91 98765 43210",
+      "name": "Sakthi",
+      "phone": "+919865234445",
       "licenseNumber": "DL-12345TN",
       "status": "Available",
       "email": "rajesh@travels.com",
@@ -107,6 +107,136 @@
       "notes": "Sightseeing trip",
       "fareEstimated": 1200,
       "createdAt": "2026-07-14T07:15:00.054Z"
+    },
+    {
+      "id": "b3",
+      "customerName": "Dinesh",
+      "pickupLocation": "Erode bus stand",
+      "dropLocation": "valparai",
+      "pickupDateTime": "2026-07-15T11:16",
+      "vehicleType": "SUV",
+      "status": "Completed",
+      "assignedVehicleId": "v2",
+      "assignedDriverId": "d3",
+      "notes": "Tourism",
+      "fareEstimated": 900,
+      "createdAt": "2026-07-15T05:48:20.009Z"
+    },
+    {
+      "id": "b4",
+      "customerName": "Suresh",
+      "pickupLocation": "Erode ",
+      "dropLocation": "bangalore airport",
+      "pickupDateTime": "2026-07-15T11:20",
+      "vehicleType": "Minivan",
+      "status": "Completed",
+      "assignedVehicleId": "v3",
+      "assignedDriverId": "d2",
+      "notes": "client meeting",
+      "fareEstimated": 725,
+      "createdAt": "2026-07-15T05:50:41.919Z"
+    },
+    {
+      "id": "b5",
+      "customerName": "arun",
+      "pickupLocation": "salem",
+      "dropLocation": "erode",
+      "pickupDateTime": "2026-07-15T11:37",
+      "vehicleType": "Sedan",
+      "status": "Completed",
+      "assignedVehicleId": "v1",
+      "assignedDriverId": "d2",
+      "notes": "friends house",
+      "fareEstimated": 300,
+      "createdAt": "2026-07-15T06:08:17.916Z"
+    },
+    {
+      "id": "b6",
+      "customerName": "baalu",
+      "pickupLocation": "erode",
+      "dropLocation": "mysore",
+      "pickupDateTime": "2026-07-06T11:40",
+      "vehicleType": "Sedan",
+      "status": "Completed",
+      "assignedVehicleId": "v1",
+      "assignedDriverId": "d1",
+      "notes": "temple ",
+      "fareEstimated": 432,
+      "createdAt": "2026-07-15T06:11:02.882Z"
+    },
+    {
+      "id": "b7",
+      "customerName": "antony",
+      "pickupLocation": "erode",
+      "dropLocation": "coimbatore",
+      "pickupDateTime": "2026-07-18T12:06",
+      "vehicleType": "SUV",
+      "status": "In Progress",
+      "assignedVehicleId": "v4",
+      "assignedDriverId": "d2",
+      "notes": "tour",
+      "fareEstimated": 1134,
+      "createdAt": "2026-07-15T06:37:08.531Z"
+    },
+    {
+      "id": "b8",
+      "customerName": "erode",
+      "pickupLocation": "erode bus stand",
+      "dropLocation": "ooty",
+      "pickupDateTime": "2026-07-15T12:25",
+      "vehicleType": "SUV",
+      "status": "In Progress",
+      "assignedVehicleId": "v2",
+      "assignedDriverId": "d3",
+      "notes": "tour",
+      "fareEstimated": 1476,
+      "createdAt": "2026-07-15T06:56:05.089Z"
+    },
+    {
+      "id": "b9",
+      "customerName": "Sam",
+      "pickupLocation": "Erode bus stand",
+      "dropLocation": "Chennai",
+      "pickupDateTime": "2026-07-15T16:07",
+      "vehicleType": "SUV",
+      "status": "Cancelled",
+      "assignedVehicleId": null,
+      "assignedDriverId": null,
+      "notes": "",
+      "fareEstimated": 1476,
+      "createdAt": "2026-07-15T10:38:59.132Z"
+    },
+    {
+      "id": "b10",
+      "customerName": "Suresh",
+      "pickupLocation": "Bangalore",
+      "dropLocation": "Chennai",
+      "pickupDateTime": "2026-07-25T10:30",
+      "vehicleType": "SUV",
+      "status": "Pending",
+      "assignedVehicleId": null,
+      "assignedDriverId": null,
+      "notes": "",
+      "fareEstimated": 612,
+      "createdAt": "2026-07-16T05:02:49.984Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "c1",
+      "name": "Sam",
+      "email": "sam@gmail.com",
+      "phone": "9345285647",
+      "password": "$2a$10$H5PR3ZPoNNTUUJqjj6/eu.j2NK4K0etNMWBeqTOp7AMdtuPFNDO4i",
+      "role": "customer"
+    },
+    {
+      "id": "c2",
+      "name": "Baalu",
+      "email": "baalu@gmail.com",
+      "phone": "9345285647",
+      "password": "$2a$10$X83131vfQ3YjBjr9Dv8F7unFTxIJXM8V2/BkKvwQ.wo9FLktpAC5C",
+      "role": "customer"
     }
   ]
 }
