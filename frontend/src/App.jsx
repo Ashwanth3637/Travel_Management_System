@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 // Admin Components & Layout
@@ -19,9 +19,28 @@ function AdminLayout({ handleLogout, children }) {
           Travels Cab Admin
         </div>
         <div className="nav-user">
-          <span className="badge badge-confirmed" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <Link 
+            to="/admin/profile" 
+            className="badge badge-confirmed" 
+            style={{ 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em', 
+              textDecoration: 'none', 
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'inline-block'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             Admin
-          </span>
+          </Link>
         </div>
       </nav>
       <main style={{ padding: '20px' }} className="animate-fade-in">
