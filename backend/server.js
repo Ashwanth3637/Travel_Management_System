@@ -43,6 +43,13 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
+// Driver role check middleware
+function requireDriver(req, res, next) {
+  if (!req.user || req.user.role !== 'driver') {
+    return res.status(403).json({ error: 'Access denied. Driver privileges required.' });
+  }
+  next();
+}
 
 // Auth endpoint (Admin Login)
 app.post('/api/auth/login', (req, res) => {
@@ -67,6 +74,49 @@ app.post('/api/auth/login', (req, res) => {
   res.json({
     token,
     user: { id: user.id, name: user.name, email: user.email, role: user.role }
+  });
+});
+// Driver Login
+app.post('/api/auth/driver/login', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      error: 'Email and password are required.'
+    });
+  }
+
+  const drivers = db.getDrivers();
+
+  const driver = drivers.find(
+    d => d.email && d.email.toLowerCase() === email.toLowerCase()
+  );
+
+  if (!driver || !bcrypt.compareSync(password, driver.password)) {
+    return res.status(400).json({
+      error: 'Invalid email or password.'
+    });
+  }
+
+  const token = jwt.sign(
+    {
+      id: driver.id,
+      name: driver.name,
+      email: driver.email,
+      role: 'driver'
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  res.json({
+    token,
+    user: {
+      id: driver.id,
+      name: driver.name,
+      email: driver.email,
+      role: 'driver'
+    }
   });
 });
 
@@ -237,7 +287,88 @@ app.get('/api/dashboard/stats', authenticateToken, requireAdmin, (req, res) => {
     }
   });
 });
+// ======================= DRIVER APIs =======================
+
+// Driver Profile
+app.get('/api/driver/profile', authenticateToken, requireDriver, (req, res) => {
+
+  const driver = db.getDrivers().find(d => d.id === req.user.id);
+
+  if (!driver) {
+    return res.status(404).json({
+      error: 'Driver not found.'
+    });
+  }
+
+  res.json(driver);
+
+});
+
+// Driver Assigned Trips
+app.get('/api/driver/trips', authenticateToken, requireDriver, (req, res) => {
+
+  const trips = db.getBookings().filter(
+    booking => booking.assignedDriverId === req.user.id
+  );
+
+  res.json(trips);
+
+});
+
+// Driver Dashboard
+app.get('/api/driver/dashboard', authenticateToken, requireDriver, (req, res) => {
+
+  const trips = db.getBookings().filter(
+    booking => booking.assignedDriverId === req.user.id
+  );
+
+  res.json({
+    totalTrips: trips.length,
+    completedTrips: trips.filter(t => t.status === 'Completed').length,
+    ongoingTrips: trips.filter(t => t.status === 'In Progress').length,
+    upcomingTrips: trips.filter(t => t.status === 'Confirmed').length,
+    trips
+  });
+
+});
+
+// Update Trip Status
+app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, (req, res) => {
+
+  const updated = db.updateBooking(
+    req.params.id,
+    { status: req.body.status }
+  );
+
+  if (!updated) {
+    return res.status(404).json({
+      error: 'Trip not found.'
+    });
+  }
+
+  res.json(updated);
+
+});
+
+// Update Driver Availability
+app.put('/api/driver/availability', authenticateToken, requireDriver, (req, res) => {
+  const { status } = req.body;
+
+  if (!['Available', 'On Trip', 'Offline'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status. Must be Available, On Trip, or Offline.' });
+  }
+
+  const updated = db.updateDriver(req.user.id, { status });
+
+  if (!updated) {
+    return res.status(404).json({ error: 'Driver not found.' });
+  }
+
+  res.json({ message: 'Availability updated.', status: updated.status });
+});
 
 app.listen(PORT, () => {
   console.log(`Travel Management System Backend listening on port ${PORT}`);
 });
+
+
