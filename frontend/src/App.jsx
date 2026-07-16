@@ -22,9 +22,6 @@ function AdminLayout({ handleLogout, children }) {
           <span className="badge badge-confirmed" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Admin
           </span>
-          <button className="btn btn-secondary" onClick={handleLogout} style={{ padding: '8px 16px' }}>
-            Logout
-          </button>
         </div>
       </nav>
       <main style={{ padding: '20px' }} className="animate-fade-in">
@@ -60,7 +57,7 @@ function AdminRoute() {
   }
   return (
     <AdminLayout handleLogout={handleLogout}>
-      <AdminDashboard token={token} />
+      <AdminDashboard token={token} handleLogout={handleLogout} />
     </AdminLayout>
   );
 }

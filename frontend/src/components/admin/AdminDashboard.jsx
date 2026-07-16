@@ -8,7 +8,7 @@ import AdminCustomers from './AdminCustomers';
 import AdminOverview from './AdminOverview';
 import AdminProfile from './AdminProfile';
 
-function AdminDashboard({ token }) {
+function AdminDashboard({ token, handleLogout }) {
   const API_URL = 'http://localhost:5001/api';
 
   const [bookings, setBookings] = useState([]);
@@ -97,12 +97,16 @@ function AdminDashboard({ token }) {
         <div className="glass-panel" style={{
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'space-between',
           gap: '8px',
           padding: '24px 16px',
           position: 'sticky',
-          top: '40px',
-          borderLeft: '4px solid var(--color-primary)'
+          top: '20px',
+          height: 'calc(100vh - 60px)',
+          borderLeft: '4px solid var(--color-primary)',
+          boxSizing: 'border-box'
         }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Brand Logo */}
           <div style={{
             display: 'flex',
@@ -450,7 +454,41 @@ function AdminDashboard({ token }) {
           >
             <span style={{ fontSize: '18px' }}>⚙️</span>
             <span>Admin Profile</span>
-          </NavLink>
+            </NavLink>
+          </div>
+
+          {/* Logout Section at the bottom */}
+          <div style={{
+            marginTop: 'auto',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <button 
+              className="btn btn-danger" 
+              onClick={handleLogout} 
+              style={{ 
+                width: '100%', 
+                padding: '12px 16px', 
+                fontSize: '14px', 
+                fontWeight: '600', 
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
 
         {/* Right Side Main Content Area */}
