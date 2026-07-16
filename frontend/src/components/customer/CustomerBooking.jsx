@@ -17,6 +17,8 @@ const CAR_IMAGES = {
   "aura":            "/cars/hyundai_aura.png",
   "hyundaiaura":     "/cars/hyundai_aura.png",
   "grandvitara":     "/cars/grand_vitara.png",
+  "thar":            "/cars/mahindra_thar.png",
+  "mahindrathar":    "/cars/mahindra_thar.png",
 };
 
 // Partial-match helper — handles any spelling variation
