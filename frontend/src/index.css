@@ -286,7 +286,7 @@ body {
 .data-table th {
   background-color: rgba(15, 23, 42, 0.4);
   padding: 12px 14px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-color);
@@ -296,10 +296,9 @@ body {
 
 .data-table td {
   padding: 12px 14px;
-  font-size: 13.5px;
+  font-size: 13px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-main);
-  white-space: nowrap;
 }
 
 .data-table tr:last-child td {

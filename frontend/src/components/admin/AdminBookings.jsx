@@ -190,15 +190,15 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th style={{ whiteSpace: 'nowrap' }}>ID</th>
                 <th>Customer</th>
                 <th>Route (From - Destination)</th>
-                <th>Pickup Time</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
                 <th>Vehicle Requested</th>
                 <th>Estimated Fare</th>
-                <th>Status</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Status</th>
                 <th>Assigned Resources</th>
-                <th>Actions</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -209,13 +209,13 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
               ) : (
                 activeBookings.map(b => (
                   <tr key={b.id}>
-                    <td><strong>{b.id}</strong></td>
+                    <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
                     <td>{b.customerName}</td>
                     <td>{b.pickupLocation} ➔ {b.dropLocation}</td>
-                    <td>{new Date(b.pickupDateTime).toLocaleString()}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(b.pickupDateTime).toLocaleString()}</td>
                     <td>{b.vehicleType}</td>
                     <td>₹{b.fareEstimated}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
                         {b.status}
                       </span>
@@ -283,15 +283,15 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th style={{ whiteSpace: 'nowrap' }}>ID</th>
                 <th>Customer</th>
                 <th>Route (From - Destination)</th>
-                <th>Pickup Time</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
                 <th>Vehicle Requested</th>
                 <th>Estimated Fare</th>
-                <th>Status</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Status</th>
                 <th>Assigned Resources</th>
-                <th>Actions</th>
+                <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -302,13 +302,13 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
               ) : (
                 archivedBookings.map(b => (
                   <tr key={b.id}>
-                    <td><strong>{b.id}</strong></td>
+                    <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
                     <td>{b.customerName}</td>
                     <td>{b.pickupLocation} ➔ {b.dropLocation}</td>
-                    <td>{new Date(b.pickupDateTime).toLocaleString()}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(b.pickupDateTime).toLocaleString()}</td>
                     <td>{b.vehicleType}</td>
                     <td>₹{b.fareEstimated}</td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
                         {b.status}
                       </span>
