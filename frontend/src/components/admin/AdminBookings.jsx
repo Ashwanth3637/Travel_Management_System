@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
-function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
+function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onlyActive, onlyHistory }) {
   const API_URL = 'http://localhost:5001/api';
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -178,7 +178,8 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
       
       {/* Active Bookings & Dispatch */}
-      <div className="glass-panel">
+      {!onlyHistory && (
+        <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ margin: 0 }}>Active Bookings & Dispatch</h3>
           <button className="btn btn-primary" onClick={() => { handleCloseAddModal(); setShowAddModal(true); }}>
@@ -272,9 +273,11 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
           </table>
         </div>
       </div>
+      )}
 
       {/* Booking History (Archived) */}
-      <div className="glass-panel">
+      {!onlyActive && (
+        <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ margin: 0 }}>Booking History (Archived)</h3>
         </div>
@@ -341,6 +344,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast }) {
           </table>
         </div>
       </div>
+      )}
 
       {/* Modal: Create/Edit Booking */}
       {showAddModal && createPortal(

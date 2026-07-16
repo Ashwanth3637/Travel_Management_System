@@ -198,6 +198,42 @@ function AdminDashboard({ token }) {
           </NavLink>
 
           <NavLink 
+            to="/admin/history" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
+              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📜</span>
+            <span>Booking History</span>
+          </NavLink>
+
+          <NavLink 
             to="/admin/vehicles" 
             style={({ isActive }) => ({
               display: 'flex',
@@ -309,7 +345,7 @@ function AdminDashboard({ token }) {
         {/* Right Side Main Content Area */}
         <div className="animate-fade-in" style={{ minWidth: 0 }}>
           <Routes>
-            <Route path="bookings" element={
+             <Route path="bookings" element={
               <AdminBookings 
                 token={token} 
                 bookings={bookings} 
@@ -317,6 +353,18 @@ function AdminDashboard({ token }) {
                 drivers={drivers} 
                 refresh={fetchData} 
                 toast={triggerToast} 
+                onlyActive={true}
+              />
+            } />
+            <Route path="history" element={
+              <AdminBookings 
+                token={token} 
+                bookings={bookings} 
+                vehicles={vehicles} 
+                drivers={drivers} 
+                refresh={fetchData} 
+                toast={triggerToast} 
+                onlyHistory={true}
               />
             } />
             <Route path="vehicles" element={
