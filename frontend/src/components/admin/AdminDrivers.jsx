@@ -10,6 +10,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
   const [phone, setPhone] = useState('');
   const [license, setLicense] = useState('');
   const [status, setStatus] = useState('Available');
+  const [viewingDriver, setViewingDriver] = useState(null);
 
   const handleSaveDriver = async (e) => {
     e.preventDefault();
@@ -113,10 +114,13 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="btn btn-indigo" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleEditClick(d)}>
+                      <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
+                        View
+                      </button>
+                      <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
                         Edit
                       </button>
-                      <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleDelete(d.id)}>
+                      <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(d.id)}>
                         Remove
                       </button>
                     </div>
@@ -164,6 +168,56 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                 <button type="submit" className="btn btn-primary">Save Driver</button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal: View Driver Details */}
+      {viewingDriver && createPortal(
+        <div className="modal-overlay">
+          <div className="glass-panel modal-content" style={{ textAlign: 'left' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Driver Details</h3>
+              <button className="modal-close" onClick={() => setViewingDriver(null)}>×</button>
+            </div>
+            <div className="details-list">
+              <div className="details-row">
+                <span className="details-label">Driver ID</span>
+                <span className="details-value">{viewingDriver.id}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Full Name</span>
+                <span className="details-value">{viewingDriver.name}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Phone Number</span>
+                <span className="details-value">{viewingDriver.phone}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">License Number</span>
+                <span className="details-value">{viewingDriver.licenseNumber}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Email Address</span>
+                <span className="details-value">{viewingDriver.email || '—'}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Account Role</span>
+                <span className="details-value">{viewingDriver.role ? viewingDriver.role.toUpperCase() : 'DRIVER'}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Status</span>
+                <span className="details-value">
+                  <span className={`badge badge-${viewingDriver.status === 'Available' ? 'inprogress' : viewingDriver.status === 'On Trip' ? 'confirmed' : 'pending'}`}>
+                    {viewingDriver.status}
+                  </span>
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setViewingDriver(null)}>Close</button>
+            </div>
           </div>
         </div>,
         document.body

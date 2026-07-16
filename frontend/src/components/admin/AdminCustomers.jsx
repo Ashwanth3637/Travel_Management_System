@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 function AdminCustomers({ token, toast }) {
   const API_URL = 'http://localhost:5001/api';
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewingCustomer, setViewingCustomer] = useState(null);
 
   const fetchCustomers = async () => {
     try {
@@ -48,6 +50,7 @@ function AdminCustomers({ token, toast }) {
                   <th>Email Address</th>
                   <th style={{ whiteSpace: 'nowrap' }}>Phone Number</th>
                   <th style={{ whiteSpace: 'nowrap' }}>Account Role</th>
+                  <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,6 +70,11 @@ function AdminCustomers({ token, toast }) {
                           {c.role || 'Customer'}
                         </span>
                       </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingCustomer(c)}>
+                          View
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -75,6 +83,45 @@ function AdminCustomers({ token, toast }) {
           </div>
         )}
       </div>
+
+      {/* Modal: View Customer Details */}
+      {viewingCustomer && createPortal(
+        <div className="modal-overlay">
+          <div className="glass-panel modal-content" style={{ textAlign: 'left' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Customer Details</h3>
+              <button className="modal-close" onClick={() => setViewingCustomer(null)}>×</button>
+            </div>
+            <div className="details-list">
+              <div className="details-row">
+                <span className="details-label">Customer ID</span>
+                <span className="details-value">{viewingCustomer.id}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Full Name</span>
+                <span className="details-value">{viewingCustomer.name}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Email Address</span>
+                <span className="details-value">{viewingCustomer.email}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Phone Number</span>
+                <span className="details-value">{viewingCustomer.phone || '—'}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Account Role</span>
+                <span className="details-value">{viewingCustomer.role ? viewingCustomer.role.toUpperCase() : 'CUSTOMER'}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setViewingCustomer(null)}>Close</button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }

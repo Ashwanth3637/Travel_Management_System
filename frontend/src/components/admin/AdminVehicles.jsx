@@ -13,6 +13,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
   const [capacity, setCapacity] = useState(4);
   const [rate, setRate] = useState(12);
   const [status, setStatus] = useState('Available');
+  const [viewingVehicle, setViewingVehicle] = useState(null);
 
   const handleSaveVehicle = async (e) => {
     e.preventDefault();
@@ -135,10 +136,13 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="btn btn-indigo" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleEditClick(v)}>
+                      <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingVehicle(v)}>
+                        View
+                      </button>
+                      <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(v)}>
                         Edit
                       </button>
-                      <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleDelete(v.id)}>
+                      <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(v.id)}>
                         Remove
                       </button>
                     </div>
@@ -205,6 +209,60 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                 <button type="submit" className="btn btn-primary">Save Vehicle</button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modal: View Vehicle Details */}
+      {viewingVehicle && createPortal(
+        <div className="modal-overlay">
+          <div className="glass-panel modal-content" style={{ textAlign: 'left' }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Vehicle Details</h3>
+              <button className="modal-close" onClick={() => setViewingVehicle(null)}>×</button>
+            </div>
+            <div className="details-list">
+              <div className="details-row">
+                <span className="details-label">Vehicle ID</span>
+                <span className="details-value">{viewingVehicle.id}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Model Name</span>
+                <span className="details-value">{viewingVehicle.name}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Registration Number</span>
+                <span className="details-value">{viewingVehicle.plateNumber}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Category</span>
+                <span className="details-value">{viewingVehicle.type}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">AC/Non AC Preference</span>
+                <span className="details-value">{viewingVehicle.acpreference}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Seating Capacity</span>
+                <span className="details-value">{viewingVehicle.capacity} Passengers</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Rate Per KM</span>
+                <span className="details-value">₹{viewingVehicle.ratePerKm}/km</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Status</span>
+                <span className="details-value">
+                  <span className={`badge badge-${viewingVehicle.status === 'Available' ? 'inprogress' : viewingVehicle.status === 'Assigned' ? 'confirmed' : 'cancelled'}`}>
+                    {viewingVehicle.status}
+                  </span>
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setViewingVehicle(null)}>Close</button>
+            </div>
           </div>
         </div>,
         document.body
