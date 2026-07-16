@@ -97,12 +97,10 @@ function AdminDashboard({ token, handleLogout }) {
         <div className="glass-panel" style={{
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
           gap: '8px',
           padding: '24px 16px',
           position: 'sticky',
           top: '20px',
-          height: 'calc(100vh - 60px)',
           borderLeft: '4px solid var(--color-primary)',
           boxSizing: 'border-box'
         }}>
