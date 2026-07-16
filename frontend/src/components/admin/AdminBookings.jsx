@@ -182,9 +182,6 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
         <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ margin: 0 }}>Active Bookings & Dispatch</h3>
-          <button className="btn btn-primary" onClick={() => { handleCloseAddModal(); setShowAddModal(true); }}>
-            + Create New Booking
-          </button>
         </div>
 
         <div className="table-container">
