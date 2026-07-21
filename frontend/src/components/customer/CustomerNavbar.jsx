@@ -1,5 +1,5 @@
 
-function CustomerNavbar({ customer, customers = [], onSelectCustomer, handleLogout }) {
+function CustomerNavbar({ customer, handleLogout }) {
   return (
     <nav className="navbar" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
       <div className="nav-logo" style={{ display: 'flex', alignItems: 'center' }}>
@@ -11,41 +11,6 @@ function CustomerNavbar({ customer, customers = [], onSelectCustomer, handleLogo
         </svg>
         Travels Cab Rider Portal
       </div>
-
-      {/* Acting As Customer Selector */}
-      {customers.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Acting As:</span>
-          <select
-            value={customer ? customer.name : ''}
-            onChange={(e) => {
-              const selected = customers.find(c => c.name === e.target.value);
-              if (selected) {
-                onSelectCustomer(selected);
-              }
-            }}
-            className="form-input"
-            style={{
-              padding: '4px 10px',
-              fontSize: '13.5px',
-              backgroundColor: 'rgba(15, 23, 42, 0.8)',
-              borderColor: 'rgba(255,255,255,0.1)',
-              color: 'var(--color-primary)',
-              borderRadius: '6px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              outline: 'none',
-              minWidth: '150px'
-            }}
-          >
-            {customers.map((c) => (
-              <option key={c.id || c.name} value={c.name} style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       <div className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
         <span className="badge badge-inprogress">

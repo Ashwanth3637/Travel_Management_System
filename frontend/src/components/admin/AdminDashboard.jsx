@@ -33,19 +33,19 @@ function AdminDashboard({ token, handleLogout }) {
   const fetchData = async () => {
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      const bRes = await fetch(`${API_URL}/bookings`, { headers });
+      const bRes = await fetch(`${API_URL}/bookings`, { headers, cache: 'no-store' });
       const bData = await bRes.json();
       if (bRes.ok) setBookings(bData);
 
-      const vRes = await fetch(`${API_URL}/vehicles`, { headers });
+      const vRes = await fetch(`${API_URL}/vehicles`, { headers, cache: 'no-store' });
       const vData = await vRes.json();
       if (vRes.ok) setVehicles(vData);
 
-      const dRes = await fetch(`${API_URL}/drivers`, { headers });
+      const dRes = await fetch(`${API_URL}/drivers`, { headers, cache: 'no-store' });
       const dData = await dRes.json();
       if (dRes.ok) setDrivers(dData);
 
-      const sRes = await fetch(`${API_URL}/dashboard/stats`, { headers });
+      const sRes = await fetch(`${API_URL}/dashboard/stats`, { headers, cache: 'no-store' });
       const sData = await sRes.json();
       if (sRes.ok) setStats(sData);
     } catch (err) {
@@ -55,6 +55,9 @@ function AdminDashboard({ token, handleLogout }) {
 
   useEffect(() => {
     fetchData();
+    // Poll every 30 seconds to keep data fresh
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [token]);
 
   return (
@@ -87,20 +90,23 @@ function AdminDashboard({ token, handleLogout }) {
       {/* Main Grid Wrapper (Left Sidebar, Right Content) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '200px 1fr',
-        gap: '20px',
+        gridTemplateColumns: '240px minmax(0, 1fr)',
+        gap: '24px',
         alignItems: 'start',
         marginTop: '10px'
       }}>
         
         {/* Left Side Sidebar Menu */}
         <div className="glass-panel" style={{
+          width: '240px',
+          minWidth: '240px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          padding: '24px 16px',
+          padding: '20px 12px',
           position: 'sticky',
           top: '20px',
+          minHeight: 'calc(100vh - 120px)',
           borderLeft: '4px solid var(--color-primary)',
           boxSizing: 'border-box'
         }}>
@@ -343,7 +349,7 @@ function AdminDashboard({ token, handleLogout }) {
             }}
           >
             <span style={{ fontSize: '18px' }}>🚗</span>
-            <span>Manage Fleet</span>
+            <span>Vehicle Management</span>
           </NavLink>
 
           <NavLink 
@@ -454,7 +460,7 @@ function AdminDashboard({ token, handleLogout }) {
         </div>
 
         {/* Right Side Main Content Area */}
-        <div className="animate-fade-in" style={{ minWidth: 0 }}>
+        <div className="animate-fade-in" style={{ minWidth: 0, width: '100%', overflow: 'hidden' }}>
           <Routes>
              <Route path="bookings" element={
               <AdminBookings 

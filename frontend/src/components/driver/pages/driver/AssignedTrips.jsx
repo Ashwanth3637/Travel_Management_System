@@ -19,7 +19,7 @@ export default function AssignedTrips() {
     })
       .then(res => res.json())
       .then(data => {
-        const active = data.filter(t => t.status === "Confirmed" || t.status === "In Progress");
+        const active = data.filter(t => ["Confirmed", "Driver Assigned", "Vehicle Assigned", "Trip Scheduled", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(t.status));
         setTrips(active);
         setLoading(false);
       })
@@ -122,20 +122,50 @@ export default function AssignedTrips() {
                   )}
                 </div>
                 <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-                  {trip.status === "Confirmed" && (
+                  {["Confirmed", "Driver Assigned", "Vehicle Assigned", "Trip Scheduled"].includes(trip.status) && (
                     <button
                       className="btn btn-primary"
                       style={{ padding: "10px 18px" }}
                       disabled={updating === trip.id}
-                      onClick={() => updateStatus(trip.id, "In Progress")}
+                      onClick={() => updateStatus(trip.id, "Trip Started")}
                     >
                       <FaPlay /> {updating === trip.id ? "Updating..." : "Start Trip"}
                     </button>
                   )}
-                  {trip.status === "In Progress" && (
+                  {trip.status === "Trip Started" && (
+                    <button
+                      className="btn btn-warning"
+                      style={{ padding: "10px 18px" }}
+                      disabled={updating === trip.id}
+                      onClick={() => updateStatus(trip.id, "Customer Picked Up")}
+                    >
+                      👤 {updating === trip.id ? "Updating..." : "Customer Picked Up"}
+                    </button>
+                  )}
+                  {trip.status === "Customer Picked Up" && (
                     <button
                       className="btn btn-indigo"
                       style={{ padding: "10px 18px" }}
+                      disabled={updating === trip.id}
+                      onClick={() => updateStatus(trip.id, "Ongoing")}
+                    >
+                      🚖 {updating === trip.id ? "Updating..." : "Trip Ongoing"}
+                    </button>
+                  )}
+                  {["Ongoing", "In Progress"].includes(trip.status) && (
+                    <button
+                      className="btn btn-warning"
+                      style={{ padding: "10px 18px" }}
+                      disabled={updating === trip.id}
+                      onClick={() => updateStatus(trip.id, "Destination Reached")}
+                    >
+                      📍 {updating === trip.id ? "Updating..." : "Destination Reached"}
+                    </button>
+                  )}
+                  {trip.status === "Destination Reached" && (
+                    <button
+                      className="btn btn-success"
+                      style={{ padding: "10px 18px", backgroundColor: "#10b981", color: "#fff" }}
                       disabled={updating === trip.id}
                       onClick={() => updateStatus(trip.id, "Completed")}
                     >

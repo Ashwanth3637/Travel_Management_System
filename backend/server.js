@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const db = require('./database');
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'travels_cab_jwt_secret_token_key_2026';
 
 app.use(cors());
@@ -142,7 +142,7 @@ app.get('/api/customers', authenticateToken, async (req, res) => {
     const all = [...registered];
     bookings.forEach(b => {
       if (!all.some(c => c.name.toLowerCase() === b.customerName.toLowerCase())) {
-        all.push({ id: 'c_temp_' + (all.length + 1), name: b.customerName, email: `${b.customerName.toLowerCase().replace(/\s+/g, '')}@example.com`, phone: '—', role: 'customer' });
+        all.push({ id: 'c' + (all.length + 1), name: b.customerName, email: `${b.customerName.toLowerCase().replace(/\s+/g, '')}@example.com`, phone: '—', role: 'customer' });
       }
     });
     res.json(all);
@@ -160,17 +160,67 @@ app.get('/api/vehicles', authenticateToken, requireAdmin, async (req, res) => {
 
 app.post('/api/vehicles', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, plateNumber, type, acpreference, capacity, ratePerKm } = req.body;
+    const { 
+      name, 
+      plateNumber, 
+      vehicleNumber,
+      type, 
+      vehicleType,
+      acpreference, 
+      brand,
+      model,
+      capacity, 
+      fuelType,
+      status,
+      availability,
+      registrationDetails,
+      insuranceDetails,
+      ratePerKm, 
+      image 
+    } = req.body;
+
     if (!name || !plateNumber || !type || !capacity || !ratePerKm) {
-      return res.status(400).json({ error: 'All vehicle fields are required.' });
+      return res.status(400).json({ error: 'All core vehicle fields (Name, Registration number, Category, Capacity, Rate) are required.' });
     }
-    const vehicles = await db.getVehicles();
-    let maxNum = 0;
-    vehicles.forEach(v => { const m = v.id.match(/^v(\d+)$/); if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]); });
-    const newVehicle = { id: 'v' + (maxNum + 1), name, plateNumber, type, acpreference: acpreference || 'AC', capacity: parseInt(capacity), status: 'Available', ratePerKm: parseFloat(ratePerKm) };
+    // Fetch all existing vehicles to compute the next sequential ID for the specific category (e.g. sv1, uv1...)
+    const prefixMap = { 'Sedan': 'sv', 'SUV': 'uv', 'Luxury': 'lv', 'Minivan': 'mv' };
+    const prefix = prefixMap[type] || 'v';
+
+    const vehiclesList = await db.getVehicles();
+    let maxIdNum = 0;
+    vehiclesList.forEach(v => {
+      if (v.id && typeof v.id === 'string' && v.id.startsWith(prefix)) {
+        const numPart = parseInt(v.id.substring(prefix.length));
+        if (!isNaN(numPart) && numPart > maxIdNum) {
+          maxIdNum = numPart;
+        }
+      }
+    });
+    const uniqueId = prefix + (maxIdNum + 1);
+
+    const newVehicle = {
+      id: uniqueId,
+      name,
+      plateNumber: plateNumber.trim().toUpperCase(),
+      vehicleNumber: (vehicleNumber || plateNumber).trim().toUpperCase(),
+      type,
+      vehicleType: vehicleType || acpreference || 'AC',
+      acpreference: acpreference || vehicleType || 'AC',
+      brand: brand || '',
+      model: model || '',
+      capacity: parseInt(capacity),
+      fuelType: fuelType || 'Petrol',
+      status: status || 'Available',
+      availability: availability !== undefined ? !!availability : true,
+      registrationDetails: registrationDetails || '',
+      insuranceDetails: insuranceDetails || '',
+      ratePerKm: parseFloat(ratePerKm),
+      image: image || ''
+    };
     res.status(201).json(await db.addVehicle(newVehicle));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
+
 
 app.put('/api/vehicles/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -187,6 +237,32 @@ app.delete('/api/vehicles/:id', authenticateToken, requireAdmin, async (req, res
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
 
+app.get('/api/car-presets', authenticateToken, (req, res) => {
+  res.json({
+    Sedan: [
+      { name: "Vitara Breeza", image: "/cars/sedan/vitara_brezza.png", capacity: 4, rate: 13 },
+      { name: "Waganor", image: "/cars/sedan/wagonr.png", capacity: 4, rate: 10 },
+      { name: "Baleno", image: "/cars/sedan/suzuki_baleno.png", capacity: 4, rate: 12 },
+      { name: "Aura", image: "/cars/sedan/hyundai_aura.png", capacity: 4, rate: 12 }
+    ],
+    SUV: [
+      { name: "Thar", image: "/cars/suv/mahindra_thar.png", capacity: 4, rate: 15 },
+      { name: "Bolero", image: "/cars/suv/bolero.png", capacity: 7, rate: 14 },
+      { name: "Scorpio", image: "/cars/suv/mahindra_scorpio.png", capacity: 7, rate: 16 },
+      { name: "Crysta", image: "/cars/suv/innova_crysta.png", capacity: 7, rate: 18 }
+    ],
+    Luxury: [
+      { name: "BMW", image: "/cars/luxury/bmw.png", capacity: 4, rate: 28 },
+      { name: "Audi", image: "/cars/luxury/audi.png", capacity: 4, rate: 28 },
+      { name: "Benz", image: "/cars/luxury/benz.png", capacity: 4, rate: 28 }
+    ],
+    Minivan: [
+      { name: "Tempo Traveller", image: "/cars/minivan/tempo_traveller.png", capacity: 12, rate: 25 },
+      { name: "Force Urbania", image: "/cars/minivan/force_urbania.png", capacity: 16, rate: 30 }
+    ]
+  });
+});
+
 // ─── Drivers ─────────────────────────────────────────────────────────────────
 
 app.get('/api/drivers', authenticateToken, requireAdmin, async (req, res) => {
@@ -195,12 +271,12 @@ app.get('/api/drivers', authenticateToken, requireAdmin, async (req, res) => {
 
 app.post('/api/drivers', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, phone, licenseNumber } = req.body;
+    const { name, phone, licenseNumber, photo, gender } = req.body;
     if (!name || !phone || !licenseNumber) return res.status(400).json({ error: 'All driver fields are required.' });
     const drivers = await db.getDrivers();
     let maxNum = 0;
     drivers.forEach(d => { const m = d.id.match(/^d(\d+)$/); if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]); });
-    const newDriver = { id: 'd' + (maxNum + 1), name, phone, licenseNumber, status: 'Available' };
+    const newDriver = { id: 'd' + (maxNum + 1), name, phone, licenseNumber, photo: photo || '', gender: gender || 'Male', status: 'Available' };
     res.status(201).json(await db.addDriver(newDriver));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
@@ -228,19 +304,56 @@ app.get('/api/bookings', authenticateToken, requireAdmin, async (req, res) => {
 
 app.post('/api/bookings', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { customerName, pickupLocation, dropLocation, pickupDateTime, vehicleType, notes } = req.body;
+    const { 
+      customerName, 
+      customerContact,
+      pickupLocation, 
+      dropLocation, 
+      pickupDateTime, 
+      vehicleType, 
+      passengersCount,
+      tripType,
+      specialRequirements,
+      notes, 
+      fareEstimated 
+    } = req.body;
+
     if (!customerName || !pickupLocation || !dropLocation || !pickupDateTime || !vehicleType) {
       return res.status(400).json({ error: 'Missing booking details.' });
     }
-    let baseRate = 12;
-    if (vehicleType === 'SUV') baseRate = 18;
-    if (vehicleType === 'Minivan') baseRate = 25;
-    const fareEstimated = (Math.floor(Math.random() * 80) + 20) * baseRate;
+
+    const finalFare = fareEstimated !== undefined && fareEstimated !== null
+      ? fareEstimated
+      : (Math.floor(Math.random() * 80) + 20) * (vehicleType === 'SUV' ? 18 : vehicleType === 'Minivan' ? 25 : 12);
 
     const bookings = await db.getBookings();
     let maxNum = 0;
     bookings.forEach(b => { const m = b.id.match(/^b(\d+)$/); if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]); });
-    const newBooking = { id: 'b' + (maxNum + 1), customerName, pickupLocation, dropLocation, pickupDateTime, vehicleType, status: 'Pending', assignedVehicleId: null, assignedDriverId: null, notes: notes || '', fareEstimated, createdAt: new Date().toISOString() };
+    
+    const [tDate, tTime] = pickupDateTime.split('T');
+
+    const newBooking = { 
+      id: 'b' + (maxNum + 1), 
+      customerName, 
+      customerContact: customerContact || '',
+      bookingDate: new Date().toISOString().split('T')[0],
+      travelDate: tDate || '',
+      travelTime: tTime || '',
+      pickupLocation, 
+      dropLocation, 
+      pickupDateTime, 
+      vehicleType, 
+      passengersCount: passengersCount ? parseInt(passengersCount) : 1,
+      tripType: tripType || 'One Way',
+      specialRequirements: specialRequirements || notes || '',
+      status: 'Pending', 
+      assignedVehicleId: null, 
+      assignedDriverId: null, 
+      notes: notes || specialRequirements || '', 
+      fareEstimated: finalFare, 
+      createdAt: new Date().toISOString() 
+    };
+
     res.status(201).json(await db.addBooking(newBooking));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
@@ -257,30 +370,132 @@ app.put('/api/bookings/:id', authenticateToken, requireAdmin, async (req, res) =
 
 app.get('/api/dashboard/stats', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const [bookings, vehicles, drivers] = await Promise.all([db.getBookings(), db.getVehicles(), db.getDrivers()]);
-    const totalEarnings = bookings.filter(b => b.status === 'Completed').reduce((s, b) => s + (b.fareEstimated || 0), 0);
+    const [bookings, vehicles, drivers, customers] = await Promise.all([
+      db.getBookings(),
+      db.getVehicles(),
+      db.getDrivers(),
+      db.getCustomers()
+    ]);
+
+    const totalEarnings = bookings.filter(b => ['Completed', 'Trip Completed'].includes(b.status)).reduce((s, b) => s + (b.fareEstimated || 0), 0);
     const totalVehicles = vehicles.length;
     const availableVehicles = vehicles.filter(v => v.status === 'Available').length;
+    const vehiclesOnTrip = vehicles.filter(v => v.status === 'On Trip').length;
+    
     const totalDrivers = drivers.length;
     const availableDrivers = drivers.filter(d => d.status === 'Available').length;
+    const driversOnTrip = drivers.filter(d => d.status === 'On Trip').length;
+
+    const totalCustomers = customers.length;
+
+    const totalBookings = bookings.length;
+    const pendingBookings = bookings.filter(b => b.status === 'Pending').length;
+    const confirmedBookings = bookings.filter(b => b.status === 'Confirmed').length;
+    const ongoingTrips = bookings.filter(b => ['In Progress', 'Trip Started', 'Customer Picked Up', 'Ongoing', 'Destination Reached'].includes(b.status)).length;
+    const completedTrips = bookings.filter(b => ['Completed', 'Trip Completed'].includes(b.status)).length;
+    const cancelledBookings = bookings.filter(b => b.status === 'Cancelled').length;
+
+    // Monthly Bookings and Revenue (last 6 months)
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyData = {};
+    
+    // Initialize last 6 months
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const mLabel = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substr(-2)}`;
+      const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyData[mKey] = { label: mLabel, bookings: 0, revenue: 0 };
+    }
+
+    // Populate monthly bookings and revenue
+    bookings.forEach(b => {
+      const dateStr = b.createdAt || b.pickupDateTime;
+      if (!dateStr) return;
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return;
+      const mKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyData[mKey]) {
+        monthlyData[mKey].bookings += 1;
+        if (['Completed', 'Trip Completed'].includes(b.status)) {
+          monthlyData[mKey].revenue += (b.fareEstimated || 0);
+        }
+      }
+    });
+
+    const monthlyArray = Object.keys(monthlyData).sort().map(k => monthlyData[k]);
+
+    // Trip Status Breakdown
+    const tripStatusBreakdown = [
+      { name: 'Pending', value: pendingBookings },
+      { name: 'Confirmed', value: confirmedBookings },
+      { name: 'In Progress', value: ongoingTrips },
+      { name: 'Completed', value: completedTrips },
+      { name: 'Cancelled', value: cancelledBookings }
+    ];
+
+    // Vehicle Usage (bookings by vehicle type)
+    const vehicleUsage = {
+      Sedan: bookings.filter(b => b.vehicleType?.toLowerCase() === 'sedan').length,
+      SUV: bookings.filter(b => b.vehicleType?.toLowerCase() === 'suv').length,
+      Minivan: bookings.filter(b => b.vehicleType?.toLowerCase() === 'minivan').length,
+      Luxury: bookings.filter(b => b.vehicleType?.toLowerCase() === 'luxury').length
+    };
+
+    // Booking Trends (last 7 days)
+    const dailyTrends = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      dailyTrends[dateStr] = { label, count: 0 };
+    }
+
+    bookings.forEach(b => {
+      const dateStr = b.createdAt || b.pickupDateTime;
+      if (!dateStr) return;
+      const fullDate = dateStr.split('T')[0];
+      if (dailyTrends[fullDate]) {
+        dailyTrends[fullDate].count += 1;
+      }
+    });
+
+    const trendsArray = Object.keys(dailyTrends).sort().map(k => dailyTrends[k]);
+
     res.json({
       earnings: totalEarnings,
       counts: {
-        bookings: bookings.length,
-        pending: bookings.filter(b => b.status === 'Pending').length,
-        confirmed: bookings.filter(b => b.status === 'Confirmed').length,
-        active: bookings.filter(b => b.status === 'In Progress').length,
-        completed: bookings.filter(b => b.status === 'Completed').length,
-        cancelled: bookings.filter(b => b.status === 'Cancelled').length,
-        vehicles: totalVehicles, availableVehicles,
-        drivers: totalDrivers, availableDrivers
+        bookings: totalBookings,
+        pending: pendingBookings,
+        confirmed: confirmedBookings,
+        active: ongoingTrips, // backward compatibility
+        ongoing: ongoingTrips,
+        completed: completedTrips,
+        cancelled: cancelledBookings,
+        vehicles: totalVehicles,
+        availableVehicles,
+        vehiclesOnTrip,
+        drivers: totalDrivers,
+        availableDrivers,
+        driversOnTrip,
+        customers: totalCustomers
       },
       utilization: {
         vehicleRate: totalVehicles ? (((totalVehicles - availableVehicles) / totalVehicles) * 100).toFixed(0) : 0,
         driverRate: totalDrivers ? (((totalDrivers - availableDrivers) / totalDrivers) * 100).toFixed(0) : 0
+      },
+      analytics: {
+        monthlyData: monthlyArray,
+        tripStatusBreakdown,
+        vehicleUsage,
+        dailyTrends: trendsArray
       }
     });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ─── Driver APIs ──────────────────────────────────────────────────────────────
@@ -306,9 +521,9 @@ app.get('/api/driver/dashboard', authenticateToken, requireDriver, async (req, r
     const trips = (await db.getBookings()).filter(b => b.assignedDriverId === req.user.id);
     res.json({
       totalTrips: trips.length,
-      completedTrips: trips.filter(t => t.status === 'Completed').length,
-      ongoingTrips: trips.filter(t => t.status === 'In Progress').length,
-      upcomingTrips: trips.filter(t => t.status === 'Confirmed').length,
+      completedTrips: trips.filter(t => ['Completed', 'Trip Completed'].includes(t.status)).length,
+      ongoingTrips: trips.filter(t => ['In Progress', 'Trip Started', 'Customer Picked Up', 'Ongoing', 'Destination Reached'].includes(t.status)).length,
+      upcomingTrips: trips.filter(t => ['Confirmed', 'Driver Assigned', 'Vehicle Assigned', 'Trip Scheduled'].includes(t.status)).length,
       trips
     });
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
@@ -336,11 +551,34 @@ app.put('/api/driver/availability', authenticateToken, requireDriver, async (req
 
 app.get('/api/customer/booking-options', authenticateToken, async (req, res) => {
   try {
-    const [vehicles, drivers] = await Promise.all([db.getVehicles(), db.getDrivers()]);
-    res.json({
-      vehicles: vehicles.filter(v => v.status === 'Available').map(v => ({ id: v.id, name: v.name, plateNumber: v.plateNumber, type: v.type, acpreference: v.acpreference, capacity: v.capacity, ratePerKm: v.ratePerKm })),
-      drivers: drivers.filter(d => d.status === 'Available').map(d => ({ id: d.id, name: d.name, phone: d.phone, licenseNumber: d.licenseNumber }))
-    });
+    const allVehicles = await db.getVehicles();
+
+    // Group by model name — show one card per model with available count
+    const grouped = {};
+    for (const v of allVehicles) {
+      const key = v.name;
+      if (!grouped[key]) {
+        grouped[key] = {
+          name: v.name,
+          type: v.type,
+          acpreference: v.acpreference || v.vehicleType || 'AC',
+          capacity: v.capacity,
+          ratePerKm: v.ratePerKm,
+          image: v.image || '',
+          totalCount: 0,
+          availableCount: 0,
+          availableIds: []   // IDs of available units (to pick one when booking)
+        };
+      }
+      grouped[key].totalCount += 1;
+      if (v.status === 'Available') {
+        grouped[key].availableCount += 1;
+        grouped[key].availableIds.push(v.id);
+      }
+    }
+
+    const models = Object.values(grouped);
+    res.json({ vehicles: models });
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
 
@@ -354,42 +592,86 @@ app.get('/api/customer/bookings', authenticateToken, async (req, res) => {
 
 app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
   try {
-    const { pickupLocation, dropLocation, pickupDateTime, vehicleType, assignedVehicleId, assignedDriverId, notes, customerName } = req.body;
-    if (!pickupLocation || !dropLocation || !pickupDateTime || !vehicleType) return res.status(400).json({ error: 'Missing booking details.' });
-    if (!assignedVehicleId) return res.status(400).json({ error: 'Please select a car model.' });
+    const { 
+      pickupLocation, 
+      dropLocation, 
+      pickupDateTime, 
+      vehicleType, 
+      modelName,         // model name e.g. "BMW" — system picks first available unit
+      assignedVehicleId, // specific unit ID (optional override)
+      customerContact,
+      passengersCount,
+      tripType,
+      specialRequirements,
+      notes, 
+      customerName, 
+      fareEstimated 
+    } = req.body;
 
-    const [vehicles, drivers] = await Promise.all([db.getVehicles(), db.getDrivers()]);
-
-    const selectedVehicle = vehicles.find(v => v.id === assignedVehicleId);
-    if (!selectedVehicle) return res.status(404).json({ error: 'Selected car was not found.' });
-    if (selectedVehicle.status !== 'Available') return res.status(400).json({ error: 'Selected car is no longer available.' });
-    if (selectedVehicle.type !== vehicleType) return res.status(400).json({ error: 'Selected car does not match the requested category.' });
-
-    let finalDriverId = assignedDriverId;
-    if (!finalDriverId) {
-      const availableDrivers = drivers.filter(d => d.status === 'Available');
-      if (availableDrivers.length === 0) {
-        return res.status(400).json({ error: 'No available drivers right now. Please try again in a few minutes.' });
-      }
-      finalDriverId = availableDrivers[0].id;
+    if (!pickupLocation || !dropLocation || !pickupDateTime || !vehicleType) {
+      return res.status(400).json({ error: 'Missing booking details.' });
+    }
+    if (!modelName && !assignedVehicleId) {
+      return res.status(400).json({ error: 'Please select a vehicle model.' });
     }
 
-    const selectedDriver = drivers.find(d => d.id === finalDriverId);
-    if (!selectedDriver) return res.status(404).json({ error: 'Selected driver was not found.' });
-    if (selectedDriver.status !== 'Available') return res.status(400).json({ error: 'Selected driver is no longer available.' });
+    // Find an available unit for this model
+    const allVehicles = await db.getVehicles();
+    let selectedVehicle = null;
 
-    let baseRate = selectedVehicle.ratePerKm || 12;
-    const fareEstimated = (Math.floor(Math.random() * 80) + 20) * baseRate;
+    if (assignedVehicleId) {
+      // Specific unit requested
+      selectedVehicle = allVehicles.find(v => v.id === assignedVehicleId);
+    } else {
+      // Auto-pick the first available unit of this model
+      selectedVehicle = allVehicles.find(v => v.name === modelName && v.status === 'Available');
+    }
+
+    if (!selectedVehicle) {
+      return res.status(400).json({ error: `No available ${modelName || 'vehicle'} units right now. Please choose another model.` });
+    }
+    if (selectedVehicle.status !== 'Available') {
+      return res.status(400).json({ error: `${selectedVehicle.name} is no longer available. Please choose another vehicle.` });
+    }
+
+    const finalFare = fareEstimated !== undefined && fareEstimated !== null
+      ? fareEstimated
+      : (Math.floor(Math.random() * 80) + 20) * (selectedVehicle.ratePerKm || 12);
 
     const bookings = await db.getBookings();
     let maxNum = 0;
     bookings.forEach(b => { const m = b.id.match(/^b(\d+)$/); if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]); });
     const nextId = 'b' + (maxNum + 1);
 
-    const newBooking = { id: nextId, customerName: customerName || req.user.name, pickupLocation, dropLocation, pickupDateTime, vehicleType, status: 'Pending', assignedVehicleId, assignedDriverId: finalDriverId, notes: notes || '', fareEstimated, createdAt: new Date().toISOString() };
-    await db.addBooking(newBooking);
-    const confirmed = await db.updateBooking(nextId, { status: 'Confirmed' });
-    res.status(201).json(confirmed || newBooking);
+    const [tDate, tTime] = pickupDateTime.split('T');
+
+    const newBooking = { 
+      id: nextId, 
+      customerName: customerName || req.user.name, 
+      customerContact: customerContact || '',
+      bookingDate: new Date().toISOString().split('T')[0],
+      travelDate: tDate || '',
+      travelTime: tTime || '',
+      pickupLocation, 
+      dropLocation, 
+      pickupDateTime, 
+      vehicleType,
+      passengersCount: passengersCount ? parseInt(passengersCount) : 1,
+      tripType: tripType || 'One Way',
+      specialRequirements: specialRequirements || notes || '',
+      status: 'Pending',
+      assignedVehicleId: selectedVehicle.id,
+      assignedDriverId: null,
+      notes: notes || specialRequirements || '', 
+      fareEstimated: finalFare, 
+      createdAt: new Date().toISOString() 
+    };
+
+    // Reserve the vehicle immediately so no other customer can book it
+    await db.updateVehicle(selectedVehicle.id, { status: 'Booked', availability: false });
+
+    const saved = await db.addBooking(newBooking);
+    res.status(201).json({ ...(saved || newBooking), vehicleName: selectedVehicle.name });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
 
@@ -403,8 +685,43 @@ app.post('/api/customer/bookings/:id/cancel', authenticateToken, async (req, res
     if (booking.customerName.toLowerCase() !== targetName.toLowerCase()) return res.status(403).json({ error: 'Access denied.' });
     if (!['Pending', 'Confirmed'].includes(booking.status)) return res.status(400).json({ error: 'Booking cannot be cancelled in its current state.' });
 
+    // Release the vehicle back to Available
+    if (booking.assignedVehicleId) {
+      await db.updateVehicle(booking.assignedVehicleId, { status: 'Available', availability: true });
+    }
+
     res.json(await db.updateBooking(req.params.id, { status: 'Cancelled' }));
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
+});
+
+app.post('/api/customer/bookings/:id/feedback', authenticateToken, async (req, res) => {
+  try {
+    const { rating, feedback } = req.body;
+    if (rating === undefined || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Valid rating (1-5) is required.' });
+    }
+    const bookings = await db.getBookings();
+    const booking = bookings.find(b => b.id === req.params.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+
+    const targetName = req.body.customerName || req.user.name;
+    if (booking.customerName.toLowerCase() !== targetName.toLowerCase()) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+    if (booking.status !== 'Completed') {
+      return res.status(400).json({ error: 'Feedback can only be shared for completed trips.' });
+    }
+
+    const updated = await db.updateBooking(req.params.id, {
+      rating: parseInt(rating),
+      feedback: feedback || '',
+      feedbackDate: new Date()
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 app.get('/api/customer/assigned-resources/:bookingId', authenticateToken, async (req, res) => {
@@ -421,8 +738,8 @@ app.get('/api/customer/assigned-resources/:bookingId', authenticateToken, async 
     const vehicle = booking.assignedVehicleId ? allVehicles.find(v => v.id === booking.assignedVehicleId) : null;
 
     res.json({
-      driver: driver ? { name: driver.name, phone: driver.phone, licenseNumber: driver.licenseNumber } : null,
-      vehicle: vehicle ? { name: vehicle.name, plateNumber: vehicle.plateNumber, type: vehicle.type, acpreference: vehicle.acpreference } : null
+      driver: driver ? { name: driver.name, phone: driver.phone, licenseNumber: driver.licenseNumber, photo: driver.photo, gender: driver.gender } : null,
+      vehicle: vehicle ? { name: vehicle.name, plateNumber: vehicle.plateNumber, type: vehicle.type, acpreference: vehicle.acpreference, image: vehicle.image } : null
     });
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });

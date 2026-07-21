@@ -9,13 +9,49 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   const [assigningBooking, setAssigningBooking] = useState(null);
   const [viewingBooking, setViewingBooking] = useState(null);
 
+  const [historyCategory, setHistoryCategory] = useState(null);
+
+  const HISTORY_CATEGORIES = [
+    { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: 'var(--color-primary)' },
+    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', color: '#f59e0b' },
+    { type: 'Luxury', img: '/cars/luxury/bmw.png', color: '#10b981' },
+    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', color: '#6366f1' }
+  ];
+
+  const shortenAddress = (address) => {
+    if (!address) return '';
+    const parts = address.split(',');
+    if (parts.length <= 2) return address;
+    return parts.slice(0, 2).map(p => p.trim()).join(', ');
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      // Format to DD/MM/YY, HH:MM
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = String(d.getFullYear()).slice(-2);
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year}, ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   // New booking form fields
   const [custName, setCustName] = useState('');
+  const [custContact, setCustContact] = useState('');
   const [bPickup, setBPickup] = useState('');
   const [bDrop, setBDrop] = useState('');
   const [bDateTime, setBDateTime] = useState('');
   const [bType, setBType] = useState('Sedan');
   const [bNotes, setBNotes] = useState('');
+  const [bPassengers, setBPassengers] = useState(1);
+  const [bTripType, setBTripType] = useState('One Way');
+  const [bSpecialRequirements, setBSpecialRequirements] = useState('');
   const [bStatus, setBStatus] = useState('Pending');
 
   // Assignment selection fields
@@ -29,11 +65,15 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
       const method = editingBooking ? 'PUT' : 'POST';
       const body = {
         customerName: custName,
+        customerContact: custContact,
         pickupLocation: bPickup,
         dropLocation: bDrop,
         pickupDateTime: bDateTime,
         vehicleType: bType,
-        notes: bNotes
+        passengersCount: parseInt(bPassengers) || 1,
+        tripType: bTripType,
+        specialRequirements: bSpecialRequirements || bNotes || '',
+        notes: bNotes || bSpecialRequirements || ''
       };
       if (editingBooking) {
         body.status = bStatus;
@@ -60,6 +100,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   const handleEditBookingClick = (b) => {
     setEditingBooking(b);
     setCustName(b.customerName);
+    setCustContact(b.customerContact || '');
     setBPickup(b.pickupLocation);
     setBDrop(b.dropLocation);
 
@@ -80,6 +121,9 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
     setBDateTime(formattedDate);
     setBType(b.vehicleType);
     setBNotes(b.notes || '');
+    setBPassengers(b.passengersCount || 1);
+    setBTripType(b.tripType || 'One Way');
+    setBSpecialRequirements(b.specialRequirements || b.notes || '');
     setBStatus(b.status || 'Pending');
     setShowAddModal(true);
   };
@@ -88,11 +132,15 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
     setShowAddModal(false);
     setEditingBooking(null);
     setCustName('');
+    setCustContact('');
     setBPickup('');
     setBDrop('');
     setBDateTime('');
     setBType('Sedan');
     setBNotes('');
+    setBPassengers(1);
+    setBTripType('One Way');
+    setBSpecialRequirements('');
     setBStatus('Pending');
   };
 
@@ -127,6 +175,14 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
     if (!selVehicleId || !selDriverId) {
       toast(null, 'Please select both a vehicle and a driver.');
       return;
+    }
+    // Soft warning for low capacity — admin can override
+    const vehicle = vehicles.find(v => v.id === selVehicleId);
+    if (vehicle && vehicle.capacity < (assigningBooking.passengersCount || 1)) {
+      const ok = window.confirm(
+        `⚠️ Capacity Warning:\n${vehicle.name} has ${vehicle.capacity} seats but this booking needs ${assigningBooking.passengersCount || 1} passengers.\n\nProceed with assignment anyway? (Admin override)`
+      );
+      if (!ok) return;
     }
     try {
       const res = await fetch(`${API_URL}/bookings/${assigningBooking.id}`, {
@@ -175,16 +231,16 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   const archivedBookings = bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       
       {/* Active Bookings & Dispatch */}
       {!onlyHistory && (
-        <div className="glass-panel">
+        <div className="glass-panel" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ margin: 0 }}>Active Bookings & Dispatch</h3>
         </div>
 
-        <div className="table-container">
+        <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -209,8 +265,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                   <tr key={b.id}>
                     <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
                     <td>{b.customerName}</td>
-                    <td>{b.pickupLocation} ➔ {b.dropLocation}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(b.pickupDateTime).toLocaleString()}</td>
+                    <td title={`${b.pickupLocation} ➔ ${b.dropLocation}`} style={{ lineHeight: '1.4' }}>
+                      {shortenAddress(b.pickupLocation)} ➔ {shortenAddress(b.dropLocation)}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
                     <td>{b.vehicleType}</td>
                     <td>₹{b.fareEstimated}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>
@@ -274,73 +332,208 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
 
       {/* Booking History (Archived) */}
       {!onlyActive && (
-        <div className="glass-panel">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0 }}>Booking History (Archived)</h3>
-        </div>
+        <div className="glass-panel" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+          {!historyCategory ? (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0 }}>Booking History (Archived)</h3>
+              </div>
 
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th style={{ whiteSpace: 'nowrap' }}>ID</th>
-                <th>Customer</th>
-                <th>Route (From - Destination)</th>
-                <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
-                <th>Vehicle Requested</th>
-                <th>Estimated Fare</th>
-                <th style={{ whiteSpace: 'nowrap' }}>Status</th>
-                <th>Assigned Resources</th>
-                <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {archivedBookings.length === 0 ? (
-                <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No archived bookings found.</td>
-                </tr>
-              ) : (
-                archivedBookings.map(b => (
-                  <tr key={b.id}>
-                    <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
-                    <td>{b.customerName}</td>
-                    <td>{b.pickupLocation} ➔ {b.dropLocation}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(b.pickupDateTime).toLocaleString()}</td>
-                    <td>{b.vehicleType}</td>
-                    <td>₹{b.fareEstimated}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
-                        {b.status}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                      {b.assignedVehicleId ? (
-                        <div>🚙 {vehicles.find(v => v.id === b.assignedVehicleId)?.name}</div>
-                      ) : null}
-                      {b.assignedDriverId ? (
-                        <div>👤 {drivers.find(d => d.id === b.assignedDriverId)?.name}</div>
-                      ) : (
-                        !b.assignedVehicleId && 'Unassigned'
-                      )}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>Archived</span>
-                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
-                          View
-                        </button>
-                        <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
-                          Edit
-                        </button>
+              {/* Category Folders (Grid) */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '20px',
+                marginBottom: '20px'
+              }}>
+                {HISTORY_CATEGORIES.map(cat => {
+                  const count = archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === cat.type.toLowerCase()).length;
+                  return (
+                    <div 
+                      key={cat.type}
+                      className="glass-panel"
+                      onClick={() => setHistoryCategory(cat.type)}
+                      style={{
+                        padding: '30px 20px',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease-in-out',
+                        borderLeft: `4px solid ${cat.color}`,
+                        borderTop: '1px solid transparent',
+                        borderRight: '1px solid transparent',
+                        borderBottom: '1px solid transparent',
+                        backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '10px',
+                        boxSizing: 'border-box'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                        e.currentTarget.style.borderTop = `1px solid ${cat.color}`;
+                        e.currentTarget.style.borderRight = `1px solid ${cat.color}`;
+                        e.currentTarget.style.borderBottom = `1px solid ${cat.color}`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                        e.currentTarget.style.borderTop = '1px solid transparent';
+                        e.currentTarget.style.borderRight = '1px solid transparent';
+                        e.currentTarget.style.borderBottom = '1px solid transparent';
+                      }}
+                    >
+                      <img
+                        src={cat.img}
+                        alt={cat.type}
+                        style={{
+                          width: '90px',
+                          height: '60px',
+                          objectFit: 'contain',
+                          marginBottom: '8px',
+                          borderRadius: '4px'
+                        }}
+                      />
+                      <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-main)' }}>{cat.type} History</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {count} {count === 1 ? 'booking' : 'bookings'} archived
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Category History Detail View Header */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '20px',
+                paddingBottom: '15px',
+                borderBottom: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setHistoryCategory(null)}
+                    style={{ 
+                      padding: '6px 12px', 
+                      fontSize: '13px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    ← Back to History
+                  </button>
+                  <div>
+                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ 
+                        display: 'inline-block', 
+                        width: '12px', 
+                        height: '12px', 
+                        borderRadius: '50%', 
+                        backgroundColor: HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.color || 'var(--color-primary)'
+                      }}></span>
+                      {historyCategory} Booking History
+                    </h3>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      Showing all {archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length} archived booking(s)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ whiteSpace: 'nowrap' }}>ID</th>
+                      <th>Customer</th>
+                      <th>Route (From - Destination)</th>
+                      <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
+                      <th>Vehicle Requested</th>
+                      <th>Estimated Fare</th>
+                      <th style={{ whiteSpace: 'nowrap' }}>Status</th>
+                      <th>Assigned Resources</th>
+                      <th>Feedback</th>
+                      <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length === 0 ? (
+                      <tr>
+                        <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                          No archived bookings found in the <strong>{historyCategory}</strong> history folder.
+                        </td>
+                      </tr>
+                    ) : (
+                      archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).map(b => (
+                        <tr key={b.id}>
+                          <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
+                          <td>{b.customerName}</td>
+                          <td title={`${b.pickupLocation} ➔ ${b.dropLocation}`} style={{ lineHeight: '1.4' }}>
+                            {shortenAddress(b.pickupLocation)} ➔ {shortenAddress(b.dropLocation)}
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
+                          <td>{b.vehicleType}</td>
+                          <td>₹{b.fareEstimated}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
+                              {b.status}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                            {b.assignedVehicleId ? (
+                              <div>🚙 {vehicles.find(v => v.id === b.assignedVehicleId)?.name}</div>
+                            ) : null}
+                            {b.assignedDriverId ? (
+                              <div>👤 {drivers.find(d => d.id === b.assignedDriverId)?.name}</div>
+                            ) : (
+                              !b.assignedVehicleId && 'Unassigned'
+                            )}
+                          </td>
+                          <td>
+                            {b.rating > 0 ? (
+                              <div>
+                                <span style={{ color: '#fbbf24', fontWeight: '700' }}>{'★'.repeat(b.rating)}</span>
+                                {b.feedback && (
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.feedback}>
+                                    "{b.feedback}"
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No feedback</span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>Archived</span>
+                              <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
+                                View
+                              </button>
+                              <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
+                                Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
-      </div>
       )}
 
       {/* Modal: Create/Edit Booking */}
@@ -357,6 +550,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                 <input type="text" className="form-input" placeholder="e.g. Ashwanth S" value={custName} onChange={(e) => setCustName(e.target.value)} required />
               </div>
               <div className="form-group">
+                <label className="form-label">Customer Contact Details</label>
+                <input type="tel" className="form-input" placeholder="e.g. +91 9876543210" value={custContact} onChange={(e) => setCustContact(e.target.value)} required />
+              </div>
+              <div className="form-group">
                 <label className="form-label">Pickup Address</label>
                 <input type="text" className="form-input" placeholder="e.g. Salem Bus Stand" value={bPickup} onChange={(e) => setBPickup(e.target.value)} required />
               </div>
@@ -368,17 +565,37 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                 <label className="form-label">Date & Time</label>
                 <input type="datetime-local" className="form-input" value={bDateTime} onChange={(e) => setBDateTime(e.target.value)} required />
               </div>
-              <div className="form-group">
-                <label className="form-label">Requested Vehicle Category</label>
-                <select className="form-select" value={bType} onChange={(e) => setBType(e.target.value)}>
-                  <option value="Sedan">Sedan (Max 4 PAX)</option>
-                  <option value="SUV">SUV (Max 7 PAX)</option>
-                  <option value="Minivan">Minivan (Max 12 PAX)</option>
-                </select>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Requested Vehicle Category</label>
+                  <select className="form-select" value={bType} onChange={(e) => setBType(e.target.value)}>
+                    <option value="Sedan">Sedan (Max 4 PAX)</option>
+                    <option value="SUV">SUV (Max 7 PAX)</option>
+                    <option value="Luxury">Luxury (Max 4 PAX)</option>
+                    <option value="Minivan">Minivan (Max 12 PAX)</option>
+                  </select>
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Trip Type</label>
+                  <select className="form-select" value={bTripType} onChange={(e) => setBTripType(e.target.value)}>
+                    <option value="One Way">One Way</option>
+                    <option value="Round Trip">Round Trip</option>
+                    <option value="Local Travel">Local Travel</option>
+                    <option value="Outstation Travel">Outstation Travel</option>
+                    <option value="Airport Pickup">Airport Pickup</option>
+                    <option value="Airport Drop">Airport Drop</option>
+                  </select>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Trip Notes</label>
-                <input type="text" className="form-input" placeholder="e.g. client meeting, need clean car" value={bNotes} onChange={(e) => setBNotes(e.target.value)} />
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">No. of Passengers</label>
+                  <input type="number" className="form-input" min="1" max="50" value={bPassengers} onChange={(e) => setBPassengers(parseInt(e.target.value) || 1)} required />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label">Special Requirements</label>
+                  <input type="text" className="form-input" placeholder="e.g. infant seat, extra boot space" value={bSpecialRequirements} onChange={(e) => setBSpecialRequirements(e.target.value)} />
+                </div>
               </div>
               {editingBooking && (
                 <div className="form-group" style={{ marginBottom: '25px' }}>
@@ -386,7 +603,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                   <select className="form-select" value={bStatus} onChange={(e) => setBStatus(e.target.value)}>
                     <option value="Pending">Pending</option>
                     <option value="Confirmed">Confirmed</option>
-                    <option value="In Progress">In Progress</option>
+                    <option value="Driver Assigned">Driver Assigned</option>
+                    <option value="Vehicle Assigned">Vehicle Assigned</option>
+                    <option value="Trip Scheduled">Trip Scheduled</option>
+                    <option value="Ongoing">Ongoing</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
@@ -394,7 +614,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
               )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={handleCloseAddModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Booking</button>
+                  <button type="submit" className="btn btn-primary">Save Booking</button>
               </div>
             </form>
           </div>
@@ -405,53 +625,182 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
       {/* Modal: Confirm and Assign Dispatch */}
       {assigningBooking && createPortal(
         <div className="modal-overlay">
-          <div className="glass-panel modal-content">
+          <div className="glass-panel modal-content" style={{ maxWidth: '680px', width: '95vw' }}>
             <div className="modal-header">
-              <h3 className="modal-title">Assign Fleet & Driver</h3>
+              <h3 className="modal-title">🚀 Assign Vehicle & Driver</h3>
               <button className="modal-close" onClick={() => setAssigningBooking(null)}>×</button>
             </div>
-            <div style={{ marginBottom: '20px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '13px' }}>
-              <div>Booking ID: <strong>{assigningBooking.id}</strong></div>
-              <div>Route: {assigningBooking.pickupLocation} ➔ {assigningBooking.dropLocation}</div>
-              <div>Type required: <strong>{assigningBooking.vehicleType}</strong></div>
+
+            {/* Booking Summary Banner */}
+            <div style={{ marginBottom: '22px', padding: '14px 16px', background: 'linear-gradient(135deg,rgba(99,102,241,0.12),rgba(16,185,129,0.08))', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.25)', fontSize: '13px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              <div><span style={{ color: 'var(--text-muted)' }}>Booking ID: </span><strong style={{ color: 'var(--color-primary)' }}>#{assigningBooking.id}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Customer: </span><strong>{assigningBooking.customerName}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Category: </span><strong>{assigningBooking.vehicleType}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Passengers: </span><strong>{assigningBooking.passengersCount || 1}</strong></div>
+              <div style={{ width: '100%', marginTop: '4px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                📍 {assigningBooking.pickupLocation} ➔ {assigningBooking.dropLocation}
+              </div>
             </div>
+
             <form onSubmit={handleAssignSubmit}>
-              <div className="form-group">
-                <label className="form-label">Select Available Vehicle ({assigningBooking.vehicleType})</label>
-                <select className="form-select" value={selVehicleId} onChange={(e) => setSelVehicleId(e.target.value)} required>
-                  <option value="">-- Select Available Vehicle --</option>
-                  {vehicles
-                    .filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType)
-                    .map(v => (
-                      <option key={v.id} value={v.id}>{v.name} ({v.plateNumber})</option>
-                    ))}
-                </select>
-                {vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length === 0 && (
-                  <div style={{ color: 'var(--status-cancelled)', fontSize: '12px', marginTop: '4px' }}>
-                    ⚠ No available vehicles found for class {assigningBooking.vehicleType}.
+              {/* ── Vehicle Selection ── */}
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <label className="form-label" style={{ margin: 0, fontSize: '13px', fontWeight: '700' }}>
+                    🚗 Select Available Vehicle <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>({assigningBooking.vehicleType})</span>
+                  </label>
+                  <span style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '20px', background: vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                    {vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length} Available
+                  </span>
+                </div>
+
+                {vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length === 0 ? (
+                  <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#ef4444', textAlign: 'center', fontSize: '13px' }}>
+                    🚫 No available <strong>{assigningBooking.vehicleType}</strong> vehicles. All vehicles of this type are currently on trips.
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', maxHeight: '240px', overflowY: 'auto', padding: '4px 2px' }}>
+                    {vehicles
+                      .filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType)
+                      .map(v => {
+                        const hasCapacity = v.capacity >= (assigningBooking.passengersCount || 1);
+                        const isSelected = selVehicleId === v.id;
+                        return (
+                          <div
+                            key={v.id}
+                            onClick={() => setSelVehicleId(v.id)}
+                            style={{
+                              padding: '12px',
+                              borderRadius: '10px',
+                              border: isSelected
+                                ? '2px solid var(--color-primary)'
+                                : hasCapacity ? '2px solid var(--border-color)' : '2px solid rgba(251,146,60,0.5)',
+                              background: isSelected
+                                ? 'rgba(99,102,241,0.12)'
+                                : hasCapacity ? 'rgba(255,255,255,0.03)' : 'rgba(251,146,60,0.05)',
+                              cursor: 'pointer',
+                              opacity: 1,
+                              transition: 'all 0.2s ease',
+                              position: 'relative',
+                              textAlign: 'center'
+                            }}
+                          >
+                            {isSelected && (
+                              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff' }}>✓</div>
+                            )}
+                            {!hasCapacity && (
+                              <div style={{ position: 'absolute', top: '6px', left: '6px', fontSize: '10px', background: 'rgba(251,146,60,0.85)', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: '700' }}>LOW CAP</div>
+                            )}
+                            {v.image ? (
+                              <img src={v.image} alt={v.name} style={{ width: '80px', height: '50px', objectFit: 'contain', marginBottom: '8px' }} />
+                            ) : (
+                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🚗</div>
+                            )}
+                            <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '3px' }}>{v.name}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>{v.plateNumber}</div>
+                            <div style={{ fontSize: '11px', color: hasCapacity ? '#10b981' : '#fb923c', fontWeight: '600' }}>
+                              {v.capacity} Seats
+                            </div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>₹{v.ratePerKm}/km</div>
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
-              </div>
-              <div className="form-group" style={{ marginBottom: '25px' }}>
-                <label className="form-label">Select Available Driver</label>
-                <select className="form-select" value={selDriverId} onChange={(e) => setSelDriverId(e.target.value)} required>
-                  <option value="">-- Select Available Driver --</option>
-                  {drivers
-                    .filter(d => d.status === 'Available')
-                    .map(d => (
-                      <option key={d.id} value={d.id}>{d.name} ({d.phone})</option>
-                    ))}
-                </select>
-                {drivers.filter(d => d.status === 'Available').length === 0 && (
-                  <div style={{ color: 'var(--status-cancelled)', fontSize: '12px', marginTop: '4px' }}>
-                    ⚠ No available drivers registered.
-                  </div>
+                {selVehicleId && (() => {
+                  const sv = vehicles.find(v => v.id === selVehicleId);
+                  return sv && sv.capacity < (assigningBooking.passengersCount || 1) ? (
+                    <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.35)', borderRadius: '8px', fontSize: '12px', color: '#fb923c' }}>
+                      ⚠️ Admin override: <strong>{sv.name}</strong> has {sv.capacity} seats but booking needs {assigningBooking.passengersCount || 1} passengers.
+                    </div>
+                  ) : null;
+                })()}
+                {selVehicleId === '' && vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 && (
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>Click a vehicle card to select it</div>
                 )}
               </div>
+
+
+              {/* ── Driver Selection ── */}
+              <div style={{ marginBottom: '26px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <label className="form-label" style={{ margin: 0, fontSize: '13px', fontWeight: '700' }}>
+                    👤 Select Available Driver
+                  </label>
+                  <span style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '20px', background: drivers.filter(d => d.status === 'Available').length > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: drivers.filter(d => d.status === 'Available').length > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                    {drivers.filter(d => d.status === 'Available').length} Available
+                  </span>
+                </div>
+
+                {drivers.filter(d => d.status === 'Available').length === 0 ? (
+                  <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#ef4444', textAlign: 'center', fontSize: '13px' }}>
+                    🚫 No available drivers. All {drivers.length} drivers are currently on trips or inactive.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', padding: '4px 2px' }}>
+                    {drivers
+                      .filter(d => d.status === 'Available')
+                      .map(d => {
+                        const isSelected = selDriverId === d.id;
+                        return (
+                          <div
+                            key={d.id}
+                            onClick={() => setSelDriverId(d.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              padding: '10px 14px',
+                              borderRadius: '10px',
+                              border: isSelected ? '2px solid var(--color-primary)' : '2px solid var(--border-color)',
+                              background: isSelected ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.03)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              position: 'relative'
+                            }}
+                          >
+                            {isSelected && (
+                              <div style={{ position: 'absolute', right: '14px', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff' }}>✓</div>
+                            )}
+                            {/* Avatar */}
+                            {d.photo ? (
+                              <img src={d.photo} alt={d.name} style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border-color)' }} />
+                            ) : (
+                              <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
+                                {d.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: '700', fontSize: '13px' }}>{d.name}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>📞 {d.phone}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>🪪 License: {d.licenseNumber}</div>
+                            </div>
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                              <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '20px', background: 'rgba(16,185,129,0.15)', color: '#10b981', fontWeight: '700' }}>Available</span>
+                              {d.gender && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>{d.gender}</div>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+                {selDriverId === '' && drivers.filter(d => d.status === 'Available').length > 0 && (
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>Click a driver row to select</div>
+                )}
+              </div>
+
+              {/* Selected Summary */}
+              {(selVehicleId || selDriverId) && (
+                <div style={{ marginBottom: '18px', padding: '12px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '12px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  {selVehicleId && <div>🚗 <strong>Vehicle:</strong> {vehicles.find(v => v.id === selVehicleId)?.name} ({vehicles.find(v => v.id === selVehicleId)?.plateNumber})</div>}
+                  {selDriverId && <div>👤 <strong>Driver:</strong> {drivers.find(d => d.id === selDriverId)?.name}</div>}
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setAssigningBooking(null)}>Cancel</button>
                 <button type="submit" className="btn btn-primary" disabled={!selVehicleId || !selDriverId}>
-                  Confirm & Dispatch
+                  ✅ Confirm & Dispatch
                 </button>
               </div>
             </form>
@@ -470,15 +819,21 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
-              <div>
-                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Customer Name</label>
-                <div style={{ fontWeight: '600', fontSize: '16px' }}>{viewingBooking.customerName}</div>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Customer Name</label>
+                  <div style={{ fontWeight: '600', fontSize: '15px' }}>{viewingBooking.customerName}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Contact Details</label>
+                  <div style={{ fontWeight: '500', fontSize: '14px' }}>{viewingBooking.customerContact || 'N/A'}</div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div style={{ flex: 1 }}>
                   <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Booking ID</label>
-                  <div style={{ fontWeight: '500' }}>#{viewingBooking.id}</div>
+                  <div style={{ fontWeight: '700', color: 'var(--color-primary)' }}>#{viewingBooking.id}</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status</label>
@@ -490,39 +845,66 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                 </div>
               </div>
 
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Booking Date</label>
+                  <div style={{ fontWeight: '500', fontSize: '13px' }}>
+                    {viewingBooking.bookingDate || (viewingBooking.createdAt ? new Date(viewingBooking.createdAt).toLocaleDateString() : 'N/A')}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Trip Type</label>
+                  <div style={{ fontWeight: '600', color: 'var(--color-primary)' }}>{viewingBooking.tripType || 'One Way'}</div>
+                </div>
+              </div>
+
               <div>
-                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Route</label>
-                <div style={{ fontWeight: '500' }}>
-                  {viewingBooking.pickupLocation} ➔ {viewingBooking.dropLocation}
+                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pickup Location</label>
+                <div style={{ fontWeight: '500', fontSize: '13.5px' }}>{viewingBooking.pickupLocation}</div>
+              </div>
+
+              <div>
+                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Drop Location</label>
+                <div style={{ fontWeight: '500', fontSize: '13.5px' }}>{viewingBooking.dropLocation}</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Travel Date</label>
+                  <div style={{ fontWeight: '500' }}>{viewingBooking.travelDate || (viewingBooking.pickupDateTime ? viewingBooking.pickupDateTime.split('T')[0] : 'N/A')}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Travel Time</label>
+                  <div style={{ fontWeight: '500' }}>{viewingBooking.travelTime || (viewingBooking.pickupDateTime ? viewingBooking.pickupDateTime.split('T')[1] : 'N/A')}</div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pickup Date & Time</label>
-                  <div style={{ fontWeight: '500' }}>{new Date(viewingBooking.pickupDateTime).toLocaleString()}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Estimated Fare</label>
-                  <div style={{ fontWeight: '600', color: '#10b981' }}>₹{viewingBooking.fareEstimated}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '20px' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Vehicle Class Requested</label>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Requested Category</label>
                   <div style={{ fontWeight: '500' }}>{viewingBooking.vehicleType}</div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Requested Date</label>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>No. of Passengers</label>
+                  <div style={{ fontWeight: '600' }}>{viewingBooking.passengersCount || 1} Passengers</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Estimated Fare</label>
+                  <div style={{ fontWeight: '700', fontSize: '17px', color: '#10b981' }}>₹{viewingBooking.fareEstimated}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Request Logged At</label>
                   <div style={{ fontWeight: '500', fontSize: '12px' }}>{new Date(viewingBooking.createdAt).toLocaleString()}</div>
                 </div>
               </div>
 
               <div>
-                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Trip Notes</label>
-                <div style={{ padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '13px', fontStyle: viewingBooking.notes ? 'normal' : 'italic' }}>
-                  {viewingBooking.notes || 'No special requirements listed'}
+                <label className="form-label" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Special Requirements</label>
+                <div style={{ padding: '10px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '13px', fontStyle: (viewingBooking.specialRequirements || viewingBooking.notes) ? 'normal' : 'italic' }}>
+                  {viewingBooking.specialRequirements || viewingBooking.notes || 'No special requirements listed'}
                 </div>
               </div>
 
@@ -555,6 +937,25 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                   </div>
                 )}
               </div>
+
+              {viewingBooking.rating > 0 && (
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--text-muted)' }}>Customer Feedback</h4>
+                  <div style={{ padding: '12px', backgroundColor: 'rgba(251, 191, 36, 0.03)', borderRadius: '6px', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rating:</span>
+                      <span style={{ fontSize: '16px', color: '#fbbf24' }}>
+                        {'★'.repeat(viewingBooking.rating)}{'☆'.repeat(5 - viewingBooking.rating)}
+                      </span>
+                    </div>
+                    {viewingBooking.feedback && (
+                      <div style={{ fontSize: '13px', color: 'var(--text-main)', fontStyle: 'italic' }}>
+                        "{viewingBooking.feedback}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>

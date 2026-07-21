@@ -1,27 +1,62 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // Car name → public image path (key = vehicle name lowercased, no spaces)
 const CAR_IMAGES = {
-  "swiftdzire": "/cars/swift_dzire.png",
-  "innovacrysta": "/cars/innova_crysta.png",
-  "tempotravellar": "/cars/tempo_traveller.png",
-  "tempotraveller": "/cars/tempo_traveller.png",
-  "mahindrascorpio": "/cars/mahindra_scorpio.png",
-  "scorpio": "/cars/mahindra_scorpio.png",
-  "fortuner": "/cars/toyota_fortuner.png",
-  "vitarabreeza": "/cars/vitara_brezza.png",
-  "vitarabrezza": "/cars/vitara_brezza.png",
-  "renaultduster": "/cars/renault_duster.png",
-  "duster": "/cars/renault_duster.png",
-  "urbania": "/cars/force_urbania.png",
-  "aura": "/cars/hyundai_aura.png",
-  "hyundaiaura": "/cars/hyundai_aura.png",
-  "grandvitara": "/cars/grand_vitara.png",
-  "thar": "/cars/mahindra_thar.png",
-  "mahindrathar": "/cars/mahindra_thar.png",
-  "baleno": "/cars/suzuki_baleno.png",
-  "marutibaleno": "/cars/suzuki_baleno.png",
+  "swiftdzire": "/cars/sedan/swift_dzire.png",
+  "innovacrysta": "/cars/suv/innova_crysta.png",
+  "crysta": "/cars/suv/innova_crysta.png",
+  "tempotravellar": "/cars/minivan/tempo_traveller.png",
+  "tempotraveller": "/cars/minivan/tempo_traveller.png",
+  "mahindrascorpio": "/cars/suv/mahindra_scorpio.png",
+  "scorpio": "/cars/suv/mahindra_scorpio.png",
+  "fortuner": "/cars/suv/toyota_fortuner.png",
+  "vitarabreeza": "/cars/sedan/vitara_brezza.png",
+  "vitarabrezza": "/cars/sedan/vitara_brezza.png",
+  "renaultduster": "/cars/suv/renault_duster.png",
+  "duster": "/cars/suv/renault_duster.png",
+  "urbania": "/cars/minivan/force_urbania.png",
+  "aura": "/cars/sedan/hyundai_aura.png",
+  "hyundaiaura": "/cars/sedan/hyundai_aura.png",
+  "grandvitara": "/cars/suv/grand_vitara.png",
+  "thar": "/cars/suv/mahindra_thar.png",
+  "mahindrathar": "/cars/suv/mahindra_thar.png",
+  "baleno": "/cars/sedan/suzuki_baleno.png",
+  "marutibaleno": "/cars/sedan/suzuki_baleno.png",
+  "waganor": "/cars/sedan/wagonr.png",
+  "wagonr": "/cars/sedan/wagonr.png",
+  "bolero": "/cars/suv/bolero.png",
+  "bmw": "/cars/luxury/bmw.png",
+  "audi": "/cars/luxury/audi.png",
+  "benz": "/cars/luxury/benz.png",
+  "mercedes": "/cars/luxury/benz.png",
+  "mercedesbenz": "/cars/luxury/benz.png",
 };
+
+const PRESET_LOCATIONS = [
+  "North Coimbatore Flyover, Coimbatore",
+  "Raja Muthiah Road, Periamet, Chennai",
+  "Coimbatore International Airport (CJB), Coimbatore",
+  "Coimbatore Junction Railway Station, Coimbatore",
+  "Gandhipuram Central Bus Stand, Coimbatore",
+  "PSG College of Technology, Peelamedu, Coimbatore",
+  "Hope College, Peelamedu, Coimbatore",
+  "Saravanampatti, Coimbatore",
+  "Town Hall, Coimbatore",
+  "Chennai Central Railway Station (MAS), Chennai",
+  "Chennai International Airport (MAA), Chennai",
+  "Marina Beach, Chennai",
+  "Koyambedu Omni Bus Terminus (CMBT), Chennai",
+  "T. Nagar, Chennai",
+  "Ooty Bus Stand, Ooty",
+  "Mettupalayam Railway Station, Mettupalayam",
+  "Singanallur Bus Stand, Coimbatore",
+  "Sulur, Coimbatore",
+  "Pollachi Junction Railway Station, Pollachi",
+  "Tiruppur Railway Station, Tiruppur",
+  "Erode Junction Railway Station, Erode",
+  "Salem Junction Railway Station, Salem",
+  "Madurai Junction Railway Station, Madurai"
+];
 
 // Partial-match helper — handles any spelling variation
 function getCarImage(name) {
@@ -71,12 +106,18 @@ const reverseGeocode = async (lat, lng, callback) => {
 function CustomerBooking({ token, customer }) {
   const API_URL = "http://localhost:5001/api";
 
-  const [pickup, setPickup] = useState("Coimbatore, Tamil Nadu, India");
-  const [drop, setDrop] = useState("Chennai, Tamil Nadu, India");
-  const [pickupCoords, setPickupCoords] = useState({ lat: 11.0168, lng: 76.9558 }); // Coimbatore
-  const [dropCoords, setDropCoords] = useState({ lat: 13.0827, lng: 80.2707 }); // Chennai
+  const [pickup, setPickup] = useState("North Coimbatore Flyover, Coimbatore");
+  const [drop, setDrop] = useState("Raja Muthiah Road, Periamet, Chennai");
+  const [pickupCoords, setPickupCoords] = useState({ lat: 11.0183, lng: 76.9602 }); // North Coimbatore Flyover
+  const [dropCoords, setDropCoords] = useState({ lat: 13.0834, lng: 80.2718 }); // Raja Muthiah Road, Chennai
   const [dateTime, setDateTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [customerContact, setCustomerContact] = useState(customer ? customer.phone || '' : '');
+  const [passengersCount, setPassengersCount] = useState(1);
+  const [tripType, setTripType] = useState('One Way');
+  const [specialRequirements, setSpecialRequirements] = useState('');
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [showDropSuggestions, setShowDropSuggestions] = useState(false);
 
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -87,6 +128,61 @@ function CustomerBooking({ token, customer }) {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const mapRef = useRef(null);
+  const pickupMarkerRef = useRef(null);
+  const dropMarkerRef = useRef(null);
+
+  const handleSearchLocation = async (query, type) => {
+    if (!query) return;
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        const newLat = parseFloat(lat);
+        const newLng = parseFloat(lon);
+
+        if (type === 'pickup') {
+          setPickupCoords({ lat: newLat, lng: newLng });
+          setPickup(display_name);
+          if (pickupMarkerRef.current) {
+            pickupMarkerRef.current.setLatLng([newLat, newLng]);
+          }
+          if (mapRef.current) {
+            mapRef.current.setView([newLat, newLng], 13);
+          }
+        } else {
+          setDropCoords({ lat: newLat, lng: newLng });
+          setDrop(display_name);
+          if (dropMarkerRef.current) {
+            dropMarkerRef.current.setLatLng([newLat, newLng]);
+          }
+          if (mapRef.current) {
+            mapRef.current.setView([newLat, newLng], 13);
+          }
+        }
+      } else {
+        setError(`No location found for "${query}"`);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to search location.");
+    }
+  };
+
+  const handleKeyDown = (e, type) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (type === 'pickup') {
+        handleSearchLocation(pickup, 'pickup');
+      } else {
+        handleSearchLocation(drop, 'drop');
+      }
+    }
+  };
 
   const fetchBookingOptions = async () => {
     setOptionsLoading(true);
@@ -118,6 +214,7 @@ function CustomerBooking({ token, customer }) {
 
     // Center map around South India region
     const map = L.map('map-container').setView([12.0, 78.6], 7);
+    mapRef.current = map;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
@@ -146,10 +243,12 @@ function CustomerBooking({ token, customer }) {
       .addTo(map)
       .bindPopup("<b>Pickup Location</b><br>Drag me!")
       .openPopup();
+    pickupMarkerRef.current = pickupMarker;
 
     const dropMarker = L.marker([dropCoords.lat, dropCoords.lng], { icon: redIcon, draggable: true })
       .addTo(map)
       .bindPopup("<b>Drop Location</b><br>Drag me!");
+    dropMarkerRef.current = dropMarker;
 
     // Set bounds
     const bounds = L.latLngBounds([pickupCoords.lat, pickupCoords.lng], [dropCoords.lat, dropCoords.lng]);
@@ -179,7 +278,7 @@ function CustomerBooking({ token, customer }) {
       const clickLatLng = e.latlng;
       const pickupLatLng = pickupMarker.getLatLng();
       const dropLatLng = dropMarker.getLatLng();
-      
+
       const distToPickup = clickLatLng.distanceTo(pickupLatLng);
       const distToDrop = clickLatLng.distanceTo(dropLatLng);
 
@@ -225,23 +324,43 @@ function CustomerBooking({ token, customer }) {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({
-          pickupLocation: pickup, dropLocation: drop, pickupDateTime: dateTime,
+          pickupLocation: pickup, 
+          dropLocation: drop, 
+          pickupDateTime: dateTime,
           vehicleType: selectedVehicle.type,
-          assignedVehicleId: selectedVehicle.id,
-          notes,
-          customerName: customer ? customer.name : undefined
+          modelName: selectedVehicle.name,     // backend will auto-pick first available unit
+          customerName: customer ? customer.name : undefined,
+          customerContact,
+          passengersCount,
+          tripType,
+          specialRequirements: specialRequirements || notes || '',
+          notes: notes || specialRequirements || '',
+          fareEstimated: estimatedFare
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Booking creation failed.");
 
-      setSuccess(`✅ Booking confirmed! Your Booking ID is ${data.id}.`);
-      setDateTime(""); setSelectedVehicle(null); setNotes("");
-      fetchBookingOptions();
+      setSuccess(`✅ Booking confirmed! Your Booking ID is #${data.id}. Vehicle: ${selectedVehicle.name} — reserved for you. Our team will assign a driver shortly.`);
+      setDateTime(""); 
+      setSelectedVehicle(null); 
+      setNotes(""); 
+      setSpecialRequirements(""); 
+      setPassengersCount(1);
+      setTripType("One Way");
+      fetchBookingOptions(); // Refresh — booked car disappears from the list
     } catch (err) {
       setError(err.message);
     }
   };
+
+  const filteredPickupPresets = PRESET_LOCATIONS.filter(loc =>
+    loc.toLowerCase().includes((pickup || "").toLowerCase())
+  );
+
+  const filteredDropPresets = PRESET_LOCATIONS.filter(loc =>
+    loc.toLowerCase().includes((drop || "").toLowerCase())
+  );
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -271,14 +390,14 @@ function CustomerBooking({ token, customer }) {
                 <span>Select Route on Map</span>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Drag pins to adjust</span>
               </label>
-              <div 
-                id="map-container" 
-                style={{ 
-                  height: '280px', 
-                  width: '100%', 
-                  borderRadius: '12px', 
-                  border: '1px solid rgba(255,255,255,0.1)', 
-                  marginBottom: '10px', 
+              <div
+                id="map-container"
+                style={{
+                  height: '280px',
+                  width: '100%',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  marginBottom: '10px',
                   overflow: 'hidden',
                   position: 'relative',
                   zIndex: 1
@@ -290,26 +409,161 @@ function CustomerBooking({ token, customer }) {
             </div>
 
             {/* Pickup Address Display */}
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Pickup Address</label>
-              <input
-                type="text" className="form-input" 
-                value={pickup} 
-                readOnly
-                style={{ backgroundColor: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
-                required
-              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text" className="form-input"
+                  value={pickup}
+                  onChange={(e) => {
+                    setPickup(e.target.value);
+                    setShowPickupSuggestions(true);
+                  }}
+                  onFocus={() => setShowPickupSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowPickupSuggestions(false), 250)}
+                  placeholder="Enter pickup location..."
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleSearchLocation(pickup, 'pickup')}
+                  style={{
+                    padding: '0 16px',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🔍 Search
+                </button>
+              </div>
+              
+              {showPickupSuggestions && filteredPickupPresets.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#1a1e2d',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  marginTop: '4px'
+                }}>
+                  {filteredPickupPresets.map(loc => (
+                    <div
+                      key={loc}
+                      onMouseDown={() => {
+                        setPickup(loc);
+                        handleSearchLocation(loc, 'pickup');
+                        setShowPickupSuggestions(false);
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255,255,255,0.03)',
+                        fontSize: '13px',
+                        color: 'var(--text-main)',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.target.style.background = 'none'}
+                    >
+                      📍 {loc}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Drop Address Display */}
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Drop Address</label>
-              <input
-                type="text" className="form-input" 
-                value={drop} 
-                readOnly
-                style={{ backgroundColor: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'not-allowed' }}
-                required
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text" className="form-input"
+                  value={drop}
+                  onChange={(e) => {
+                    setDrop(e.target.value);
+                    setShowDropSuggestions(true);
+                  }}
+                  onFocus={() => setShowDropSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowDropSuggestions(false), 250)}
+                  placeholder="Enter drop location..."
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => handleSearchLocation(drop, 'drop')}
+                  style={{
+                    padding: '0 16px',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🔍 Search
+                </button>
+              </div>
+              
+              {showDropSuggestions && filteredDropPresets.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#1a1e2d',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  marginTop: '4px'
+                }}>
+                  {filteredDropPresets.map(loc => (
+                    <div
+                      key={loc}
+                      onMouseDown={() => {
+                        setDrop(loc);
+                        handleSearchLocation(loc, 'drop');
+                        setShowDropSuggestions(false);
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid rgba(255,255,255,0.03)',
+                        fontSize: '13px',
+                        color: 'var(--text-main)',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}
+                      onMouseLeave={(e) => e.target.style.background = 'none'}
+                    >
+                      📍 {loc}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Contact Details */}
+            <div className="form-group">
+              <label className="form-label">Customer Contact Details (Phone)</label>
+              <input 
+                type="tel" className="form-input" 
+                value={customerContact} onChange={(e) => setCustomerContact(e.target.value)} 
+                placeholder="Enter contact number..." 
+                required 
               />
             </div>
 
@@ -317,6 +571,30 @@ function CustomerBooking({ token, customer }) {
             <div className="form-group">
               <label className="form-label">Travel Date & Time</label>
               <input type="datetime-local" className="form-input" value={dateTime} onChange={(e) => setDateTime(e.target.value)} required />
+            </div>
+
+            {/* Trip Type & Number of Passengers */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Trip Type</label>
+                <select className="form-select" value={tripType} onChange={(e) => setTripType(e.target.value)}>
+                  <option value="One Way">One Way</option>
+                  <option value="Round Trip">Round Trip</option>
+                  <option value="Local Travel">Local Travel</option>
+                  <option value="Outstation Travel">Outstation Travel</option>
+                  <option value="Airport Pickup">Airport Pickup</option>
+                  <option value="Airport Drop">Airport Drop</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Number of Passengers</label>
+                <input 
+                  type="number" className="form-input" 
+                  min="1" max="50"
+                  value={passengersCount} onChange={(e) => setPassengersCount(parseInt(e.target.value) || 1)} 
+                  required 
+                />
+              </div>
             </div>
 
             {/* ── Car Model Grid ── */}
@@ -349,55 +627,112 @@ function CustomerBooking({ token, customer }) {
 
               {optionsLoading ? (
                 <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                  🔄 Loading available cars...
+                  🔄 Loading cars...
                 </div>
               ) : filteredVehicles.length === 0 ? (
-                <div style={{ padding: '16px', backgroundColor: 'rgba(255,60,60,0.05)', border: '1px solid rgba(255,60,60,0.15)', borderRadius: '8px', fontSize: '13px', color: 'var(--status-cancelled)', textAlign: 'center' }}>
-                  ⚠ No available cars found{filterType !== "All" ? ` for ${filterType}` : ""}. Try another type.
+                <div style={{ padding: '20px 16px', backgroundColor: 'rgba(255,60,60,0.05)', border: '1px solid rgba(255,60,60,0.15)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>🚗</div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    No {filterType !== 'All' ? filterType : ''} Vehicles in Fleet
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Please contact us to check availability.</div>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '12px', maxHeight: '380px', overflowY: 'auto', paddingRight: '4px' }}>
                   {filteredVehicles.map((vehicle) => {
-                    const isSelected = selectedVehicle?.id === vehicle.id;
+                    const isAvailable = vehicle.availableCount > 0;
+                    const isSelected = selectedVehicle?.name === vehicle.name;
+                    const img = getCarImage(vehicle.name) || vehicle.image;
                     return (
                       <div
-                        key={vehicle.id}
-                        onClick={() => setSelectedVehicle(vehicle)}
+                        key={vehicle.name}
+                        onClick={() => isAvailable && setSelectedVehicle(vehicle)}
                         style={{
-                          padding: '14px 10px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer',
-                          border: isSelected ? '2px solid var(--color-primary)' : '1px solid rgba(255,255,255,0.07)',
-                          backgroundColor: isSelected ? 'rgba(16,185,129,0.09)' : 'rgba(255,255,255,0.02)',
+                          padding: '14px 10px', borderRadius: '12px', textAlign: 'center',
+                          cursor: isAvailable ? 'pointer' : 'not-allowed',
+                          border: isSelected
+                            ? '2px solid var(--color-primary)'
+                            : isAvailable ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(239,68,68,0.2)',
+                          backgroundColor: isSelected
+                            ? 'rgba(16,185,129,0.09)'
+                            : isAvailable ? 'rgba(255,255,255,0.02)' : 'rgba(239,68,68,0.04)',
                           boxShadow: isSelected ? '0 0 14px rgba(16,185,129,0.18)' : 'none',
                           transform: isSelected ? 'translateY(-2px)' : 'none',
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.2s ease',
+                          opacity: isAvailable ? 1 : 0.5,
+                          position: 'relative'
                         }}
-                        onMouseEnter={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; } }}
-                        onMouseLeave={(e) => { if (!isSelected) { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; } }}
+                        onMouseEnter={(e) => {
+                          if (isAvailable && !isSelected) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (isAvailable && !isSelected) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)';
+                          }
+                        }}
                       >
-                        {(() => {
-                          const img = getCarImage(vehicle.name);
-                          return img ? (
-                            <img
-                              src={img}
-                              alt={vehicle.name}
-                              style={{ width: '100%', height: '90px', objectFit: 'cover', marginBottom: '6px', borderRadius: '8px', display: 'block', background: 'rgba(0,0,0,0.3)' }}
-                              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
-                            />
-                          ) : null;
-                        })()}
-                        <div style={{ fontSize: '30px', marginBottom: '6px', display: getCarImage(vehicle.name) ? 'none' : 'block' }}>{TYPE_ICONS[vehicle.type] || "🚘"}</div>
-                        <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)', marginBottom: '3px' }}>{vehicle.name}</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>{vehicle.type} • {vehicle.capacity} Seats</div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px' }}>{vehicle.plateNumber}</div>
+                        {/* Availability count badge — top right */}
                         <div style={{
-                          fontSize: '11px', fontWeight: '800',
-                          color: isSelected ? 'var(--color-primary)' : 'var(--text-muted)',
-                          backgroundColor: isSelected ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
-                          padding: '3px 8px', borderRadius: '10px', display: 'inline-block'
+                          position: 'absolute', top: '7px', right: '7px',
+                          fontSize: '9px', fontWeight: '800', padding: '2px 7px', borderRadius: '20px',
+                          background: isAvailable
+                            ? `rgba(16,185,129,${vehicle.availableCount === vehicle.totalCount ? '0.2' : '0.12'})`
+                            : 'rgba(239,68,68,0.2)',
+                          color: isAvailable ? '#10b981' : '#ef4444',
+                          whiteSpace: 'nowrap'
                         }}>
-                          ₹{vehicle.ratePerKm}/km
+                          {isAvailable ? `${vehicle.availableCount}/${vehicle.totalCount} avail` : 'FULL'}
                         </div>
-                        {vehicle.acpreference && (
+
+                        {img ? (
+                          <img
+                            src={img}
+                            alt={vehicle.name}
+                            style={{
+                              width: '100%', height: '90px', objectFit: 'cover',
+                              marginBottom: '6px', borderRadius: '8px', display: 'block',
+                              background: 'rgba(0,0,0,0.3)',
+                              filter: isAvailable ? 'none' : 'grayscale(80%)'
+                            }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div style={{ fontSize: '30px', marginBottom: '6px', filter: isAvailable ? 'none' : 'grayscale(1)' }}>
+                            {TYPE_ICONS[vehicle.type] || '🚘'}
+                          </div>
+                        )}
+
+                        <div style={{ fontWeight: '700', fontSize: '13px', color: isAvailable ? 'var(--text-main)' : 'var(--text-muted)', marginBottom: '3px' }}>
+                          {vehicle.name}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                          {vehicle.type} • {vehicle.capacity} Seats
+                        </div>
+
+                        {isAvailable ? (
+                          <div style={{
+                            fontSize: '11px', fontWeight: '800',
+                            color: isSelected ? 'var(--color-primary)' : 'var(--text-muted)',
+                            backgroundColor: isSelected ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
+                            padding: '3px 8px', borderRadius: '10px', display: 'inline-block'
+                          }}>
+                            ₹{vehicle.ratePerKm}/km
+                          </div>
+                        ) : (
+                          <div style={{
+                            fontSize: '10px', fontWeight: '700', color: '#ef4444',
+                            padding: '2px 8px', borderRadius: '10px', display: 'inline-block',
+                            background: 'rgba(239,68,68,0.1)'
+                          }}>
+                            Fully Booked
+                          </div>
+                        )}
+
+                        {isAvailable && vehicle.acpreference && (
                           <div style={{ fontSize: '10px', color: '#60a5fa', marginTop: '4px' }}>{vehicle.acpreference}</div>
                         )}
                       </div>
@@ -409,12 +744,12 @@ function CustomerBooking({ token, customer }) {
 
 
 
-            {/* Notes */}
+            {/* Special Requirements */}
             <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label className="form-label">Special Notes (Optional)</label>
+              <label className="form-label">Special Requirements</label>
               <textarea
                 className="form-input" placeholder="E.g. infant seat required, extra luggage, etc."
-                value={notes} onChange={(e) => setNotes(e.target.value)}
+                value={specialRequirements} onChange={(e) => setSpecialRequirements(e.target.value)}
                 rows="2" style={{ resize: 'vertical', minHeight: '64px', fontFamily: 'inherit' }}
               />
             </div>

@@ -107,13 +107,11 @@ import CustomerLogin from "./components/customer/CustomerLogin";
 import CustomerRegister from "./components/customer/CustomerRegister";
 import CustomerDashboard from "./components/customer/CustomerDashboard";
 
-function CustomerLayout({ customer, customers, onSelectCustomer, handleLogout, children }) {
+function CustomerLayout({ customer, handleLogout, children }) {
   return (
     <>
       <CustomerNavbar 
         customer={customer} 
-        customers={customers} 
-        onSelectCustomer={onSelectCustomer} 
         handleLogout={handleLogout} 
       />
       <main style={{ padding: '0 20px 20px' }} className="animate-fade-in">
@@ -253,8 +251,6 @@ function App() {
               customerToken ? (
                 <CustomerLayout 
                   customer={customer} 
-                  customers={customers} 
-                  onSelectCustomer={handleSelectCustomer} 
                   handleLogout={handleCustomerLogout}
                 >
                   <CustomerDashboard 

@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
+const MALE_AVATARS = [
+  '/drivers/driver_avatar_1.png',
+  '/drivers/driver_avatar_2.png',
+  '/drivers/driver_avatar_3.png',
+  '/drivers/driver_avatar_5.png',
+  '/drivers/driver_avatar_6.png'
+];
+
+const FEMALE_AVATARS = [
+  '/drivers/driver_avatar_4.png'
+];
+
+const getDriverAvatar = (gender, index) => {
+  const isFemale = gender && gender.toLowerCase() === 'female';
+  const list = isFemale ? FEMALE_AVATARS : MALE_AVATARS;
+  return list[index % list.length];
+};
+
 function AdminDrivers({ token, drivers, refresh, toast }) {
   const API_URL = 'http://localhost:5001/api';
 
@@ -9,6 +27,9 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [license, setLicense] = useState('');
+  const [photo, setPhoto] = useState(null);
+  const [gender, setGender] = useState('Male');
+  const [preview, setPreview] = useState("");
   const [status, setStatus] = useState('Available');
   const [viewingDriver, setViewingDriver] = useState(null);
 
@@ -17,7 +38,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
     try {
       const url = editingDriver ? `${API_URL}/drivers/${editingDriver.id}` : `${API_URL}/drivers`;
       const method = editingDriver ? 'PUT' : 'POST';
-      const body = { name, phone, licenseNumber: license };
+      const body = { name, phone, licenseNumber: license, photo, gender };
       if (editingDriver) {
         body.status = status;
       }
@@ -45,6 +66,8 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
     setName(d.name);
     setPhone(d.phone);
     setLicense(d.licenseNumber);
+    setPhoto(d.photo || '');
+    setGender(d.gender || 'Male');
     setStatus(d.status || 'Available');
     setShowModal(true);
   };
@@ -55,6 +78,8 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
     setName('');
     setPhone('');
     setLicense('');
+    setPhoto('');
+    setGender('Male');
     setStatus('Available');
   };
 
@@ -101,32 +126,68 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                 <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No drivers registered.</td>
               </tr>
             ) : (
-              drivers.map(d => (
-                <tr key={d.id}>
-                  <td><strong>{d.id}</strong></td>
-                  <td>{d.name}</td>
-                  <td>{d.phone}</td>
-                  <td>{d.licenseNumber}</td>
-                  <td>
-                    <span className={`badge badge-${d.status === 'Available' ? 'inprogress' : d.status === 'On Trip' ? 'confirmed' : 'pending'}`}>
-                      {d.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
-                        View
-                      </button>
-                      <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
-                        Edit
-                      </button>
-                      <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(d.id)}>
-                        Remove
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              drivers.map((d, idx) => {
+                const avatarColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#8b5cf6', '#06b6d4'];
+                const bgColor = avatarColors[idx % avatarColors.length];
+                const photoSrc = d.photo || getDriverAvatar(d.gender, idx);
+                const initial = d.name ? d.name.charAt(0).toUpperCase() : '?';
+                return (
+                  <tr key={d.id}>
+                    <td><strong>{d.id}</strong></td>
+                    <td style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img
+                          src={photoSrc}
+                          alt={d.name}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: `2px solid ${bgColor}`,
+                            display: 'block'
+                          }}
+                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                        />
+                        <div style={{
+                          display: 'none',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: bgColor,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          color: '#fff',
+                          border: `2px solid ${bgColor}`
+                        }}>{initial}</div>
+                      </div>
+                      <span>{d.name}</span>
+                    </td>
+                    <td>{d.phone}</td>
+                    <td>{d.licenseNumber}</td>
+                    <td>
+                      <span className={`badge badge-${d.status === 'Available' ? 'inprogress' : d.status === 'On Trip' ? 'confirmed' : 'pending'}`}>
+                        {d.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
+                          View
+                        </button>
+                        <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
+                          Edit
+                        </button>
+                        <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(d.id)}>
+                          Remove
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -152,6 +213,41 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
               <div className="form-group">
                 <label className="form-label">License Number</label>
                 <input type="text" className="form-input" placeholder="e.g. DL-12345TN" value={license} onChange={(e) => setLicense(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Gender</label>
+                <select className="form-select" value={gender} onChange={(e) => setGender(e.target.value)}>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Driver Photo URL/Path</label>
+                <input type="text" className="form-input" placeholder="e.g. /drivers/driver_avatar_1.png" value={photo || ''} onChange={(e) => setPhoto(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Or Upload Driver Photo File</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="form-input" 
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setPhoto(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }} 
+                />
+                {photo && (
+                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img src={photo} alt="Driver preview" style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
+                    <button type="button" className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '11px' }} onClick={() => setPhoto('')}>Remove Photo</button>
+                  </div>
+                )}
               </div>
               {editingDriver && (
                 <div className="form-group" style={{ marginBottom: '25px' }}>
@@ -202,6 +298,10 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
               <div className="details-row">
                 <span className="details-label">Email Address</span>
                 <span className="details-value">{viewingDriver.email || '—'}</span>
+              </div>
+              <div className="details-row">
+                <span className="details-label">Gender</span>
+                <span className="details-value">{viewingDriver.gender || 'Male'}</span>
               </div>
               <div className="details-row">
                 <span className="details-label">Account Role</span>
