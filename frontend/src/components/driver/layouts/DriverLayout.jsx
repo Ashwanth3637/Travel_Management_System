@@ -4,7 +4,7 @@ import DriverSidebar from "../driver/DriverSidebar";
 
 const DriverLayout = () => {
     return (
-        <div className="app-container" style={{ display: 'flex', minHeight: '100vh', width: '100vw' }}>
+        <div className="app-container" style={{ display: 'flex', flexDirection: 'row', minHeight: '100vh', width: '100vw' }}>
             {/* Sidebar */}
             <DriverSidebar />
 
