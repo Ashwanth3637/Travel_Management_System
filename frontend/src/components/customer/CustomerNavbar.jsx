@@ -1,4 +1,6 @@
 
+import ThemeToggle from "../ThemeToggle";
+
 function CustomerNavbar({ customer, handleLogout }) {
   return (
     <nav className="navbar" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -9,10 +11,11 @@ function CustomerNavbar({ customer, handleLogout }) {
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        Travels Cab Rider Portal
+        Travel Booking Management System
       </div>
 
       <div className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <ThemeToggle />
         <span className="badge badge-inprogress">
           Rider
         </span>

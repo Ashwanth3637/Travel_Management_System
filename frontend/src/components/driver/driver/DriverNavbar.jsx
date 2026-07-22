@@ -1,5 +1,6 @@
 import { FaUserCircle } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import ThemeToggle from "../../ThemeToggle";
 
 const DriverNavbar = () => {
   const [driverName, setDriverName] = useState("Driver");
@@ -27,7 +28,8 @@ const DriverNavbar = () => {
         Dashboard Overview
       </h1>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <ThemeToggle />
         <FaUserCircle size={28} color="var(--color-primary)" />
         <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{driverName}</span>
       </div>

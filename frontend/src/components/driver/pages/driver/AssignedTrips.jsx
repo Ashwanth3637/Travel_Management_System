@@ -124,7 +124,7 @@ export default function AssignedTrips() {
                 <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
                   {["Confirmed", "Driver Assigned", "Vehicle Assigned", "Trip Scheduled"].includes(trip.status) && (
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-start"
                       style={{ padding: "10px 18px" }}
                       disabled={updating === trip.id}
                       onClick={() => updateStatus(trip.id, "Trip Started")}

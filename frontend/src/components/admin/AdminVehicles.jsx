@@ -354,10 +354,9 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
                           <span className={`badge badge-${
-                            v.status === 'Available' ? 'inprogress' : 
-                            v.status === 'Assigned' ? 'confirmed' : 
-                            v.status === 'On Trip' ? 'inprogress' :
-                            v.status === 'Under Maintenance' ? 'pending' : 'cancelled'
+                            v.status === 'Assigned' ? 'assigned' : 
+                            v.status === 'On Trip' ? 'ontrip' :
+                            (v.status === 'Inactive' || v.status === 'Under Maintenance') ? 'inactive' : 'available'
                           }`}>
                             {v.status || 'Available'}
                           </span>
@@ -378,13 +377,13 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '6px' }}>
-                          <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingVehicle(v)}>
+                          <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingVehicle(v)}>
                             View
                           </button>
-                          <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(v)}>
+                          <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(v)}>
                             Edit
                           </button>
-                          <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(v.id)}>
+                          <button className="btn btn-remove" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(v.id)}>
                             Remove
                           </button>
                         </div>
@@ -623,10 +622,9 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                 <span className="details-label">Status</span>
                 <span className="details-value">
                   <span className={`badge badge-${
-                    viewingVehicle.status === 'Available' ? 'inprogress' : 
-                    viewingVehicle.status === 'Assigned' ? 'confirmed' : 
-                    viewingVehicle.status === 'On Trip' ? 'inprogress' :
-                    viewingVehicle.status === 'Under Maintenance' ? 'pending' : 'cancelled'
+                    viewingVehicle.status === 'Assigned' ? 'assigned' : 
+                    viewingVehicle.status === 'On Trip' ? 'ontrip' :
+                    (viewingVehicle.status === 'Inactive' || viewingVehicle.status === 'Under Maintenance') ? 'inactive' : 'available'
                   }`}>
                     {viewingVehicle.status || 'Available'}
                   </span>

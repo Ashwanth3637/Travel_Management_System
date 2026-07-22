@@ -87,16 +87,16 @@ function AdminLogin({ onLogin }) {
         flexWrap: 'wrap',
         gap: '12px',
         marginBottom: '28px',
-        color: '#10b981',
+        color: 'var(--color-primary)',
         fontSize: '18px',
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: '1px',
-        textShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
+        textShadow: '0 0 20px var(--color-primary-glow)',
         padding: '8px 16px',
         borderRadius: '30px',
-        background: 'rgba(16, 185, 129, 0.05)',
-        border: '1px solid rgba(16, 185, 129, 0.15)',
+        background: 'rgba(197, 168, 92, 0.06)',
+        border: '1px solid rgba(197, 168, 92, 0.18)',
         backdropFilter: 'blur(8px)'
       }}>
         <span style={{ minWidth: '320px', textAlign: 'center', display: 'inline-block' }}>
@@ -105,7 +105,7 @@ function AdminLogin({ onLogin }) {
             display: 'inline-block',
             width: '2px',
             height: '14px',
-            backgroundColor: '#10b981',
+            backgroundColor: 'var(--color-primary)',
             marginLeft: '4px',
             animation: 'pulse-dot 1s infinite'
           }}></span>
@@ -172,7 +172,7 @@ function AdminLogin({ onLogin }) {
             Admin Dashboard Login
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-            Travels Cab & Travel Booking Management System
+            Travel Booking Management System
           </p>
         </div>
 
