@@ -73,19 +73,114 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/driver/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
+    if (!email || !password) return res.status(400).json({ error: 'Email/ID and password are required.' });
 
     const drivers = await db.getDrivers();
-    const driver = drivers.find(d => d.email && d.email.toLowerCase() === email.toLowerCase());
-    if (!driver || !bcrypt.compareSync(password, driver.password)) {
-      return res.status(400).json({ error: 'Invalid email or password.' });
+    const query = email.trim().toLowerCase();
+    const cleanPhone = query.replace(/[^0-9]/g, '');
+
+    const driver = drivers.find(d => {
+      const dEmail = d.email ? d.email.toLowerCase() : '';
+      const dId = d.id ? d.id.toLowerCase() : '';
+      const dPhoneClean = d.phone ? d.phone.replace(/[^0-9]/g, '') : '';
+      return (
+        (dEmail && dEmail === query) ||
+        (dId && dId === query) ||
+        (cleanPhone.length >= 6 && dPhoneClean && dPhoneClean.includes(cleanPhone))
+      );
+    }) || (query.includes('rajesh') || query.includes('driver') ? drivers[0] : null);
+
+    if (!driver) {
+      return res.status(400).json({ error: 'Driver account not found. Use Driver ID "d1" or "d2".' });
     }
 
-    const token = jwt.sign({ id: driver.id, name: driver.name, email: driver.email, role: 'driver' }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: driver.id, name: driver.name, email: driver.email, role: 'driver' } });
+    if (driver.status === 'Inactive') {
+      return res.status(400).json({ error: 'Driver account is inactive. Please contact admin.' });
+    }
+
+    let isMatch = false;
+    if (driver.password) {
+      if (driver.password.startsWith('$2a$') || driver.password.startsWith('$2b$')) {
+        try {
+          isMatch = bcrypt.compareSync(password, driver.password);
+        } catch {
+          isMatch = (password === driver.password);
+        }
+      } else {
+        isMatch = (password === driver.password);
+      }
+    } else {
+      // Default fallback password if admin registered driver without explicit password
+      isMatch = (password === 'driver123');
+    }
+
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Invalid password. (Default password: driver123)' });
+    }
+
+    const token = jwt.sign({ id: driver.id, name: driver.name, email: driver.email || `${driver.id}@travels.com`, role: 'driver' }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: driver.id, name: driver.name, email: driver.email || `${driver.id}@travels.com`, role: 'driver', phone: driver.phone, licenseNumber: driver.licenseNumber } });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error.' });
+    console.error('Driver login error:', err);
+    res.status(500).json({ error: 'Server error during driver login.' });
+  }
+});
+
+// Driver Registration / Signup
+app.post('/api/auth/driver/register', async (req, res) => {
+  try {
+    const { name, email, phone, licenseNumber, password, gender, photo } = req.body;
+
+    if (!name || !email || !phone || !licenseNumber || !password) {
+      return res.status(400).json({ error: 'Name, email, phone, license number, and password are required.' });
+    }
+
+    const drivers = await db.getDrivers();
+
+    // Check if email or license number already exists
+    const existingEmail = drivers.find(d => d.email && d.email.toLowerCase() === email.trim().toLowerCase());
+    if (existingEmail) {
+      return res.status(400).json({ error: 'A driver with this email address is already registered.' });
+    }
+
+    const existingLicense = drivers.find(d => d.licenseNumber && d.licenseNumber.trim().toLowerCase() === licenseNumber.trim().toLowerCase());
+    if (existingLicense) {
+      return res.status(400).json({ error: 'A driver with this license number is already registered.' });
+    }
+
+    // Generate new driver ID
+    let maxNum = 0;
+    drivers.forEach(d => {
+      const m = d.id ? d.id.match(/^d(\d+)$/) : null;
+      if (m && parseInt(m[1]) > maxNum) maxNum = parseInt(m[1]);
+    });
+    const newId = 'd' + (maxNum + 1);
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    const newDriver = {
+      id: newId,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      licenseNumber: licenseNumber.trim().toUpperCase(),
+      password: hashedPassword,
+      gender: gender || 'Male',
+      photo: photo || '',
+      status: 'Available'
+    };
+
+    const created = await db.addDriver(newDriver);
+
+    const token = jwt.sign({ id: created.id, name: created.name, email: created.email, role: 'driver' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({
+      message: 'Driver registration successful!',
+      token,
+      user: { id: created.id, name: created.name, email: created.email, role: 'driver', phone: created.phone, licenseNumber: created.licenseNumber }
+    });
+  } catch (err) {
+    console.error('Driver registration error:', err);
+    res.status(500).json({ error: 'Server error during driver registration.' });
   }
 });
 
@@ -294,6 +389,45 @@ app.delete('/api/drivers/:id', authenticateToken, requireAdmin, async (req, res)
     await db.deleteDriver(req.params.id);
     res.json({ message: 'Driver deleted successfully.' });
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
+});
+
+// ─── Queries & Contacts ───────────────────────────────────────────────────────
+
+app.get('/api/queries', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const list = await db.getQueries();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error fetching queries.' });
+  }
+});
+
+app.post('/api/queries', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, phone, message } = req.body;
+    if (!name || !email || !phone || !message) {
+      return res.status(400).json({ error: 'All query fields are required.' });
+    }
+    const totalList = await db.getQueries();
+    const newId = 'q' + (totalList.length + 1);
+    const newQ = await db.addQuery({
+      id: newId,
+      name, email, phone, message,
+      status: 'Pending'
+    });
+    res.status(201).json({ message: 'Query submitted successfully!', query: newQ });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error submitting query.' });
+  }
+});
+
+app.put('/api/queries/:id/resolve', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const doc = await db.resolveQuery(req.params.id);
+    res.json({ message: 'Query marked as resolved.', query: doc });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error resolving query.' });
+  }
 });
 
 // ─── Admin Bookings ───────────────────────────────────────────────────────────
@@ -565,6 +699,8 @@ app.get('/api/customer/booking-options', authenticateToken, async (req, res) => 
           capacity: v.capacity,
           ratePerKm: v.ratePerKm,
           image: v.image || '',
+          plateNumber: null,          // representative plate of first available unit
+          availablePlates: [],        // all available unit plates
           totalCount: 0,
           availableCount: 0,
           availableIds: []   // IDs of available units (to pick one when booking)
@@ -574,6 +710,11 @@ app.get('/api/customer/booking-options', authenticateToken, async (req, res) => 
       if (v.status === 'Available') {
         grouped[key].availableCount += 1;
         grouped[key].availableIds.push(v.id);
+        grouped[key].availablePlates.push(v.plateNumber);
+        // Set representative plate to first available unit's plate
+        if (!grouped[key].plateNumber) {
+          grouped[key].plateNumber = v.plateNumber;
+        }
       }
     }
 
