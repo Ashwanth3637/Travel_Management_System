@@ -192,12 +192,14 @@ app.post('/api/customers/register', async (req, res) => {
     if (!name || !email || !phone || !password) return res.status(400).json({ error: 'All fields are required.' });
 
     const customers = await db.getCustomers();
-    if (customers.find(c => c.email.toLowerCase() === email.toLowerCase())) {
+    if (customers.find(c => c.email && c.email.toLowerCase() === email.toLowerCase())) {
       return res.status(400).json({ error: 'Email is already registered.' });
     }
 
+    const uniqueId = 'c_' + Date.now() + Math.floor(Math.random() * 1000);
+
     const newCustomer = {
-      id: 'c' + (customers.length + 1),
+      id: uniqueId,
       name, email, phone,
       password: bcrypt.hashSync(password, 10),
       role: 'customer'
@@ -205,8 +207,8 @@ app.post('/api/customers/register', async (req, res) => {
     await db.addCustomer(newCustomer);
     res.status(201).json({ message: 'Registration successful', customer: { id: newCustomer.id, name, email, phone } });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error.' });
+    console.error('Customer registration error:', err);
+    res.status(500).json({ error: err.message || 'Server error during customer registration.' });
   }
 });
 
@@ -402,22 +404,25 @@ app.get('/api/queries', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/queries', authenticateToken, async (req, res) => {
+app.post('/api/queries', async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
-    if (!name || !email || !phone || !message) {
-      return res.status(400).json({ error: 'All query fields are required.' });
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: 'Name, email, and message are required.' });
     }
     const totalList = await db.getQueries();
-    const newId = 'q' + (totalList.length + 1);
+    const nextNum = totalList.length + 1;
+    const newId = `q${nextNum}`;
     const newQ = await db.addQuery({
       id: newId,
-      name, email, phone, message,
-      status: 'Pending'
+      name, email, phone: phone || '', message,
+      status: 'Pending',
+      createdAt: new Date().toLocaleString()
     });
     res.status(201).json({ message: 'Query submitted successfully!', query: newQ });
   } catch (err) {
-    res.status(500).json({ error: 'Server error submitting query.' });
+    console.error('Error adding query:', err);
+    res.status(500).json({ error: 'Server error saving query.' });
   }
 });
 
@@ -466,6 +471,12 @@ app.post('/api/bookings', authenticateToken, requireAdmin, async (req, res) => {
     
     const [tDate, tTime] = pickupDateTime.split('T');
 
+    // Derive 4-digit Start OTP using customer's registered mobile number (last 4 digits)
+    const rawPhone = (customerContact || '').replace(/[^0-9]/g, '');
+    const startOtp = rawPhone.length >= 4 
+      ? rawPhone.slice(-4) 
+      : Math.floor(1000 + Math.random() * 9000).toString();
+
     const newBooking = { 
       id: 'b' + (maxNum + 1), 
       customerName, 
@@ -485,6 +496,7 @@ app.post('/api/bookings', authenticateToken, requireAdmin, async (req, res) => {
       assignedDriverId: null, 
       notes: notes || specialRequirements || '', 
       fareEstimated: finalFare, 
+      startOtp: startOtp,
       createdAt: new Date().toISOString() 
     };
 
@@ -665,8 +677,45 @@ app.get('/api/driver/dashboard', authenticateToken, requireDriver, async (req, r
 
 app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async (req, res) => {
   try {
-    const updated = await db.updateBooking(req.params.id, { status: req.body.status });
-    if (!updated) return res.status(404).json({ error: 'Trip not found.' });
+    const { status, otp } = req.body;
+    const bookings = await db.getBookings();
+    const trip = bookings.find(b => b.id === req.params.id);
+    if (!trip) return res.status(404).json({ error: 'Trip not found.' });
+
+    // Validate OTP if trying to start trip
+    if (status === 'Trip Started') {
+      if (!otp) {
+        return res.status(400).json({ error: 'Customer OTP is required to start the trip.' });
+      }
+
+      const inputOtp = otp.trim();
+      const phoneDigits = (trip.customerContact || '').replace(/[^0-9]/g, '');
+      const phoneLast4 = phoneDigits.length >= 4 ? phoneDigits.slice(-4) : '';
+
+      // Check registered customer details from DB if needed
+      let registeredLast4 = '';
+      try {
+        const customers = await db.getCustomers();
+        const custDoc = customers.find(c => c.name.toLowerCase() === trip.customerName.toLowerCase());
+        if (custDoc && custDoc.phone) {
+          const cDigits = custDoc.phone.replace(/[^0-9]/g, '');
+          if (cDigits.length >= 4) registeredLast4 = cDigits.slice(-4);
+        }
+      } catch (err) {
+        console.error('Error matching customer phone:', err);
+      }
+
+      const isValid = 
+        (trip.startOtp && trip.startOtp === inputOtp) ||
+        (phoneLast4 && phoneLast4 === inputOtp) ||
+        (registeredLast4 && registeredLast4 === inputOtp);
+
+      if (!isValid) {
+        return res.status(400).json({ error: `Invalid OTP! Please enter the customer's 4-digit mobile OTP code.` });
+      }
+    }
+
+    const updated = await db.updateBooking(req.params.id, { status });
     res.json(updated);
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
@@ -786,6 +835,12 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
 
     const [tDate, tTime] = pickupDateTime.split('T');
 
+    // Derive 4-digit Start OTP using customer's registered mobile number (last 4 digits)
+    const rawPhone = (customerContact || req.user.phone || '').replace(/[^0-9]/g, '');
+    const startOtp = rawPhone.length >= 4 
+      ? rawPhone.slice(-4) 
+      : Math.floor(1000 + Math.random() * 9000).toString();
+
     const newBooking = { 
       id: nextId, 
       customerName: customerName || req.user.name, 
@@ -883,6 +938,26 @@ app.get('/api/customer/assigned-resources/:bookingId', authenticateToken, async 
       vehicle: vehicle ? { name: vehicle.name, plateNumber: vehicle.plateNumber, type: vehicle.type, acpreference: vehicle.acpreference, image: vehicle.image } : null
     });
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
+});
+
+
+
+app.get('/api/admin/queries', authenticateToken, async (req, res) => {
+  try {
+    const queries = await db.getQueries();
+    res.json(queries);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+app.put('/api/admin/queries/:id/resolve', authenticateToken, async (req, res) => {
+  try {
+    const updated = await db.resolveQuery(req.params.id);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error.' });
+  }
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────

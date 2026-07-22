@@ -74,6 +74,7 @@ const BookingSchema = new mongoose.Schema({
   assignedDriverId:   { type: String, default: null },
   notes:              { type: String, default: '' },
   fareEstimated:      { type: Number, default: 0 },
+  startOtp:           { type: String, default: '' },
   createdAt:          { type: String },
   rating:             { type: Number, default: 0 },
   feedback:           { type: String, default: '' },
@@ -93,7 +94,7 @@ const QuerySchema = new mongoose.Schema({
   id:        { type: String, required: true, unique: true },
   name:      { type: String, required: true },
   email:     { type: String, required: true },
-  phone:     { type: String, required: true },
+  phone:     { type: String, default: '' },
   message:   { type: String, required: true },
   status:    { type: String, default: 'Pending' },
   createdAt: { type: String, default: () => new Date().toLocaleString() }
