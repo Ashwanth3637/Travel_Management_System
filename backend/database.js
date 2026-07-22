@@ -89,12 +89,23 @@ const CustomerSchema = new mongoose.Schema({
   role:     { type: String, default: 'customer' }
 }, { timestamps: true });
 
+const QuerySchema = new mongoose.Schema({
+  id:        { type: String, required: true, unique: true },
+  name:      { type: String, required: true },
+  email:     { type: String, required: true },
+  phone:     { type: String, required: true },
+  message:   { type: String, required: true },
+  status:    { type: String, default: 'Pending' },
+  createdAt: { type: String, default: () => new Date().toLocaleString() }
+});
+
 // ─── Models (guard re-compile) ────────────────────────────────────────────────
 
 const User     = mongoose.models.User     || mongoose.model('User',     UserSchema);
 const Driver   = mongoose.models.Driver   || mongoose.model('Driver',   DriverSchema);
 const Booking  = mongoose.models.Booking  || mongoose.model('Booking',  BookingSchema);
 const Customer = mongoose.models.Customer || mongoose.model('Customer', CustomerSchema);
+const Query    = mongoose.models.Query    || mongoose.model('Query',    QuerySchema);
 
 // Separate vehicle collections per category
 const SeданModel  = mongoose.models.Sedan    || mongoose.model('Sedan',    VehicleSchema, 'sedans');
@@ -320,6 +331,18 @@ module.exports = {
     const old = await Booking.findOne({ id });
     if (!old) return null;
 
+    // If vehicle assignment changed, release the old vehicle
+    if (fields.assignedVehicleId && old.assignedVehicleId && fields.assignedVehicleId !== old.assignedVehicleId) {
+      for (const M of ALL_VEHICLE_MODELS) {
+        await M.findOneAndUpdate({ id: old.assignedVehicleId }, { status: 'Available' });
+      }
+    }
+
+    // If driver assignment changed, release the old driver
+    if (fields.assignedDriverId && old.assignedDriverId && fields.assignedDriverId !== old.assignedDriverId) {
+      await Driver.findOneAndUpdate({ id: old.assignedDriverId }, { status: 'Available' });
+    }
+
     const newStatus = fields.status || old.status;
 
     // Release resources on completion/cancellation
@@ -359,6 +382,23 @@ module.exports = {
   addCustomer: async (customer) => {
     await connectDB();
     const doc = await Customer.create(customer);
+    return toPlain(doc);
+  },
+
+  // Queries & Contacts
+  getQueries: async () => {
+    await connectDB();
+    const docs = await Query.find({});
+    return docs.map(toPlain);
+  },
+  addQuery: async (qData) => {
+    await connectDB();
+    const doc = await Query.create(qData);
+    return toPlain(doc);
+  },
+  resolveQuery: async (id) => {
+    await connectDB();
+    const doc = await Query.findOneAndUpdate({ id }, { status: 'Resolved' }, { new: true });
     return toPlain(doc);
   }
 };

@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, Outlet } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 // Admin Components & Layout
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminDashboard from "./components/admin/AdminDashboard";
+
+import ThemeToggle from "./components/ThemeToggle";
+import LandingPage from "./components/LandingPage";
 
 function AdminLayout({ handleLogout, children }) {
   return (
@@ -16,9 +19,10 @@ function AdminLayout({ handleLogout, children }) {
             <circle cx="7" cy="17" r="2"></circle>
             <circle cx="17" cy="17" r="2"></circle>
           </svg>
-          Travels Cab Admin
+          Travel Booking Management System
         </div>
-        <div className="nav-user">
+        <div className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <ThemeToggle />
           <Link 
             to="/admin/profile" 
             style={{ 
@@ -107,7 +111,7 @@ import CustomerLogin from "./components/customer/CustomerLogin";
 import CustomerRegister from "./components/customer/CustomerRegister";
 import CustomerDashboard from "./components/customer/CustomerDashboard";
 
-function CustomerLayout({ customer, handleLogout, children }) {
+function CustomerLayout({ customer, handleLogout }) {
   return (
     <>
       <CustomerNavbar 
@@ -115,7 +119,7 @@ function CustomerLayout({ customer, handleLogout, children }) {
         handleLogout={handleLogout} 
       />
       <main style={{ padding: '0 20px 20px' }} className="animate-fade-in">
-        {children}
+        <Outlet />
       </main>
     </>
   );
@@ -123,6 +127,7 @@ function CustomerLayout({ customer, handleLogout, children }) {
 
 // Driver Components
 import DriverLogin from "./components/driver/pages/driver/DriverLogin";
+import DriverRegister from "./components/driver/pages/driver/DriverRegister";
 import DriverDashboard from "./components/driver/pages/driver/DriverDashboard";
 import DriverProfile from "./components/driver/pages/driver/DriverProfile";
 import AssignedTrips from "./components/driver/pages/driver/AssignedTrips";
@@ -200,12 +205,17 @@ function App() {
     <BrowserRouter>
       <div className="app-container">
         <Routes>
+          {/* Landing / Welcome Hub */}
+          <Route path="/" element={<LandingPage />} />
+
           {/* Admin Routes */}
           <Route path="/admin/*" element={<AdminRoute />} />
           <Route path="/admin/login" element={<AdminRoute />} />
 
           {/* Driver Routes */}
           <Route path="/driver/login" element={<DriverLogin />} />
+          <Route path="/driver/register" element={<DriverRegister />} />
+          <Route path="/driver/signup" element={<Navigate to="/driver/register" replace />} />
           <Route
             path="/driver"
             element={
@@ -219,14 +229,87 @@ function App() {
             <Route path="trips" element={<AssignedTrips />} />
             <Route path="history" element={<TripHistory />} />
             <Route path="availability" element={<Availability />} />
+            <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>
 
           {/* Customer Routes (Rider Module) */}
+          <Route path="/customer/login" element={<Navigate to="/login" replace />} />
+          <Route path="/customer/register" element={<Navigate to="/register" replace />} />
+
+          <Route
+            path="/customer"
+            element={
+              customerToken ? (
+                <CustomerLayout customer={customer} handleLogout={handleCustomerLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          >
+            <Route index element={<Navigate to="home" replace />} />
+            <Route path="home" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="home"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="booking" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="booking"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="history" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="history"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="track" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="track"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="feedback" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="feedback"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="*" element={<Navigate to="home" replace />} />
+          </Route>
+
           <Route 
             path="/login" 
             element={
               customerToken ? (
-                <Navigate to="/" replace />
+                <Navigate to="/customer/home" replace />
               ) : (
                 <CustomerLogin onLogin={handleCustomerLogin} />
               )
@@ -237,33 +320,18 @@ function App() {
             path="/register" 
             element={
               customerToken ? (
-                <Navigate to="/" replace />
+                <Navigate to="/customer/home" replace />
               ) : (
                 <CustomerRegister />
               )
             } 
           />
 
-          {/* Secure Rider Dashboard routes */}
           <Route 
             path="/*" 
             element={
               customerToken ? (
-                <CustomerLayout 
-                  customer={customer} 
-                  handleLogout={handleCustomerLogout}
-                >
-                  <CustomerDashboard 
-                    token={customerToken} 
-                    customer={customer} 
-                    onUpdateProfile={handleUpdateProfile}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    activeTrackBooking={activeTrackBooking}
-                    setActiveTrackBooking={setActiveTrackBooking}
-                    handleLogout={handleCustomerLogout}
-                  />
-                </CustomerLayout>
+                <Navigate to="/customer/home" replace />
               ) : (
                 <Navigate to="/login" replace />
               )

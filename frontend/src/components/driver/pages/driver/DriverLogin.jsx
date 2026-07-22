@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 
@@ -89,7 +89,7 @@ const DriverLogin = () => {
             Driver Login
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-            Travels Cab & Travel Booking Management System
+            Travel Booking Management System
           </p>
         </div>
 
@@ -125,19 +125,19 @@ const DriverLogin = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">Email, Phone, or Driver ID</label>
             <input
-              type="email"
+              type="text"
               name="email"
               className="form-input"
-              placeholder="driver@travels.com"
+              placeholder="rajesh@travels.com or d1"
               value={formData.email}
               onChange={handleChange}
               required
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: '30px' }}>
+          <div className="form-group" style={{ marginBottom: '24px' }}>
             <label className="form-label">Password</label>
             <input
               type="password"
@@ -151,9 +151,34 @@ const DriverLogin = () => {
           </div>
 
           <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', fontSize: '15px', padding: '14px' }}>
-            {loading ? "Logging In..." : "Login to Dashboard"}
+            {loading ? "Logging In..." : "Login to Driver Portal"}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '13.5px', color: 'var(--text-muted)' }}>
+          Don't have a driver account?{" "}
+          <Link to="/driver/register" style={{ color: 'var(--color-primary)', fontWeight: '700', textDecoration: 'none' }}>
+            Register as Driver
+          </Link>
+        </div>
+
+        <div style={{
+          marginTop: '24px',
+          padding: '12px 14px',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          borderRadius: '8px',
+          border: '1px dashed var(--border-color)',
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+          textAlign: 'left'
+        }}>
+          <strong style={{ color: 'var(--color-primary)' }}>💡 Valid Driver Credentials:</strong>
+          <ul style={{ margin: '6px 0 0 16px', padding: 0, lineHeight: '1.6' }}>
+            <li><strong>Driver ID:</strong> <code>d1</code> or <code>d2</code> or <code>d3</code></li>
+            <li><strong>Email:</strong> <code>rajesh@travels.com</code></li>
+            <li><strong>Password:</strong> <code>driver123</code></li>
+          </ul>
+        </div>
       </div>
     </div>
   );

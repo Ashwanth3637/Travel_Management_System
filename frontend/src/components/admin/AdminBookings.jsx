@@ -57,6 +57,18 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   // Assignment selection fields
   const [selVehicleId, setSelVehicleId] = useState('');
   const [selDriverId, setSelDriverId] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+    } catch (err) {
+      toast(null, 'Failed to refresh data.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleSaveBooking = async (e) => {
     e.preventDefault();
@@ -166,8 +178,8 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
 
   const handleOpenAssignModal = (booking) => {
     setAssigningBooking(booking);
-    setSelVehicleId('');
-    setSelDriverId('');
+    setSelVehicleId(booking.assignedVehicleId || '');
+    setSelDriverId(booking.assignedDriverId || '');
   };
 
   const handleAssignSubmit = async (e) => {
@@ -238,6 +250,32 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
         <div className="glass-panel" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 style={{ margin: 0 }}>Active Bookings & Dispatch</h3>
+          <button
+            onClick={handleManualRefresh}
+            className="btn btn-secondary"
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              cursor: isRefreshing ? 'not-allowed' : 'pointer'
+            }}
+            disabled={isRefreshing}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                fontSize: '14px',
+                lineHeight: '1'
+              }}
+            >
+              ⟳
+            </span>
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
 
         <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
@@ -290,7 +328,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
                         {b.status === 'Pending' && (
                           <>
-                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleOpenAssignModal(b)}>
+                            <button className="btn btn-assign" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleOpenAssignModal(b)}>
                               Confirm
                             </button>
                             <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleCancelBooking(b.id)}>
@@ -300,7 +338,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                         )}
                         {b.status === 'Confirmed' && (
                           <>
-                            <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleForceStatus(b.id, 'In Progress')}>
+                            <button className="btn btn-start" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleForceStatus(b.id, 'In Progress')}>
                               Start
                             </button>
                             <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleCancelBooking(b.id)}>
@@ -313,10 +351,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                             Complete
                           </button>
                         )}
-                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
+                        <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
                           View
                         </button>
-                        <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
+                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
                           Edit
                         </button>
                       </div>
@@ -517,10 +555,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                           <td>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
                               <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>Archived</span>
-                              <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
+                              <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
                                 View
                               </button>
-                              <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
+                              <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
                                 Edit
                               </button>
                             </div>
@@ -538,13 +576,13 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
 
       {/* Modal: Create/Edit Booking */}
       {showAddModal && createPortal(
-        <div className="modal-overlay">
-          <div className="glass-panel modal-content">
+        <div className="modal-overlay" onClick={handleCloseAddModal}>
+          <div className="glass-panel modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">{editingBooking ? 'Update Booking Details' : 'Book New Ride Request'}</h3>
-              <button className="modal-close" onClick={handleCloseAddModal}>×</button>
+              <button type="button" className="modal-close" onClick={handleCloseAddModal}>×</button>
             </div>
-            <form onSubmit={handleSaveBooking}>
+            <form onSubmit={handleSaveBooking} action="javascript:void(0)">
               <div className="form-group">
                 <label className="form-label">Customer Name</label>
                 <input type="text" className="form-input" placeholder="e.g. Ashwanth S" value={custName} onChange={(e) => setCustName(e.target.value)} required />
@@ -624,11 +662,11 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
 
       {/* Modal: Confirm and Assign Dispatch */}
       {assigningBooking && createPortal(
-        <div className="modal-overlay">
-          <div className="glass-panel modal-content" style={{ maxWidth: '680px', width: '95vw' }}>
+        <div className="modal-overlay" onClick={() => setAssigningBooking(null)}>
+          <div className="glass-panel modal-content" style={{ maxWidth: '680px', width: '95vw' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">🚀 Assign Vehicle & Driver</h3>
-              <button className="modal-close" onClick={() => setAssigningBooking(null)}>×</button>
+              <button className="modal-close" type="button" onClick={() => setAssigningBooking(null)}>×</button>
             </div>
 
             {/* Booking Summary Banner */}
@@ -642,83 +680,33 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
               </div>
             </div>
 
-            <form onSubmit={handleAssignSubmit}>
-              {/* ── Vehicle Selection ── */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <label className="form-label" style={{ margin: 0, fontSize: '13px', fontWeight: '700' }}>
-                    🚗 Select Available Vehicle <span style={{ color: 'var(--text-muted)', fontWeight: '400' }}>({assigningBooking.vehicleType})</span>
-                  </label>
-                  <span style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '20px', background: vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
-                    {vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length} Available
-                  </span>
-                </div>
-
-                {vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length === 0 ? (
-                  <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#ef4444', textAlign: 'center', fontSize: '13px' }}>
-                    🚫 No available <strong>{assigningBooking.vehicleType}</strong> vehicles. All vehicles of this type are currently on trips.
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px', maxHeight: '240px', overflowY: 'auto', padding: '4px 2px' }}>
-                    {vehicles
-                      .filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType)
-                      .map(v => {
-                        const hasCapacity = v.capacity >= (assigningBooking.passengersCount || 1);
-                        const isSelected = selVehicleId === v.id;
-                        return (
-                          <div
-                            key={v.id}
-                            onClick={() => setSelVehicleId(v.id)}
-                            style={{
-                              padding: '12px',
-                              borderRadius: '10px',
-                              border: isSelected
-                                ? '2px solid var(--color-primary)'
-                                : hasCapacity ? '2px solid var(--border-color)' : '2px solid rgba(251,146,60,0.5)',
-                              background: isSelected
-                                ? 'rgba(99,102,241,0.12)'
-                                : hasCapacity ? 'rgba(255,255,255,0.03)' : 'rgba(251,146,60,0.05)',
-                              cursor: 'pointer',
-                              opacity: 1,
-                              transition: 'all 0.2s ease',
-                              position: 'relative',
-                              textAlign: 'center'
-                            }}
-                          >
-                            {isSelected && (
-                              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff' }}>✓</div>
-                            )}
-                            {!hasCapacity && (
-                              <div style={{ position: 'absolute', top: '6px', left: '6px', fontSize: '10px', background: 'rgba(251,146,60,0.85)', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontWeight: '700' }}>LOW CAP</div>
-                            )}
-                            {v.image ? (
-                              <img src={v.image} alt={v.name} style={{ width: '80px', height: '50px', objectFit: 'contain', marginBottom: '8px' }} />
-                            ) : (
-                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>🚗</div>
-                            )}
-                            <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '3px' }}>{v.name}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>{v.plateNumber}</div>
-                            <div style={{ fontSize: '11px', color: hasCapacity ? '#10b981' : '#fb923c', fontWeight: '600' }}>
-                              {v.capacity} Seats
-                            </div>
-                            <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>₹{v.ratePerKm}/km</div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-                {selVehicleId && (() => {
-                  const sv = vehicles.find(v => v.id === selVehicleId);
-                  return sv && sv.capacity < (assigningBooking.passengersCount || 1) ? (
-                    <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.35)', borderRadius: '8px', fontSize: '12px', color: '#fb923c' }}>
-                      ⚠️ Admin override: <strong>{sv.name}</strong> has {sv.capacity} seats but booking needs {assigningBooking.passengersCount || 1} passengers.
+            <form onSubmit={handleAssignSubmit} action="javascript:void(0)">
+              {/* ── Auto-Assigned Vehicle Info (Customer Chosen) ── */}
+              {(() => {
+                const assignedVehicle = vehicles.find(v => v.id === assigningBooking.assignedVehicleId || v._id === assigningBooking.assignedVehicleId);
+                return (
+                  <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ fontSize: '32px', padding: '12px', background: 'rgba(16,185,129,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      🚙
                     </div>
-                  ) : null;
-                })()}
-                {selVehicleId === '' && vehicles.filter(v => v.status === 'Available' && v.type === assigningBooking.vehicleType).length > 0 && (
-                  <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>Click a vehicle card to select it</div>
-                )}
-              </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Selected Vehicle (Customer Choice)</div>
+                      <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-main)', marginTop: '2px' }}>
+                        {assignedVehicle ? assignedVehicle.name : 'Unassigned Vehicle'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '15px', marginTop: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {assignedVehicle && (
+                          <>
+                            <div>📋 <b>Number:</b> {assignedVehicle.plateNumber}</div>
+                            <div>👥 <b>Capacity:</b> {assignedVehicle.capacity} Seats</div>
+                            <div>💰 <b>Rate:</b> ₹{assignedVehicle.ratePerKm}/km</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
 
               {/* ── Driver Selection ── */}
@@ -727,25 +715,29 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                   <label className="form-label" style={{ margin: 0, fontSize: '13px', fontWeight: '700' }}>
                     👤 Select Available Driver
                   </label>
-                  <span style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '20px', background: drivers.filter(d => d.status === 'Available').length > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: drivers.filter(d => d.status === 'Available').length > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
-                    {drivers.filter(d => d.status === 'Available').length} Available
+                  <span style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '20px', background: drivers.filter(d => d.status === 'Available' || d.id === assigningBooking.assignedDriverId || d._id === assigningBooking.assignedDriverId).length > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: drivers.filter(d => d.status === 'Available' || d.id === assigningBooking.assignedDriverId || d._id === assigningBooking.assignedDriverId).length > 0 ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                    {drivers.filter(d => d.status === 'Available' || d.id === assigningBooking.assignedDriverId || d._id === assigningBooking.assignedDriverId).length} Available
                   </span>
                 </div>
 
-                {drivers.filter(d => d.status === 'Available').length === 0 ? (
+                {drivers.filter(d => d.status === 'Available' || d.id === assigningBooking.assignedDriverId || d._id === assigningBooking.assignedDriverId).length === 0 ? (
                   <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#ef4444', textAlign: 'center', fontSize: '13px' }}>
                     🚫 No available drivers. All {drivers.length} drivers are currently on trips or inactive.
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', padding: '4px 2px' }}>
                     {drivers
-                      .filter(d => d.status === 'Available')
+                      .filter(d => d.status === 'Available' || d.id === assigningBooking.assignedDriverId || d._id === assigningBooking.assignedDriverId)
                       .map(d => {
-                        const isSelected = selDriverId === d.id;
+                        const isSelected = selDriverId === d.id || selDriverId === d._id;
                         return (
                           <div
-                            key={d.id}
-                            onClick={() => setSelDriverId(d.id)}
+                            key={d.id || d._id}
+                            onClick={() => {
+                              const driverId = d.id || d._id || '';
+                              console.log("AdminBookings - Driver Row Clicked:", d, "Selected ID:", driverId);
+                              setSelDriverId(driverId);
+                            }}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -758,6 +750,8 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                               transition: 'all 0.2s ease',
                               position: 'relative'
                             }}
+                            onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; } }}
+                            onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'var(--border-color)'; } }}
                           >
                             {isSelected && (
                               <div style={{ position: 'absolute', right: '14px', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff' }}>✓</div>
@@ -792,14 +786,14 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
               {/* Selected Summary */}
               {(selVehicleId || selDriverId) && (
                 <div style={{ marginBottom: '18px', padding: '12px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '10px', fontSize: '12px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                  {selVehicleId && <div>🚗 <strong>Vehicle:</strong> {vehicles.find(v => v.id === selVehicleId)?.name} ({vehicles.find(v => v.id === selVehicleId)?.plateNumber})</div>}
-                  {selDriverId && <div>👤 <strong>Driver:</strong> {drivers.find(d => d.id === selDriverId)?.name}</div>}
+                  {selVehicleId && <div>🚗 <strong>Vehicle:</strong> {vehicles.find(v => v.id === selVehicleId || v._id === selVehicleId)?.name} ({vehicles.find(v => v.id === selVehicleId || v._id === selVehicleId)?.plateNumber})</div>}
+                  {selDriverId && <div>👤 <strong>Driver:</strong> {drivers.find(d => d.id === selDriverId || d._id === selDriverId)?.name}</div>}
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setAssigningBooking(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={!selVehicleId || !selDriverId}>
+                <button type="submit" className="btn btn-assign" disabled={!selVehicleId || !selDriverId}>
                   ✅ Confirm & Dispatch
                 </button>
               </div>
@@ -811,11 +805,11 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
 
       {/* Modal: View Booking / Customer Details */}
       {viewingBooking && createPortal(
-        <div className="modal-overlay">
-          <div className="glass-panel modal-content" style={{ maxWidth: '500px' }}>
+        <div className="modal-overlay" onClick={() => setViewingBooking(null)}>
+          <div className="glass-panel modal-content" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Ride & Customer Details</h3>
-              <button className="modal-close" onClick={() => setViewingBooking(null)}>×</button>
+              <button type="button" className="modal-close" onClick={() => setViewingBooking(null)}>×</button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>

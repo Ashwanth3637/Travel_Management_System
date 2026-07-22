@@ -71,7 +71,7 @@ function AdminCustomers({ token, toast }) {
                         </span>
                       </td>
                       <td style={{ whiteSpace: 'nowrap' }}>
-                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingCustomer(c)}>
+                        <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingCustomer(c)}>
                           View
                         </button>
                       </td>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import AdminBookings from './AdminBookings';
 import AdminVehicles from './AdminVehicles';
@@ -7,6 +8,7 @@ import AdminReports from './AdminReports';
 import AdminCustomers from './AdminCustomers';
 import AdminOverview from './AdminOverview';
 import AdminProfile from './AdminProfile';
+import AdminFeedbacks from './AdminFeedbacks';
 
 function AdminDashboard({ token, handleLogout }) {
   const API_URL = 'http://localhost:5001/api';
@@ -33,20 +35,23 @@ function AdminDashboard({ token, handleLogout }) {
   const fetchData = async () => {
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      const bRes = await fetch(`${API_URL}/bookings`, { headers, cache: 'no-store' });
-      const bData = await bRes.json();
+      const [bRes, vRes, dRes, sRes] = await Promise.all([
+        fetch(`${API_URL}/bookings`, { headers, cache: 'no-store' }),
+        fetch(`${API_URL}/vehicles`, { headers, cache: 'no-store' }),
+        fetch(`${API_URL}/drivers`, { headers, cache: 'no-store' }),
+        fetch(`${API_URL}/dashboard/stats`, { headers, cache: 'no-store' })
+      ]);
+
+      const [bData, vData, dData, sData] = await Promise.all([
+        bRes.json(),
+        vRes.json(),
+        dRes.json(),
+        sRes.json()
+      ]);
+
       if (bRes.ok) setBookings(bData);
-
-      const vRes = await fetch(`${API_URL}/vehicles`, { headers, cache: 'no-store' });
-      const vData = await vRes.json();
       if (vRes.ok) setVehicles(vData);
-
-      const dRes = await fetch(`${API_URL}/drivers`, { headers, cache: 'no-store' });
-      const dData = await dRes.json();
       if (dRes.ok) setDrivers(dData);
-
-      const sRes = await fetch(`${API_URL}/dashboard/stats`, { headers, cache: 'no-store' });
-      const sData = await sRes.json();
       if (sRes.ok) setStats(sData);
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -63,28 +68,74 @@ function AdminDashboard({ token, handleLogout }) {
   return (
     <div style={{ position: 'relative' }}>
       
-      {/* Toast notifications */}
-      {successMsg && (
+      {/* Toast notifications — rendered via portal to escape any stacking context */}
+      {successMsg && createPortal(
         <div style={{
-          position: 'fixed', top: '90px', right: '40px', zIndex: 1000,
-          padding: '16px 24px', backgroundColor: 'var(--status-completed-bg)',
-          color: 'var(--status-completed)', borderRadius: '12px',
-          border: '1px solid var(--status-completed)', fontWeight: '600',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 99999,
+          minWidth: '280px',
+          maxWidth: '400px',
+          padding: '14px 18px',
+          background: 'linear-gradient(135deg, #064e3b, #065f46)',
+          color: '#6ee7b7',
+          borderRadius: '14px',
+          border: '1px solid rgba(16,185,129,0.4)',
+          fontWeight: '600',
+          fontSize: '14px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.15)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          animation: 'slideInRight 0.3s ease',
+          lineHeight: '1.4',
         }}>
-          {successMsg}
-        </div>
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>✅</span>
+          <span style={{ flex: 1 }}>{successMsg}</span>
+          <button
+            onClick={() => setSuccessMsg('')}
+            style={{
+              background: 'none', border: 'none', color: '#6ee7b7',
+              cursor: 'pointer', fontSize: '16px', padding: '0', flexShrink: 0, opacity: 0.7,
+            }}
+          >✕</button>
+        </div>,
+        document.body
       )}
-      {errorMsg && (
+      {errorMsg && createPortal(
         <div style={{
-          position: 'fixed', top: '90px', right: '40px', zIndex: 1000,
-          padding: '16px 24px', backgroundColor: 'var(--status-cancelled-bg)',
-          color: 'var(--status-cancelled)', borderRadius: '12px',
-          border: '1px solid var(--status-cancelled)', fontWeight: '600',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+          position: 'fixed',
+          top: successMsg ? '100px' : '24px',
+          right: '24px',
+          zIndex: 99999,
+          minWidth: '280px',
+          maxWidth: '400px',
+          padding: '14px 18px',
+          background: 'linear-gradient(135deg, #450a0a, #7f1d1d)',
+          color: '#fca5a5',
+          borderRadius: '14px',
+          border: '1px solid rgba(239,68,68,0.4)',
+          fontWeight: '600',
+          fontSize: '14px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.15)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px',
+          animation: 'slideInRight 0.3s ease',
+          lineHeight: '1.4',
         }}>
-          {errorMsg}
-        </div>
+          <span style={{ fontSize: '20px', flexShrink: 0 }}>❌</span>
+          <span style={{ flex: 1 }}>{errorMsg}</span>
+          <button
+            onClick={() => setErrorMsg('')}
+            style={{
+              background: 'none', border: 'none', color: '#fca5a5',
+              cursor: 'pointer', fontSize: '16px', padding: '0', flexShrink: 0, opacity: 0.7,
+            }}
+          >✕</button>
+        </div>,
+        document.body
       )}
 
       {/* Main Grid Wrapper (Left Sidebar, Right Content) */}
@@ -145,7 +196,7 @@ function AdminDashboard({ token, handleLogout }) {
                 color: 'var(--text-main)',
                 letterSpacing: '0.5px'
               }}>
-                Travels Cab
+                Travel <span style={{ color: 'var(--color-primary)', fontWeight: '900' }}>Booking</span>
               </div>
               <div style={{
                 fontSize: '10px',
@@ -155,7 +206,7 @@ function AdminDashboard({ token, handleLogout }) {
                 letterSpacing: '1px',
                 marginTop: '2px'
               }}>
-                Control Hub
+                Management System
               </div>
             </div>
           </div>
@@ -423,6 +474,42 @@ function AdminDashboard({ token, handleLogout }) {
             <span style={{ fontSize: '18px' }}>📊</span>
             <span>Reports & Analytics</span>
           </NavLink>
+
+          <NavLink 
+            to="/admin/feedbacks" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '14px 18px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '600',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
+              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+            })}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                e.currentTarget.style.color = 'var(--text-main)';
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                e.currentTarget.style.color = 'var(--text-muted)';
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📬</span>
+            <span>Customer Feedbacks</span>
+          </NavLink>
           </div>
 
           {/* Logout Section at the bottom */}
@@ -508,8 +595,19 @@ function AdminDashboard({ token, handleLogout }) {
             } />
             <Route path="reports" element={
               <AdminReports 
+                token={token}
                 stats={stats} 
+                bookings={bookings}
+                vehicles={vehicles}
+                drivers={drivers}
                 refresh={fetchData}
+                toast={triggerToast}
+              />
+            } />
+            <Route path="feedbacks" element={
+              <AdminFeedbacks 
+                token={token} 
+                toast={triggerToast} 
               />
             } />
             <Route path="overview" element={

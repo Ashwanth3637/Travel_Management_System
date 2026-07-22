@@ -66,7 +66,7 @@ function CustomerRegister() {
             Create Rider Account
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-            Join Travels Cab to book rides instantly
+            Join Travel Booking Management System to book rides instantly
           </p>
         </div>
 

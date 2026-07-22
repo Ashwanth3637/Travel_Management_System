@@ -168,19 +168,19 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                     <td>{d.phone}</td>
                     <td>{d.licenseNumber}</td>
                     <td>
-                      <span className={`badge badge-${d.status === 'Available' ? 'inprogress' : d.status === 'On Trip' ? 'confirmed' : 'pending'}`}>
+                      <span className={`badge badge-${d.status === 'Assigned' ? 'assigned' : d.status === 'On Trip' ? 'ontrip' : d.status === 'Inactive' ? 'inactive' : 'available'}`}>
                         {d.status}
                       </span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="btn btn-indigo" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
+                        <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
                           View
                         </button>
-                        <button className="btn btn-warning" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
+                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
                           Edit
                         </button>
-                        <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(d.id)}>
+                        <button className="btn btn-remove" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleDelete(d.id)}>
                           Remove
                         </button>
                       </div>
@@ -227,10 +227,10 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
               </div>
               <div className="form-group">
                 <label className="form-label">Or Upload Driver Photo File</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="form-input" 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="form-input"
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (file) {
@@ -240,7 +240,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                       };
                       reader.readAsDataURL(file);
                     }
-                  }} 
+                  }}
                 />
                 {photo && (
                   <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -310,7 +310,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
               <div className="details-row">
                 <span className="details-label">Status</span>
                 <span className="details-value">
-                  <span className={`badge badge-${viewingDriver.status === 'Available' ? 'inprogress' : viewingDriver.status === 'On Trip' ? 'confirmed' : 'pending'}`}>
+                  <span className={`badge badge-${viewingDriver.status === 'Assigned' ? 'assigned' : viewingDriver.status === 'On Trip' ? 'ontrip' : viewingDriver.status === 'Inactive' ? 'inactive' : 'available'}`}>
                     {viewingDriver.status}
                   </span>
                 </span>

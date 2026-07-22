@@ -87,16 +87,16 @@ function CustomerLogin({ onLogin }) {
         flexWrap: 'wrap',
         gap: '12px',
         marginBottom: '28px',
-        color: '#10b981',
+        color: '#ffffff',
         fontSize: '18px',
         fontWeight: '800',
         textTransform: 'uppercase',
         letterSpacing: '1px',
-        textShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
+        textShadow: '0 0 15px rgba(197, 168, 92, 0.6)',
         padding: '8px 16px',
         borderRadius: '30px',
-        background: 'rgba(16, 185, 129, 0.05)',
-        border: '1px solid rgba(16, 185, 129, 0.15)',
+        background: 'rgba(197, 168, 92, 0.08)',
+        border: '1px solid rgba(197, 168, 92, 0.22)',
         backdropFilter: 'blur(8px)'
       }}>
         <span style={{ minWidth: '320px', textAlign: 'center', display: 'inline-block' }}>
@@ -105,7 +105,7 @@ function CustomerLogin({ onLogin }) {
             display: 'inline-block',
             width: '2px',
             height: '14px',
-            backgroundColor: '#10b981',
+            backgroundColor: 'var(--color-primary)',
             marginLeft: '4px',
             animation: 'pulse-dot 1s infinite'
           }}></span>
@@ -118,7 +118,7 @@ function CustomerLogin({ onLogin }) {
           style={{
             background: 'none',
             border: 'none',
-            color: '#10b981',
+            color: 'var(--color-primary)',
             cursor: 'pointer',
             padding: '4px',
             display: 'flex',
@@ -126,15 +126,15 @@ function CustomerLogin({ onLogin }) {
             justifyContent: 'center',
             borderRadius: '50%',
             transition: 'all 0.2s ease',
-            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            backgroundColor: 'rgba(197, 168, 92, 0.06)',
             outline: 'none'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.16)';
             e.currentTarget.style.transform = 'scale(1.1)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.06)';
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
@@ -294,12 +294,7 @@ function CustomerLogin({ onLogin }) {
           </Link>
         </div>
 
-        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '15px', textAlign: 'center' }}>
-          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Are you an administrator? </span>
-          <a href="http://localhost:5173/login" style={{ fontSize: '13px', color: 'var(--color-secondary)', textDecoration: 'none', fontWeight: '600' }}>
-            Go to Admin Login
-          </a>
-        </div>
+
       </div>
     </div>
   );

@@ -637,10 +637,10 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                           </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                             <button
-                              className="btn btn-secondary"
-                              style={{ padding: '6px 12px', fontSize: '13px' }}
+                              className="btn btn-view"
+                              style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
                               onClick={() => handleViewDetails(b)}
                             >
                               View Details
@@ -649,7 +649,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                             {b.status === "In Progress" && (
                               <button
                                 className="btn btn-primary"
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
                                 onClick={() => onSelectTrackTrip(b)}
                               >
                                 Track Trip
@@ -659,7 +659,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                             {(b.status === "Pending" || b.status === "Confirmed") && (
                               <button
                                 className="btn btn-danger"
-                                style={{ padding: '6px 12px', fontSize: '13px' }}
+                                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
                                 onClick={() => handleCancelBooking(b.id)}
                               >
                                 Cancel

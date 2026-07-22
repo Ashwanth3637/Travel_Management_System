@@ -1,18 +1,22 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomerBooking from "./CustomerBooking";
 import CustomerBookingHistory from "./CustomerBookingHistory";
 import CustomerTrackTrip from "./CustomerTrackTrip";
+import CustomerFeedback from "./CustomerFeedback";
 
 const NAV_ITEMS = [
   { key: "home",    icon: "🏠", label: "Overview" },
   { key: "booking", icon: "🚗", label: "Book a Ride" },
   { key: "history", icon: "📜", label: "Ride History" },
   { key: "track",   icon: "📍", label: "Track Active Trip" },
+  { key: "feedback", icon: "💬", label: "Feedback" },
 ];
 
-function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setActiveTab, activeTrackBooking, setActiveTrackBooking, handleLogout }) {
+function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, activeTrackBooking, setActiveTrackBooking, handleLogout }) {
   const API_URL = "http://localhost:5001/api";
+  const navigate = useNavigate();
 
   const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, active: 0, completed: 0, cancelled: 0 });
 
@@ -70,12 +74,12 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setAct
 
   const handleSelectTrackTrip = (booking) => {
     setActiveTrackBooking(booking);
-    setActiveTab("track");
+    navigate("/customer/track");
   };
 
   const handleClearActiveTrip = () => {
     setActiveTrackBooking(null);
-    setActiveTab("home");
+    navigate("/customer/home");
   };
 
   const renderTabContent = () => {
@@ -127,10 +131,10 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setAct
               <div className="glass-panel" style={{ padding: '30px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 20px 0' }}>Quick Shortcuts</h3>
                 <div style={{ display: 'flex', gap: '15px' }}>
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '15px' }} onClick={() => setActiveTab("booking")}>
+                  <button className="btn btn-primary" style={{ flex: 1, padding: '15px' }} onClick={() => navigate("/customer/booking")}>
                     🚗 Book a Cab
                   </button>
-                  <button className="btn btn-indigo" style={{ flex: 1, padding: '15px' }} onClick={() => setActiveTab("history")}>
+                  <button className="btn btn-indigo" style={{ flex: 1, padding: '15px' }} onClick={() => navigate("/customer/history")}>
                     📜 Ride History
                   </button>
                 </div>
@@ -150,6 +154,8 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setAct
         return <CustomerBookingHistory token={token} customer={customer} onSelectTrackTrip={handleSelectTrackTrip} />;
       case "track":
         return <CustomerTrackTrip token={token} customer={customer} activeBooking={activeTrackBooking} onClearActiveTrip={handleClearActiveTrip} />;
+      case "feedback":
+        return <CustomerFeedback token={token} customer={customer} />;
       default:
         return null;
     }
@@ -225,22 +231,15 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setAct
             {/* Edit Profile button */}
             <div>
               <button
+                className="btn btn-green"
                 onClick={() => setEditingProfile(true)}
                 style={{
                   marginTop: '8px',
                   padding: '6px 14px',
                   fontSize: '12px',
-                  fontWeight: '600',
                   borderRadius: '8px',
-                  border: '1px solid var(--color-primary)',
-                  backgroundColor: 'rgba(16,185,129,0.08)',
-                  color: 'var(--color-primary)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
                   width: '100%'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.18)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.08)'; }}
               >
                 ✏️ Edit Profile
               </button>
@@ -333,7 +332,7 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, setAct
             return (
               <button
                 key={item.key}
-                onClick={() => { setActiveTab(item.key); setEditingProfile(false); }}
+                onClick={() => { navigate(`/customer/${item.key}`); setEditingProfile(false); }}
                 style={sidebarNavLink(isActive)}
                 onMouseEnter={(e) => {
                   if (!isActive) {
