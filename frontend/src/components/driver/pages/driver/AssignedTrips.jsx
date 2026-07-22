@@ -12,8 +12,8 @@ export default function AssignedTrips() {
 
   const token = localStorage.getItem("token");
 
-  const fetchTrips = () => {
-    setLoading(true);
+  const fetchTrips = (showSpinner = false) => {
+    if (showSpinner) setLoading(true);
     fetch(`${API_URL}/driver/trips`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -29,22 +29,40 @@ export default function AssignedTrips() {
       });
   };
 
-  useEffect(() => { fetchTrips(); }, []);
+  useEffect(() => {
+    fetchTrips(true);
 
-  const updateStatus = async (tripId, status) => {
+    // Auto-refresh every 3 seconds so new assignments show instantly without page refresh
+    const interval = setInterval(() => {
+      fetchTrips(false);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const [otpTripId, setOtpTripId] = useState(null);
+  const [otpInput, setOtpInput] = useState("");
+
+  const updateStatus = async (tripId, status, otp = null) => {
     setUpdating(tripId);
+    setError("");
     try {
       const res = await fetch(`${API_URL}/driver/trips/${tripId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, otp })
       });
-      if (!res.ok) throw new Error("Update failed");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Update failed");
+      }
       setToast(`Trip marked as "${status}" successfully!`);
       setTimeout(() => setToast(""), 3000);
+      setOtpTripId(null);
+      setOtpInput("");
       fetchTrips();
-    } catch {
-      setError("Failed to update trip status.");
+    } catch (err) {
+      setError(err.message || "Failed to update trip status.");
     } finally {
       setUpdating(null);
     }
@@ -127,7 +145,11 @@ export default function AssignedTrips() {
                       className="btn btn-start"
                       style={{ padding: "10px 18px" }}
                       disabled={updating === trip.id}
-                      onClick={() => updateStatus(trip.id, "Trip Started")}
+                      onClick={() => {
+                        setOtpTripId(trip.id);
+                        setOtpInput("");
+                        setError("");
+                      }}
                     >
                       <FaPlay /> {updating === trip.id ? "Updating..." : "Start Trip"}
                     </button>
@@ -180,6 +202,64 @@ export default function AssignedTrips() {
               You have no assigned trips at the moment.
             </div>
           )}
+        </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {otpTripId && (
+        <div className="modal-overlay" style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999
+        }}>
+          <div className="glass-panel" style={{ width: "90%", maxWidth: "400px", padding: "28px", textAlign: "center" }}>
+            <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>
+              🔑 Enter Customer OTP
+            </h3>
+            <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "20px" }}>
+              Ask customer for the 4-digit OTP displayed on their booking confirmation to verify and start the trip.
+            </p>
+
+            <input
+              type="text"
+              maxLength={4}
+              placeholder="e.g. 1234"
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ""))}
+              style={{
+                width: "100%",
+                padding: "14px",
+                fontSize: "24px",
+                fontWeight: "800",
+                letterSpacing: "8px",
+                textAlign: "center",
+                borderRadius: "10px",
+                border: "1px solid var(--border-color)",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                color: "#fff",
+                marginBottom: "20px"
+              }}
+              autoFocus
+            />
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+                onClick={() => { setOtpTripId(null); setOtpInput(""); }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-start"
+                style={{ flex: 1 }}
+                disabled={otpInput.length !== 4 || updating === otpTripId}
+                onClick={() => updateStatus(otpTripId, "Trip Started", otpInput)}
+              >
+                {updating === otpTripId ? "Verifying..." : "Verify & Start"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

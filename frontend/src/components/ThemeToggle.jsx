@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 
 function ThemeToggle() {
   const [isLight, setIsLight] = useState(() => {
-    return document.body.classList.contains('light-theme');
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme === 'light';
+    return true; // Default to Light theme
   });
 
   const toggleTheme = () => {
@@ -13,8 +15,8 @@ function ThemeToggle() {
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    const isL = savedTheme === 'light';
+    const savedTheme = localStorage.getItem('theme');
+    const isL = savedTheme ? savedTheme === 'light' : true;
     setIsLight(isL);
     document.body.classList.toggle('light-theme', isL);
   }, []);

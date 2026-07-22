@@ -33,6 +33,8 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
     }
   }, [customer]);
 
+  const [recentActiveBookings, setRecentActiveBookings] = useState([]);
+
   const fetchStats = useCallback(async () => {
     if (!customer) return;
     try {
@@ -47,10 +49,13 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
           total:     data.length,
           pending:   data.filter(b => b.status === "Pending").length,
           confirmed: data.filter(b => b.status === "Confirmed").length,
-          active:    data.filter(b => b.status === "In Progress").length,
+          active:    data.filter(b => b.status === "In Progress" || b.status === "Trip Started").length,
           completed: data.filter(b => b.status === "Completed").length,
           cancelled: data.filter(b => b.status === "Cancelled").length
         });
+        // Active or upcoming non-completed trips
+        const actives = data.filter(b => b.status !== "Completed" && b.status !== "Cancelled");
+        setRecentActiveBookings(actives);
       }
     } catch (err) {
       console.error("Failed to load stats", err);
@@ -127,6 +132,65 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
               </div>
             </div>
 
+            {/* Active Bookings Banner & OTP Card */}
+            {recentActiveBookings.length > 0 && (
+              <div style={{ marginTop: '30px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔑 Active Bookings & Start OTP Code
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  {recentActiveBookings.map(b => (
+                    <div key={b.id} className="glass-panel" style={{
+                      padding: '20px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderLeft: '4px solid var(--color-primary)',
+                      flexWrap: 'wrap',
+                      gap: '15px'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                          <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>#{b.id}</span>
+                          <span className={`badge ${b.status === 'Pending' ? 'badge-pending' : b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-inprogress'}`}>
+                            {b.status}
+                          </span>
+                          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>({b.vehicleType})</span>
+                        </div>
+                        <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+                          📍 {b.pickupLocation} → {b.dropLocation}
+                        </div>
+                      </div>
+
+                      {b.startOtp && (
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(197, 168, 92, 0.2), rgba(229, 193, 88, 0.1))',
+                          padding: '10px 18px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--color-primary)',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: '700', letterSpacing: '0.05em' }}>
+                            Trip Start OTP
+                          </div>
+                          <div style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '4px', color: '#fff', marginTop: '2px' }}>
+                            {b.startOtp}
+                          </div>
+                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            Share with driver
+                          </div>
+                        </div>
+                      )}
+
+                      <button className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={() => handleSelectTrackTrip(b)}>
+                        📍 Track Trip
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '30px', marginTop: '30px' }}>
               <div className="glass-panel" style={{ padding: '30px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 20px 0' }}>Quick Shortcuts</h3>
@@ -142,7 +206,7 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
               <div className="glass-panel" style={{ padding: '30px', borderLeft: '4px solid var(--status-pending)' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: '0 0 12px 0' }}>Trip Regulations</h3>
                 <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  Bookings can only be cancelled while in <strong>Pending</strong> or <strong>Confirmed</strong> states. Once a trip shifts to <strong>In Progress</strong>, cancellations are disabled.
+                  Bookings can only be cancelled while in <strong>Pending</strong> or <strong>Confirmed</strong> states. Share your <strong>4-digit Trip Start OTP</strong> with the assigned chauffeur to authorize and start the trip.
                 </p>
               </div>
             </div>
@@ -174,20 +238,20 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
     width: '100%',
     textAlign: 'left',
     transition: 'all 0.2s ease',
-    color:           isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-    backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-    borderLeft:      isActive ? '4px solid #fff' : '4px solid transparent',
-    boxShadow:       isActive ? '0 0 15px var(--color-primary-glow)' : 'none',
+    color:           isActive ? '#ffffff' : 'var(--text-muted)',
+    backgroundColor: isActive ? '#10b981' : 'rgba(255,255,255,0.01)',
+    borderLeft:      isActive ? '4px solid #ffffff' : '4px solid transparent',
+    boxShadow:       isActive ? '0 0 20px rgba(16, 185, 129, 0.45)' : 'none',
   });
 
   return (
     <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', maxWidth: '1400px', margin: '0 auto' }}>
 
       {/* ─── LEFT SIDEBAR ─── */}
-      <div style={{
+      <div className="glass-panel" style={{
         width: '240px',
         minWidth: '240px',
-        background: 'rgba(15,23,42,0.7)',
+        background: 'var(--bg-card)',
         backdropFilter: 'blur(20px)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
@@ -206,11 +270,11 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
             {/* Avatar */}
             <div style={{
               width: '60px', height: '60px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: '800', fontSize: '24px', color: '#fff',
               margin: '0 auto 10px',
-              boxShadow: '0 4px 16px rgba(99,102,241,0.35)'
+              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.35)'
             }}>
               {customer ? customer.name.charAt(0).toUpperCase() : 'R'}
             </div>

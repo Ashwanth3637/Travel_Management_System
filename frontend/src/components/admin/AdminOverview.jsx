@@ -8,18 +8,18 @@ function StatCard({ title, value, icon, color, subtitle }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered
-          ? `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)`
-          : `rgba(255,255,255,0.02)`,
-        border: `1px solid ${hovered ? color : 'rgba(255,255,255,0.06)'}`,
+        background: hovered ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
+        border: `1.5px solid ${hovered ? color : 'rgba(15, 23, 42, 0.12)'}`,
         borderRadius: '16px',
-        padding: '20px 22px',
+        padding: '18px 20px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px',
+        gap: '14px',
         transition: 'all 0.25s ease',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
-        boxShadow: hovered ? `0 8px 24px ${color}22` : 'none',
+        boxShadow: hovered 
+          ? `0 10px 25px ${color}33` 
+          : '0 4px 16px rgba(15, 23, 42, 0.05)',
         cursor: 'default',
       }}
     >

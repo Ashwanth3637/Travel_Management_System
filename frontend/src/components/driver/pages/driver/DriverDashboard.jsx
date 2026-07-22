@@ -9,11 +9,11 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [driverName, setDriverName] = useState("Driver");
 
-  useEffect(() => {
-    const driver = JSON.parse(localStorage.getItem("driver"));
-    if (driver && driver.name) setDriverName(driver.name);
-
+  const fetchDashboardData = (isInitial = false) => {
+    if (isInitial) setLoading(true);
     const token = localStorage.getItem("token");
+    if (!token) return;
+
     fetch(`${API_URL}/driver/dashboard`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -27,6 +27,20 @@ export default function DriverDashboard() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    const driver = JSON.parse(localStorage.getItem("driver"));
+    if (driver && driver.name) setDriverName(driver.name);
+
+    fetchDashboardData(true);
+
+    // Auto-refresh every 3 seconds for real-time updates when Admin assigns trips
+    const interval = setInterval(() => {
+      fetchDashboardData(false);
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const statCards = [

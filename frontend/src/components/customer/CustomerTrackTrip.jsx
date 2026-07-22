@@ -225,29 +225,35 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
     }
   }, [progress, routePoints]);
 
-  // Fetch assigned resources on load/change
+  // Fetch assigned resources on load & poll every 3s for live updates
   useEffect(() => {
-    if (currentBooking) {
-      const fetchAssigned = async () => {
-        setLoading(true);
-        try {
-          const res = await fetch(`${API_URL}/customer/assigned-resources/${currentBooking.id}?customerName=${encodeURIComponent(customer ? customer.name : "")}`, {
-            headers: {
-              "Authorization": `Bearer ${token}`
-            }
-          });
-          const data = await res.json();
-          if (res.ok) {
-            setAssignedDetails(data);
+    if (!currentBooking) return;
+
+    const fetchAssigned = async (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/customer/assigned-resources/${currentBooking.id}?customerName=${encodeURIComponent(customer ? customer.name : "")}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
           }
-        } catch (err) {
-          console.error("Failed to load assigned details", err);
-        } finally {
-          setLoading(false);
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setAssignedDetails(data);
         }
-      };
-      fetchAssigned();
-    }
+      } catch (err) {
+        console.error("Failed to load assigned details", err);
+      } finally {
+        if (showSpinner) setLoading(false);
+      }
+    };
+
+    fetchAssigned(true);
+    const interval = setInterval(() => {
+      fetchAssigned(false);
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [currentBooking, token, customer]);
 
   // Simulate progress indicator ticking
@@ -465,6 +471,39 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
                 <span className="details-label">Cab Category</span>
                 <span className="details-value">{booking.vehicleType}</span>
               </div>
+              {booking.startOtp && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(197, 168, 92, 0.15), rgba(229, 193, 88, 0.08))',
+                  border: '1px border var(--color-primary)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--color-primary)', fontWeight: '700', letterSpacing: '0.05em' }}>
+                      🔑 Trip Start OTP
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Share with driver to start trip
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '22px',
+                    fontWeight: '800',
+                    letterSpacing: '4px',
+                    color: '#fcfcfd',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(197, 168, 92, 0.4)'
+                  }}>
+                    {booking.startOtp}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

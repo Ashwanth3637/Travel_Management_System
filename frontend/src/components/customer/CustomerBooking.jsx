@@ -401,7 +401,10 @@ function CustomerBooking({ token, customer }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Booking failed.");
-      setSuccess(`✅ Booking confirmed! ID: #${data.id} — ${selectedVehicle.name} reserved. Driver will be assigned shortly.`);
+      setSuccess({
+        message: `✅ Booking confirmed! ID: #${data.id} — ${selectedVehicle.name} reserved.`,
+        startOtp: data.startOtp
+      });
       setDateTime(""); setSelectedVehicle(null); setPassengersCount(1);
       setTripType("One Way"); setSpecialRequirements("");
       fetchBookingOptions();
@@ -426,7 +429,45 @@ function CustomerBooking({ token, customer }) {
 
       {/* Alerts */}
       {error && <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '10px', fontSize: '13px', marginBottom: '18px' }}>{error}</div>}
-      {success && <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399', borderRadius: '10px', fontSize: '13px', marginBottom: '18px' }}>{success}</div>}
+      {success && (
+        <div style={{
+          padding: '16px 20px',
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)',
+          border: '1px solid rgba(16,185,129,0.4)',
+          borderRadius: '14px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          <div>
+            <div style={{ fontWeight: '700', fontSize: '15px', color: '#34d399', marginBottom: '4px' }}>
+              {success.message || success}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              Driver will verify this OTP code before starting your ride.
+            </div>
+          </div>
+          {success.startOtp && (
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid var(--color-primary)',
+              padding: '6px 16px',
+              borderRadius: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '10px', color: 'var(--color-primary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                🔑 Your Start OTP
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: '800', letterSpacing: '4px', color: '#fff' }}>
+                {success.startOtp}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ═══ JOURNEY PLANNER CARD ═══ */}
       <div style={{

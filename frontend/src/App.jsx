@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 // Admin Components & Layout
@@ -137,6 +137,24 @@ import Availability from "./components/driver/pages/driver/Availability";
 import DriverLayout from "./components/driver/layouts/DriverLayout";
 import ProtectedRoute from "./components/driver/driver/ProtectedRoute";
 
+function PageRefreshHandler() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const navEntries = performance.getEntriesByType && performance.getEntriesByType("navigation");
+    const isReload =
+      (navEntries && navEntries.length > 0 && navEntries[0].type === "reload") ||
+      (performance.navigation && performance.navigation.type === 1);
+
+    if (isReload && location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, []);
+
+  return null;
+}
+
 function App() {
   // Customer Authentication States
   const [customerToken, setCustomerToken] = useState(() => {
@@ -174,6 +192,12 @@ function App() {
     }
   }, [customerToken]);
 
+  // Force Light Theme across all modules (Admin, Customer, Driver, Landing)
+  useEffect(() => {
+    document.body.classList.add('light-theme');
+    localStorage.setItem('theme', 'light');
+  }, []);
+
   const handleSelectCustomer = (selectedCust) => {
     setCustomer(selectedCust);
     sessionStorage.setItem('customer', JSON.stringify(selectedCust));
@@ -203,6 +227,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <PageRefreshHandler />
       <div className="app-container">
         <Routes>
           {/* Landing / Welcome Hub */}

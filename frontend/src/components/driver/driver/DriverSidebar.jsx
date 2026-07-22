@@ -23,12 +23,13 @@ const DriverSidebar = () => {
     alignItems: 'center',
     gap: '12px',
     padding: '12px 20px',
-    color: isActive ? 'var(--color-primary)' : 'var(--text-main)',
-    backgroundColor: isActive ? 'var(--color-primary-glow)' : 'transparent',
+    color: isActive ? '#ffffff' : 'var(--text-main)',
+    backgroundColor: isActive ? '#3b82f6' : 'transparent',
     textDecoration: 'none',
-    fontWeight: '500',
+    fontWeight: '600',
     transition: 'all 0.2s',
-    borderLeft: isActive ? '4px solid var(--color-primary)' : '4px solid transparent',
+    borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+    boxShadow: isActive ? '0 0 20px rgba(59, 130, 246, 0.45)' : 'none',
   });
 
   return (
@@ -48,7 +49,7 @@ const DriverSidebar = () => {
         <div style={{
           fontSize: '24px',
           fontWeight: '800',
-          background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}>

@@ -86,27 +86,39 @@ function CustomerLogin({ onLogin }) {
         justifyContent: 'center',
         flexWrap: 'wrap',
         gap: '12px',
-        marginBottom: '28px',
-        color: '#ffffff',
-        fontSize: '18px',
-        fontWeight: '800',
-        textTransform: 'uppercase',
-        letterSpacing: '1px',
-        textShadow: '0 0 15px rgba(197, 168, 92, 0.6)',
-        padding: '8px 16px',
-        borderRadius: '30px',
-        background: 'rgba(197, 168, 92, 0.08)',
-        border: '1px solid rgba(197, 168, 92, 0.22)',
-        backdropFilter: 'blur(8px)'
+        marginBottom: '24px',
+        padding: '10px 22px',
+        borderRadius: '50px',
+        background: 'linear-gradient(135deg, rgba(197, 168, 92, 0.15) 0%, rgba(229, 193, 88, 0.05) 100%)',
+        border: '1px solid rgba(197, 168, 92, 0.35)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37), 0 0 20px rgba(197, 168, 92, 0.25)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)'
       }}>
-        <span style={{ minWidth: '320px', textAlign: 'center', display: 'inline-block' }}>
+        <span style={{
+          minWidth: '320px',
+          textAlign: 'center',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '15px',
+          fontWeight: '700',
+          textTransform: 'uppercase',
+          letterSpacing: '1.5px',
+          background: 'linear-gradient(135deg, #fef08a 0%, #c5a85c 50%, #e5c158 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          filter: 'drop-shadow(0 2px 8px rgba(197, 168, 92, 0.4))'
+        }}>
           {displayText}
           <span style={{
             display: 'inline-block',
             width: '2px',
-            height: '14px',
-            backgroundColor: 'var(--color-primary)',
-            marginLeft: '4px',
+            height: '16px',
+            backgroundColor: '#c5a85c',
+            marginLeft: '6px',
+            borderRadius: '2px',
+            boxShadow: '0 0 8px #c5a85c',
             animation: 'pulse-dot 1s infinite'
           }}></span>
         </span>
@@ -116,32 +128,34 @@ function CustomerLogin({ onLogin }) {
           onClick={handleRefreshGreeting}
           title="Refresh greeting"
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--color-primary)',
+            background: 'rgba(197, 168, 92, 0.12)',
+            border: '1px solid rgba(197, 168, 92, 0.3)',
+            color: '#e5c158',
             cursor: 'pointer',
-            padding: '4px',
+            padding: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: '50%',
-            transition: 'all 0.2s ease',
-            backgroundColor: 'rgba(197, 168, 92, 0.06)',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
             outline: 'none'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.16)';
-            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.25)';
+            e.currentTarget.style.borderColor = 'rgba(229, 193, 88, 0.6)';
+            e.currentTarget.style.transform = 'scale(1.15) rotate(15deg)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.06)';
-            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.backgroundColor = 'rgba(197, 168, 92, 0.12)';
+            e.currentTarget.style.borderColor = 'rgba(197, 168, 92, 0.3)';
+            e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
           }}
         >
           <svg
             className={isSpinning ? "icon-spin" : ""}
-            width="16"
-            height="16"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

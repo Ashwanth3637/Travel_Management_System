@@ -9,6 +9,7 @@ import AdminCustomers from './AdminCustomers';
 import AdminOverview from './AdminOverview';
 import AdminProfile from './AdminProfile';
 import AdminFeedbacks from './AdminFeedbacks';
+import AdminQueries from './AdminQueries';
 
 function AdminDashboard({ token, handleLogout }) {
   const API_URL = 'http://localhost:5001/api';
@@ -60,8 +61,8 @@ function AdminDashboard({ token, handleLogout }) {
 
   useEffect(() => {
     fetchData();
-    // Poll every 30 seconds to keep data fresh
-    const interval = setInterval(fetchData, 30000);
+    // Poll every 3 seconds for instant real-time sync across Admin and Driver portals
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [token]);
 
@@ -158,7 +159,7 @@ function AdminDashboard({ token, handleLogout }) {
           position: 'sticky',
           top: '20px',
           minHeight: 'calc(100vh - 120px)',
-          borderLeft: '4px solid var(--color-primary)',
+          borderLeft: '4px solid #f59e0b',
           boxSizing: 'border-box'
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -175,14 +176,14 @@ function AdminDashboard({ token, handleLogout }) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.25)',
+              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
               flexShrink: 0
             }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-dark)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2z"></path>
                 <path d="M18 18h4a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4"></path>
                 <circle cx="7" cy="17" r="2"></circle>
@@ -196,12 +197,12 @@ function AdminDashboard({ token, handleLogout }) {
                 color: 'var(--text-main)',
                 letterSpacing: '0.5px'
               }}>
-                Travel <span style={{ color: 'var(--color-primary)', fontWeight: '900' }}>Booking</span>
+                Travel <span style={{ color: '#f59e0b', fontWeight: '900' }}>Booking</span>
               </div>
               <div style={{
                 fontSize: '10px',
                 fontWeight: '700',
-                color: 'var(--color-primary)',
+                color: '#d97706',
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
                 marginTop: '2px'
@@ -235,10 +236,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -271,10 +272,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -307,10 +308,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -343,10 +344,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -379,10 +380,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -415,10 +416,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -451,10 +452,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -476,7 +477,7 @@ function AdminDashboard({ token, handleLogout }) {
           </NavLink>
 
           <NavLink 
-            to="/admin/feedbacks" 
+            to="/admin/queries" 
             style={({ isActive }) => ({
               display: 'flex',
               alignItems: 'center',
@@ -487,10 +488,10 @@ function AdminDashboard({ token, handleLogout }) {
               fontSize: '14px',
               fontWeight: '600',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? 'var(--text-dark)' : 'var(--text-muted)',
-              backgroundColor: isActive ? 'var(--color-primary)' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #fff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 15px var(--color-primary-glow)' : 'none'
+              color: isActive ? '#0f172a' : 'var(--text-muted)',
+              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
+              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
+              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
             })}
             onMouseEnter={(e) => {
               if (!e.currentTarget.classList.contains('active')) {
@@ -507,8 +508,8 @@ function AdminDashboard({ token, handleLogout }) {
               }
             }}
           >
-            <span style={{ fontSize: '18px' }}>📬</span>
-            <span>Customer Feedbacks</span>
+            <span style={{ fontSize: '18px' }}>💬</span>
+            <span>Queries & Feedbacks</span>
           </NavLink>
           </div>
 
@@ -606,6 +607,12 @@ function AdminDashboard({ token, handleLogout }) {
             } />
             <Route path="feedbacks" element={
               <AdminFeedbacks 
+                token={token} 
+                toast={triggerToast} 
+              />
+            } />
+            <Route path="queries" element={
+              <AdminQueries 
                 token={token} 
                 toast={triggerToast} 
               />

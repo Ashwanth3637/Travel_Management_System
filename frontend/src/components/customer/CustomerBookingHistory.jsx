@@ -223,6 +223,14 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                     </span>
                   </span>
                 </div>
+                {selectedBooking.startOtp && (
+                  <div className="details-row" style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
+                    <span className="details-label" style={{ color: 'var(--color-primary)', fontWeight: '700' }}>🔑 Start Trip OTP</span>
+                    <span className="details-value" style={{ fontWeight: '800', letterSpacing: '2px', color: '#fcfcfd', background: 'rgba(197, 168, 92, 0.2)', padding: '2px 8px', borderRadius: '6px', border: '1px solid var(--color-primary)' }}>
+                      {selectedBooking.startOtp}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
