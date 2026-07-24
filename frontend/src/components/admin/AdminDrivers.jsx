@@ -103,7 +103,31 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
     <div className="glass-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h3 style={{ margin: 0 }}>Drivers Registry</h3>
-        <button className="btn btn-primary" onClick={() => { handleCloseModal(); setShowModal(true); }}>
+        <button 
+          style={{
+            padding: '10px 18px',
+            fontWeight: '700',
+            fontSize: '14px',
+            backgroundColor: '#3b82f6',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#2563eb';
+            e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#3b82f6';
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+          onClick={() => { handleCloseModal(); setShowModal(true); }}
+        >
           + Add Driver
         </button>
       </div>
@@ -177,7 +201,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                         <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
                           View
                         </button>
-                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(d)}>
+                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', backgroundColor: '#3b82f6', borderColor: '#2563eb', color: '#ffffff' }} onClick={() => handleEditClick(d)}>
                           Edit
                         </button>
                         <button className="btn btn-remove" style={{ padding: '5px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleDelete(d.id)} title="Remove">
@@ -267,7 +291,33 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
               )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Driver</button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  Save Driver
+                </button>
               </div>
             </form>
           </div>

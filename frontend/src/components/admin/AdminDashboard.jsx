@@ -157,60 +157,25 @@ function AdminDashboard({ token, handleLogout }) {
           gap: '8px',
           padding: '20px 12px',
           position: 'sticky',
-          top: '20px',
+          top: '90px',
           minHeight: 'calc(100vh - 120px)',
           borderLeft: '4px solid #f59e0b',
           boxSizing: 'border-box'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* Brand Logo */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '0 12px 16px 12px',
-            borderBottom: '1px solid var(--border-color)',
-            marginBottom: '16px'
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* ── Brand / Header ── */}
+          <div style={{ padding: '16px 8px 20px', textAlign: 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)',
-              flexShrink: 0
+              fontSize: '24px',
+              fontWeight: '800',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '0.5px'
             }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2z"></path>
-                <path d="M18 18h4a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4"></path>
-                <circle cx="7" cy="17" r="2"></circle>
-                <circle cx="17" cy="17" r="2"></circle>
-              </svg>
+              Administration
             </div>
-            <div style={{ textAlign: 'left', lineHeight: '1.2' }}>
-              <div style={{
-                fontSize: '15px',
-                fontWeight: '800',
-                color: 'var(--text-main)',
-                letterSpacing: '0.5px'
-              }}>
-                Travel <span style={{ color: '#f59e0b', fontWeight: '900' }}>Booking</span>
-              </div>
-              <div style={{
-                fontSize: '10px',
-                fontWeight: '700',
-                color: '#d97706',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                marginTop: '2px'
-              }}>
-                Management System
-              </div>
-            </div>
-          </div>
+          </div>    </div>
 
           <div style={{
             fontSize: '11px',
@@ -230,34 +195,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>🏠</span>
-            <span>Dashboard Details</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(59, 130, 246, 0.12)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>🏠</span>
+                <span>Dashboard</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -266,34 +230,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>📅</span>
-            <span>Bookings & Dispatch</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(99, 102, 241, 0.12)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>📅</span>
+                <span>Bookings</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -302,34 +265,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>📜</span>
-            <span>Booking History</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(245, 158, 11, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>📜</span>
+                <span>Trip History</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -338,34 +300,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>👥</span>
-            <span>Customer Profiles</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(236, 72, 153, 0.12)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>👥</span>
+                <span>Customers</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -374,34 +335,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>🚗</span>
-            <span>Vehicle Management</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(249, 115, 22, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>🚗</span>
+                <span>Vehicles</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -410,34 +370,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>👨‍✈️</span>
-            <span>Manage Drivers</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 185, 129, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>👨‍✈️</span>
+                <span>Drivers</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -446,34 +405,33 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>📊</span>
-            <span>Reports & Analytics</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(139, 92, 246, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>📊</span>
+                <span>Reports</span>
+              </>
+            )}
           </NavLink>
 
           <NavLink 
@@ -482,66 +440,66 @@ function AdminDashboard({ token, handleLogout }) {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '14px 18px',
+              padding: '12px 16px',
               borderRadius: '10px',
               textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: '600',
+              fontSize: '14.5px',
+              fontWeight: '800',
               transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#0f172a' : 'var(--text-muted)',
-              backgroundColor: isActive ? '#f59e0b' : 'rgba(255,255,255,0.01)',
-              borderLeft: isActive ? '4px solid #ffffff' : '4px solid transparent',
-              boxShadow: isActive ? '0 0 20px rgba(245, 158, 11, 0.45)' : 'none'
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
             })}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                e.currentTarget.style.color = 'var(--text-main)';
-                e.currentTarget.style.transform = 'translateX(4px)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.classList.contains('active')) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                e.currentTarget.style.color = 'var(--text-muted)';
-                e.currentTarget.style.transform = 'translateX(0)';
-              }
-            }}
           >
-            <span style={{ fontSize: '18px' }}>💬</span>
-            <span>Queries & Feedbacks</span>
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(6, 182, 212, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>💬</span>
+                <span>Feedback</span>
+              </>
+            )}
           </NavLink>
-          </div>
 
           {/* Logout Section at the bottom */}
-          <div style={{
-            marginTop: 'auto',
-            paddingTop: '16px',
-            borderTop: '1px solid var(--border-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}>
+          <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
             <button 
-              className="btn btn-danger" 
               onClick={handleLogout} 
               style={{ 
                 width: '100%', 
                 padding: '12px 16px', 
-                fontSize: '14px', 
-                fontWeight: '600', 
-                borderRadius: '8px',
+                fontSize: '14.5px', 
+                fontWeight: '800', 
+                borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px'
+                gap: '8px',
+                backgroundColor: '#ef4444',
+                color: '#ffffff',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#dc2626';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ef4444';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
+              <span style={{ fontSize: '16px' }}>🔑</span>
               <span>Logout</span>
             </button>
           </div>

@@ -29,7 +29,6 @@ const DriverNavbar = () => {
       </h1>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-        <ThemeToggle />
         <FaUserCircle size={28} color="var(--color-primary)" />
         <span style={{ fontWeight: '500', color: 'var(--text-main)' }}>{driverName}</span>
       </div>

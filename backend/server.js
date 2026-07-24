@@ -720,6 +720,31 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
 
+// Driver/Admin update payment status (Cash Received / GPay Received / Unpaid)
+app.put('/api/driver/bookings/:id/payment-status', async (req, res) => {
+  try {
+    const { paymentStatus, paymentMethod } = req.body;
+    if (!['PAID', 'UNPAID'].includes(paymentStatus)) {
+      return res.status(400).json({ error: 'Invalid payment status. Must be PAID or UNPAID.' });
+    }
+    const bookings = await db.getBookings();
+    const booking = bookings.find(b => b.id === req.params.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+
+    const txnId = paymentStatus === 'PAID' ? ('TXN-DRV-' + Math.floor(10000000 + Math.random() * 90000000)) : null;
+    const updated = await db.updateBooking(req.params.id, {
+      paymentStatus: paymentStatus,
+      paymentMethod: paymentMethod || 'CASH',
+      paidAt: paymentStatus === 'PAID' ? new Date().toISOString() : null,
+      transactionId: txnId || booking.transactionId
+    });
+    res.json(updated || { ...booking, paymentStatus, paymentMethod: paymentMethod || 'CASH' });
+  } catch (err) {
+    console.error('Driver payment update error:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 app.put('/api/driver/availability', authenticateToken, requireDriver, async (req, res) => {
   try {
     const { status } = req.body;
@@ -917,6 +942,70 @@ app.post('/api/customer/bookings/:id/feedback', authenticateToken, async (req, r
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// Direct Driver Messages & Trip Fare Alerts Endpoint for Customer
+app.get('/api/customer/messages', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await db.getBookings();
+    const targetName = req.query.customerName || req.user.name;
+    const customerTrips = bookings.filter(b => 
+      b.customerName.toLowerCase() === targetName.toLowerCase() && 
+      ['Completed', 'Trip Completed'].includes(b.status)
+    );
+
+    const drivers = await db.getDrivers();
+
+    const messages = customerTrips.map(b => {
+      const driver = b.assignedDriverId ? drivers.find(d => d.id === b.assignedDriverId) : null;
+      const driverName = driver ? driver.name : 'Rajesh (Verified Driver)';
+      return {
+        id: 'msg-' + b.id,
+        bookingId: b.id,
+        title: `🚗 Trip #${b.id} Completed - Fare Invoice`,
+        driverName: driverName,
+        driverPhone: driver ? driver.phone : '9845201948',
+        fareAmount: b.fareEstimated || 1850,
+        pickupLocation: b.pickupLocation,
+        dropLocation: b.dropLocation,
+        paymentStatus: b.paymentStatus || 'UNPAID',
+        paymentMethod: b.paymentMethod || 'GPAY',
+        text: `Hello ${b.customerName}, your trip #${b.id} (${b.pickupLocation} ➔ ${b.dropLocation}) is completed by Driver ${driverName}. Total Cost: ₹${b.fareEstimated || 1850}. Please settle fare via GPay QR Code or Cash.`,
+        createdAt: b.paidAt || b.createdAt || new Date().toISOString()
+      };
+    });
+
+    res.json(messages);
+  } catch (err) {
+    console.error('Error fetching customer messages:', err);
+    res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// Process Customer Payment for Completed Trip
+app.post('/api/customer/payments/pay', authenticateToken, async (req, res) => {
+  try {
+    const { bookingId, paymentMethod, amountPaid, transactionId } = req.body;
+    if (!bookingId || !paymentMethod) {
+      return res.status(400).json({ error: 'Booking ID and payment method are required.' });
+    }
+    const bookings = await db.getBookings();
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+
+    const txnId = transactionId || 'TXN-' + Math.floor(10000000 + Math.random() * 90000000);
+    const updated = await db.updateBooking(bookingId, {
+      paymentStatus: 'PAID',
+      paymentMethod: paymentMethod,
+      transactionId: txnId,
+      paidAt: new Date().toISOString(),
+      amountPaid: amountPaid || booking.fareEstimated || 0
+    });
+    res.json({ message: 'Payment processed successfully!', booking: updated, transactionId: txnId });
+  } catch (err) {
+    console.error('Payment error:', err);
+    res.status(500).json({ error: 'Server error processing payment.' });
   }
 });
 

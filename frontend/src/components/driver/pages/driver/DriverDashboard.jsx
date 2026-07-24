@@ -43,7 +43,18 @@ export default function DriverDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const totalEarnings = (stats?.trips || [])
+    .filter(t => t.status === "Completed")
+    .reduce((sum, t) => sum + Math.round((t.fareEstimated || 0) * 0.85), 0);
+
   const statCards = [
+    {
+      label: "Total Earnings",
+      value: `₹${totalEarnings.toLocaleString("en-IN")}`,
+      icon: "💰",
+      color: "#10b981",
+      bg: "rgba(16, 185, 129, 0.15)"
+    },
     {
       label: "Total Trips",
       value: stats?.totalTrips ?? 0,
@@ -80,7 +91,7 @@ export default function DriverDashboard() {
         <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>
           Welcome back, {driverName}!
         </h2>
-        <p style={{ color: "var(--text-muted)" }}>Here is your dashboard overview for today.</p>
+        <p style={{ color: "var(--text-muted)" }}>Here is your dashboard overview and ride earnings payout for today.</p>
       </div>
 
       {loading ? (
@@ -91,53 +102,75 @@ export default function DriverDashboard() {
         <>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "20px",
-            marginBottom: "40px"
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: "16px",
+            marginBottom: "35px"
           }}>
             {statCards.map(card => (
-              <div key={card.label} className="glass-panel" style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+              <div key={card.label} className="glass-panel" style={{ display: "flex", alignItems: "center", gap: "16px", padding: "18px 20px" }}>
                 <div style={{
-                  width: "56px", height: "56px", borderRadius: "50%",
+                  width: "50px", height: "50px", borderRadius: "50%",
                   backgroundColor: card.bg,
                   color: card.color,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "22px", flexShrink: 0
+                  fontSize: "20px", flexShrink: 0
                 }}>
                   {card.icon}
                 </div>
                 <div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "4px" }}>{card.label}</div>
-                  <div style={{ fontSize: "26px", fontWeight: "700" }}>{card.value}</div>
+                  <div style={{ color: "var(--text-muted)", fontSize: "12px", fontWeight: '700', textTransform: 'uppercase', marginBottom: "2px" }}>{card.label}</div>
+                  <div style={{ fontSize: "22px", fontWeight: "800", color: card.label === "Total Earnings" ? "#10b981" : "#1e293b" }}>{card.value}</div>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="glass-panel">
-            <h3 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "20px", borderBottom: "1px solid var(--border-color)", paddingBottom: "15px" }}>
-              Active & Upcoming Trips
+            <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "20px", borderBottom: "1px solid var(--border-color)", paddingBottom: "15px" }}>
+              Active & Assigned Ride Earnings Payout
             </h3>
-            {recentTrips.length > 0 ? recentTrips.map(trip => (
-              <div key={trip.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "14px 0", borderBottom: "1px solid var(--border-color)"
-              }}>
-                <div>
-                  <div style={{ fontWeight: "600", marginBottom: "4px" }}>{trip.customerName}</div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "13px" }}>
-                    {trip.pickupLocation} → {trip.dropLocation}
+            {recentTrips.length > 0 ? recentTrips.map(trip => {
+              const driverEarn = Math.round((trip.fareEstimated || 0) * 0.85);
+              return (
+                <div key={trip.id} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "16px 0", borderBottom: "1px solid var(--border-color)", flexWrap: "wrap", gap: "12px"
+                }}>
+                  <div>
+                    <div style={{ fontWeight: "800", fontSize: "16px", marginBottom: "4px" }}>{trip.customerName}</div>
+                    <div style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                      📍 {trip.pickupLocation} → {trip.dropLocation}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "11px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>RIDE FARE</div>
+                      <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>₹{trip.fareEstimated?.toLocaleString("en-IN")}</div>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: "#dcfce7",
+                      border: "1px solid #86efac",
+                      padding: "6px 14px",
+                      borderRadius: "12px",
+                      textAlign: "right"
+                    }}>
+                      <div style={{ fontSize: "10px", fontWeight: "800", color: "#15803d", textTransform: "uppercase" }}>YOUR EARNING (85%)</div>
+                      <div style={{ fontSize: "17px", fontWeight: "800", color: "#166534" }}>💰 ₹{driverEarn.toLocaleString("en-IN")}</div>
+                    </div>
+
+                    <div style={{
+                      padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700",
+                      backgroundColor: trip.status === "In Progress" ? "var(--status-inprogress-bg)" : "var(--status-confirmed-bg)",
+                      color: trip.status === "In Progress" ? "var(--status-inprogress)" : "var(--status-confirmed)"
+                    }}>
+                      {trip.status}
+                    </div>
                   </div>
                 </div>
-                <div style={{
-                  padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "600",
-                  backgroundColor: trip.status === "In Progress" ? "var(--status-inprogress-bg)" : "var(--status-confirmed-bg)",
-                  color: trip.status === "In Progress" ? "var(--status-inprogress)" : "var(--status-confirmed)"
-                }}>
-                  {trip.status}
-                </div>
-              </div>
-            )) : (
+              );
+            }) : (
               <div style={{ color: "var(--text-muted)", textAlign: "center", padding: "30px 0" }}>
                 No active or upcoming trips.
               </div>

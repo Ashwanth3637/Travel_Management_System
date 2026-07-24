@@ -522,10 +522,10 @@ export function HorizontalBarChart({ data }) {
   const total = values.reduce((sum, v) => sum + v, 0);
 
   const colors = {
-    Sedan: '#10b981',   // Green
-    SUV: '#6366f1',     // Indigo
-    Minivan: '#f59e0b', // Amber
-    Luxury: '#ec4899'   // Pink
+    Sedan: '#2563eb',   // Blue
+    SUV: '#10b981',     // Green
+    Luxury: '#8b5cf6',  // Purple
+    Minivan: '#f97316'  // Orange
   };
 
   return (

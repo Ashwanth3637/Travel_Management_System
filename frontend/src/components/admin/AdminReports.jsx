@@ -201,7 +201,14 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
             onClick={exportToCSV} 
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: '600' }}
           >
-            📥 Export CSV Report
+            📥 Export CSV
+          </button>
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => window.print()} 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: '600', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+          >
+            📄 Export PDF
           </button>
           <button 
             className="btn btn-secondary" 

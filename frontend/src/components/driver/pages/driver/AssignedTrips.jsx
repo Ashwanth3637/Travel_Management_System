@@ -128,9 +128,23 @@ export default function AssignedTrips() {
                       <FaCalendarAlt color="var(--color-secondary)" />
                       {formatDate(trip.pickupDateTime)}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <FaRupeeSign color="var(--status-pending)" />
-                      {trip.fareEstimated?.toLocaleString("en-IN")} (estimated)
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "700", color: "#1e293b" }}>
+                      <FaRupeeSign color="#10b981" />
+                      Fare: ₹{trip.fareEstimated?.toLocaleString("en-IN")}
+                    </div>
+                    <div style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: "#dcfce7",
+                      color: "#166534",
+                      padding: "2px 8px",
+                      borderRadius: "10px",
+                      fontSize: "12px",
+                      fontWeight: "800",
+                      border: "1px solid #86efac"
+                    }}>
+                      💰 Your Earning: ₹{Math.round((trip.fareEstimated || 0) * 0.85).toLocaleString("en-IN")} (85%)
                     </div>
                   </div>
                   {trip.notes && (
@@ -185,14 +199,43 @@ export default function AssignedTrips() {
                     </button>
                   )}
                   {trip.status === "Destination Reached" && (
-                    <button
-                      className="btn btn-success"
-                      style={{ padding: "10px 18px", backgroundColor: "#10b981", color: "#fff" }}
-                      disabled={updating === trip.id}
-                      onClick={() => updateStatus(trip.id, "Completed")}
-                    >
-                      <FaFlag /> {updating === trip.id ? "Updating..." : "Complete Trip"}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>
+                        Collect Fare: ₹{trip.fareEstimated || 1850}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          className="btn btn-success"
+                          style={{ padding: "8px 12px", backgroundColor: "#10b981", color: "#fff", fontSize: '12px' }}
+                          disabled={updating === trip.id}
+                          onClick={async () => {
+                            await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: 'CASH' })
+                            });
+                            updateStatus(trip.id, "Completed");
+                          }}
+                        >
+                          💵 Cash Received
+                        </button>
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: "8px 12px", backgroundColor: "#2563eb", color: "#fff", fontSize: '12px' }}
+                          disabled={updating === trip.id}
+                          onClick={async () => {
+                            await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: 'GPAY' })
+                            });
+                            updateStatus(trip.id, "Completed");
+                          }}
+                        >
+                          📱 GPay Received
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

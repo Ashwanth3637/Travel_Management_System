@@ -71,7 +71,7 @@ async function geocode(query) {
 
 // ── Type icons ─────────────────────────────────────────────────────────────────
 const TYPE_ICONS = { Sedan: "🚘", SUV: "🚙", Minivan: "🚐", Luxury: "🏎️" };
-const TYPE_COLORS = { Sedan: "#6366f1", SUV: "#f97316", Minivan: "#06b6d4", Luxury: "#f59e0b", All: "#10b981" };
+const TYPE_COLORS = { Sedan: "#2563eb", SUV: "#f97316", Minivan: "#10b981", Luxury: "#8b5cf6", All: "#2563eb" };
 
 // ── Quick presets ──────────────────────────────────────────────────────────────
 const QUICK_CITIES = [

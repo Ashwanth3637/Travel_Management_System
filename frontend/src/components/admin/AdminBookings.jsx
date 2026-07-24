@@ -12,10 +12,10 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   const [historyCategory, setHistoryCategory] = useState(null);
 
   const HISTORY_CATEGORIES = [
-    { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: 'var(--color-primary)' },
-    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', color: '#f59e0b' },
-    { type: 'Luxury', img: '/cars/luxury/bmw.png', color: '#10b981' },
-    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', color: '#6366f1' }
+    { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: '#2563eb' },
+    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', color: '#f97316' },
+    { type: 'Luxury', img: '/cars/luxury/bmw.png', defaultRate: 28, color: '#8b5cf6' },
+    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', color: '#10b981' }
   ];
 
   const shortenAddress = (address) => {
@@ -308,7 +308,22 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
                     <td>{b.vehicleType}</td>
-                    <td>₹{b.fareEstimated}</td>
+                    <td>
+                      <div style={{ fontWeight: '800', color: '#1e293b' }}>₹{b.fareEstimated}</div>
+                      <span style={{
+                        display: 'inline-block',
+                        marginTop: '2px',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '10.5px',
+                        fontWeight: '800',
+                        backgroundColor: b.paymentStatus === 'PAID' ? '#dcfce7' : '#fee2e2',
+                        color: b.paymentStatus === 'PAID' ? '#166534' : '#991b1b',
+                        border: b.paymentStatus === 'PAID' ? '1px solid #86efac' : '1px solid #fca5a5'
+                      }}>
+                        {b.paymentStatus === 'PAID' ? `PAID (${b.paymentMethod || 'GPAY'}) ✅` : 'UNPAID ⌛'}
+                      </span>
+                    </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
                         {b.status}
@@ -327,24 +342,14 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                     <td>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
                         {b.status === 'Pending' && (
-                          <>
-                            <button className="btn btn-assign" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleOpenAssignModal(b)}>
-                              Confirm
-                            </button>
-                            <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleCancelBooking(b.id)}>
-                              Cancel
-                            </button>
-                          </>
+                          <button className="btn btn-assign" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleOpenAssignModal(b)}>
+                            Confirm
+                          </button>
                         )}
                         {b.status === 'Confirmed' && (
-                          <>
-                            <button className="btn btn-start" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleForceStatus(b.id, 'In Progress')}>
-                              Start
-                            </button>
-                            <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleCancelBooking(b.id)}>
-                              Cancel
-                            </button>
-                          </>
+                          <button className="btn btn-start" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleForceStatus(b.id, 'In Progress')}>
+                            Start
+                          </button>
                         )}
                         {b.status === 'In Progress' && (
                           <button className="btn btn-primary" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleForceStatus(b.id, 'Completed')}>
@@ -354,8 +359,16 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                         <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
                           View
                         </button>
-                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
+                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', backgroundColor: '#3b82f6', borderColor: '#2563eb', color: '#ffffff' }} onClick={() => handleEditBookingClick(b)}>
                           Edit
+                        </button>
+                        <button className="btn btn-remove" style={{ padding: '5px 9px', borderRadius: '8px' }} title="Delete / Cancel Booking" onClick={() => handleCancelBooking(b.id)}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
                         </button>
                       </div>
                     </td>
@@ -652,7 +665,33 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
               )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={handleCloseAddModal}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">Save Booking</button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  Save Booking
+                </button>
               </div>
             </form>
           </div>
