@@ -92,7 +92,32 @@ function AdminProfile({ token, toast }) {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px' }}>
+          <button 
+            type="submit" 
+            style={{ 
+              width: '100%', 
+              padding: '14px', 
+              fontWeight: '700',
+              fontSize: '15px',
+              backgroundColor: '#3b82f6',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(59, 130, 246, 0.4)',
+              transition: 'all 0.25s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.55)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3b82f6';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(59, 130, 246, 0.4)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
             Save Profile Settings
           </button>
         </form>

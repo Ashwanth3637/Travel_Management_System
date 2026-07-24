@@ -7,10 +7,11 @@ export default function TripHistory() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
+  const loadTrips = () => {
     fetch(`${API_URL}/driver/trips`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -24,7 +25,39 @@ export default function TripHistory() {
         setError("Failed to load trip history.");
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadTrips();
   }, []);
+
+  const handleUpdatePayment = async (tripId, method) => {
+    try {
+      setError("");
+      const headers = { 'Content-Type': 'application/json' };
+      if (token && token !== "null" && token !== "undefined") {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${API_URL}/driver/bookings/${tripId}/payment-status`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: method })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setToast(`✅ Payment for #${tripId} marked as ${method} Received!`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => setToast(""), 5000);
+        // Update state in place without page reload or redirection
+        setTrips(prev => prev.map(t => t.id === tripId ? { ...t, paymentStatus: 'PAID', paymentMethod: method } : t));
+      } else {
+        setError(data.error || "Failed to update payment status.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update payment status.");
+    }
+  };
 
   const formatDate = (dt) => new Date(dt).toLocaleString("en-IN", {
     dateStyle: "medium", timeStyle: "short"
@@ -42,6 +75,17 @@ export default function TripHistory() {
         <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Trip History</h2>
         <p style={{ color: "var(--text-muted)" }}>Review your previously completed and cancelled trips.</p>
       </div>
+
+      {toast && (
+        <div style={{
+          padding: "14px 18px", backgroundColor: "#dcfce7", color: "#15803d",
+          borderRadius: "10px", fontSize: "14px", fontWeight: "700",
+          marginBottom: "20px", border: "1px solid #86efac",
+          boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)'
+        }}>
+          {toast}
+        </div>
+      )}
 
       {error && (
         <div style={{
@@ -77,16 +121,48 @@ export default function TripHistory() {
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-                <div style={statusStyle(trip.status)}>{trip.status}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: "14px", fontWeight: "600", fontSize: "14px" }}>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div style={statusStyle(trip.status)}>{trip.status}</div>
+                  <span style={{
+                    padding: "3px 10px", borderRadius: "14px", fontSize: "11px", fontWeight: "700",
+                    backgroundColor: trip.paymentStatus === 'PAID' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    color: trip.paymentStatus === 'PAID' ? '#10b981' : '#ef4444',
+                    border: trip.paymentStatus === 'PAID' ? '1px solid #10b981' : '1px solid #ef4444'
+                  }}>
+                    {trip.paymentStatus === 'PAID' ? `PAID (${trip.paymentMethod || 'GPAY'}) ✅` : 'UNPAID ⌛'}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", fontWeight: "600", fontSize: "14px", flexWrap: "wrap" }}>
                   {trip.status === "Completed" && (
                     <span style={{ color: "#fbbf24", display: "flex", alignItems: "center", gap: "4px" }}>
                       <FaStar /> 5.0
                     </span>
                   )}
-                  <span style={{ display: "flex", alignItems: "center", color: "var(--text-main)" }}>
-                    <FaRupeeSign />{trip.fareEstimated?.toLocaleString("en-IN")}
+                  <span style={{ display: "flex", alignItems: "center", color: "#64748b", fontWeight: '700', fontSize: '13px' }}>
+                    Fare: ₹{trip.fareEstimated?.toLocaleString("en-IN")}
                   </span>
+                  <span style={{
+                    padding: "3px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "800",
+                    backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #86efac"
+                  }}>
+                    💰 Earning: ₹{Math.round((trip.fareEstimated || 0) * 0.85).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                {/* Driver quick status update pills */}
+                <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'CASH'); }}
+                    style={{ padding: '6px 12px', fontSize: '11.5px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', boxShadow: '0 3px 10px rgba(16,185,129,0.35)' }}
+                  >
+                    💵 Mark Cash
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'GPAY'); }}
+                    style={{ padding: '6px 12px', fontSize: '11.5px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', boxShadow: '0 3px 10px rgba(37,99,235,0.35)' }}
+                  >
+                    📱 Mark GPay
+                  </button>
                 </div>
               </div>
             </div>

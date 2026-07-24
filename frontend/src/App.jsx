@@ -19,10 +19,9 @@ function AdminLayout({ handleLogout, children }) {
             <circle cx="7" cy="17" r="2"></circle>
             <circle cx="17" cy="17" r="2"></circle>
           </svg>
-          Travel Booking Management System
+          TravelGo <span style={{ fontSize: '12px', opacity: 0.8, fontWeight: '600', marginLeft: '6px', color: '#3b82f6' }}>AI Fleet</span>
         </div>
         <div className="nav-user" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <ThemeToggle />
           <Link 
             to="/admin/profile" 
             style={{ 
@@ -61,13 +60,13 @@ function AdminLayout({ handleLogout, children }) {
             }}>
               A
             </div>
-            <span className="badge badge-confirmed" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+            <span style={{ fontSize: '15px', fontWeight: '800', color: '#ffffff', letterSpacing: '0.3px' }}>
               Admin
             </span>
           </Link>
         </div>
       </nav>
-      <main style={{ padding: '20px' }} className="animate-fade-in">
+      <main style={{ padding: '24px 20px 40px 20px' }} className="animate-fade-in">
         {children}
       </main>
     </>
@@ -118,7 +117,7 @@ function CustomerLayout({ customer, handleLogout }) {
         customer={customer} 
         handleLogout={handleLogout} 
       />
-      <main style={{ padding: '0 20px 20px' }} className="animate-fade-in">
+      <main style={{ padding: '24px 20px 40px 20px' }} className="animate-fade-in">
         <Outlet />
       </main>
     </>
@@ -311,6 +310,17 @@ function App() {
                 customer={customer} 
                 onUpdateProfile={handleUpdateProfile}
                 activeTab="track"
+                activeTrackBooking={activeTrackBooking}
+                setActiveTrackBooking={setActiveTrackBooking}
+                handleLogout={handleCustomerLogout}
+              />
+            } />
+            <Route path="payments" element={
+              <CustomerDashboard 
+                token={customerToken} 
+                customer={customer} 
+                onUpdateProfile={handleUpdateProfile}
+                activeTab="payments"
                 activeTrackBooking={activeTrackBooking}
                 setActiveTrackBooking={setActiveTrackBooking}
                 handleLogout={handleCustomerLogout}

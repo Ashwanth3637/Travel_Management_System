@@ -5,10 +5,10 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
   const API_URL = 'http://localhost:5001/api';
 
   const CATEGORIES = [
-    { type: 'Sedan', img: '/cars/sedan/vitara_brezza.png', defaultCapacity: 4, defaultRate: 12, color: 'var(--color-primary)' },
-    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', defaultCapacity: 6, defaultRate: 18, color: '#f59e0b' },
-    { type: 'Luxury', img: '/cars/luxury/bmw.png', defaultCapacity: 4, defaultRate: 28, color: '#10b981' },
-    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', defaultCapacity: 12, defaultRate: 25, color: '#6366f1' }
+    { type: 'Sedan', img: '/cars/sedan/vitara_brezza.png', defaultCapacity: 4, defaultRate: 12, color: '#2563eb' },
+    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', defaultCapacity: 6, defaultRate: 18, color: '#f97316' },
+    { type: 'Luxury', img: '/cars/luxury/bmw.png', defaultCapacity: 4, defaultRate: 28, color: '#8b5cf6' },
+    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', defaultCapacity: 12, defaultRate: 25, color: '#10b981' }
   ];
 
   const [activeCategory, setActiveCategory] = useState(null);
@@ -147,9 +147,6 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ margin: 0 }}>Vehicle Management Registry</h3>
-            <button className="btn btn-primary" onClick={() => { handleCloseModal(); setShowModal(true); }}>
-              + Add Vehicle
-            </button>
           </div>
 
           {/* Category Cards (Folders) Grid */}
@@ -216,7 +213,6 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                     {count} {count === 1 ? 'vehicle' : 'vehicles'} stored
                   </div>
                   <button 
-                    className="btn btn-secondary" 
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddWithCategory(cat);
@@ -224,10 +220,26 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                     style={{ 
                       marginTop: '15px', 
                       width: '100%', 
-                      padding: '8px 0', 
+                      padding: '9px 0', 
                       fontSize: '13px',
-                      backgroundColor: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)'
+                      fontWeight: '700',
+                      backgroundColor: '#3b82f6',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.35)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.5)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#3b82f6';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.35)';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                   >
                     + Add {cat.type}
@@ -280,7 +292,28 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
               </div>
             </div>
             <button 
-              className="btn btn-primary" 
+              style={{
+                padding: '10px 18px',
+                fontWeight: '700',
+                fontSize: '14px',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#3b82f6';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
               onClick={() => handleAddWithCategory(CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase()) || { type: activeCategory, defaultCapacity: 4, defaultRate: 12 })}
             >
               + Add {activeCategory}
@@ -380,7 +413,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                           <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingVehicle(v)}>
                             View
                           </button>
-                          <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditClick(v)}>
+                          <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', backgroundColor: '#3b82f6', borderColor: '#2563eb', color: '#ffffff' }} onClick={() => handleEditClick(v)}>
                             Edit
                           </button>
                           <button className="btn btn-remove" style={{ padding: '5px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleDelete(v.id)} title="Remove">
@@ -547,7 +580,33 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Vehicle</button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  Save Vehicle
+                </button>
               </div>
             </form>
           </div>

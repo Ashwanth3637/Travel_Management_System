@@ -12,10 +12,10 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
   const [historyCategory, setHistoryCategory] = useState(null);
 
   const HISTORY_CATEGORIES = [
-    { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: 'var(--color-primary)' },
-    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', color: '#f59e0b' },
-    { type: 'Luxury', img: '/cars/luxury/bmw.png', color: '#10b981' },
-    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', color: '#6366f1' }
+    { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: '#2563eb' },
+    { type: 'SUV', img: '/cars/suv/mahindra_thar.png', color: '#f97316' },
+    { type: 'Luxury', img: '/cars/luxury/bmw.png', color: '#8b5cf6' },
+    { type: 'Minivan', img: '/cars/minivan/tempo_traveller.png', color: '#10b981' }
   ];
   const [assignedDetails, setAssignedDetails] = useState({ driver: null, vehicle: null });
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -656,10 +656,10 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                           </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between', width: '100%', minWidth: '170px' }}>
                             <button
                               className="btn btn-view"
-                              style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
+                              style={{ padding: '5px 12px', fontSize: '12px', borderRadius: '6px', whiteSpace: 'nowrap' }}
                               onClick={() => handleViewDetails(b)}
                             >
                               View Details
@@ -668,7 +668,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                             {["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(b.status) && (
                               <button
                                 className="btn btn-primary"
-                                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
+                                style={{ padding: '5px 12px', fontSize: '12px', borderRadius: '6px', whiteSpace: 'nowrap' }}
                                 onClick={() => onSelectTrackTrip(b)}
                               >
                                 Track Trip
@@ -678,7 +678,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                             {(b.status === "Pending" || b.status === "Confirmed") && (
                               <button
                                 className="btn btn-danger"
-                                style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}
+                                style={{ padding: '5px 12px', fontSize: '12px', borderRadius: '6px', whiteSpace: 'nowrap' }}
                                 onClick={() => handleCancelBooking(b.id)}
                               >
                                 Cancel
