@@ -64,8 +64,16 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
         setProgress(100);
       } else if (booking.status === "Pending" || booking.status === "Confirmed" || booking.status === "Cancelled") {
         setProgress(0);
-      } else if (booking.status === "In Progress" && progress === 0) {
-        setProgress(35);
+      } else if (["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(booking.status)) {
+        if (booking.status === "Trip Started") {
+          setProgress(20);
+        } else if (booking.status === "Customer Picked Up") {
+          setProgress(45);
+        } else if (booking.status === "Ongoing" || booking.status === "In Progress") {
+          setProgress(70);
+        } else if (booking.status === "Destination Reached") {
+          setProgress(95);
+        }
       }
     }
   }, [booking?.status]);
@@ -83,7 +91,7 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
           if (res.ok) {
             const bookings = await res.json();
             // Try to find the most relevant active trip (In Progress > Confirmed > Pending)
-            const active = bookings.find(b => b.status === "In Progress") || 
+            const active = bookings.find(b => ["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(b.status)) || 
                            bookings.find(b => b.status === "Confirmed") ||
                            bookings.find(b => b.status === "Pending");
             if (active) {
@@ -258,7 +266,7 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
 
   // Simulate progress indicator ticking
   useEffect(() => {
-    if (!booking || booking.status !== "In Progress") return;
+    if (!booking || !["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(booking.status)) return;
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -309,7 +317,7 @@ function CustomerTrackTrip({ token, customer, activeBooking, onClearActiveTrip }
       }
     }
 
-    if (booking.status === "In Progress") {
+    if (["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(booking.status)) {
       // Estimate total duration based on fare (approx ₹15 per km, speed 50km/h)
       // duration in mins = fare / 15
       const totalDurationMins = Math.max(15, Math.round((booking.fareEstimated || 300) / 15));

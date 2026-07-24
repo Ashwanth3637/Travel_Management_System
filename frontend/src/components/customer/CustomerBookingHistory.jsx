@@ -147,9 +147,20 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
   const getBadgeClass = (status) => {
     switch (status) {
       case "Pending": return "badge-pending";
-      case "Confirmed": return "badge-confirmed";
-      case "In Progress": return "badge-inprogress";
-      case "Completed": return "badge-completed";
+      case "Confirmed":
+      case "Driver Assigned":
+      case "Vehicle Assigned":
+      case "Trip Scheduled":
+        return "badge-confirmed";
+      case "In Progress":
+      case "Trip Started":
+      case "Customer Picked Up":
+      case "Ongoing":
+      case "Destination Reached":
+        return "badge-inprogress";
+      case "Completed":
+      case "Trip Completed":
+        return "badge-completed";
       case "Cancelled": return "badge-cancelled";
       default: return "";
     }
@@ -654,7 +665,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                               View Details
                             </button>
 
-                            {b.status === "In Progress" && (
+                            {["In Progress", "Trip Started", "Customer Picked Up", "Ongoing", "Destination Reached"].includes(b.status) && (
                               <button
                                 className="btn btn-primary"
                                 style={{ padding: '4px 10px', fontSize: '12px', borderRadius: '6px' }}

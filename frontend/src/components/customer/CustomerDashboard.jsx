@@ -152,7 +152,12 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                           <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>#{b.id}</span>
-                          <span className={`badge ${b.status === 'Pending' ? 'badge-pending' : b.status === 'Confirmed' ? 'badge-confirmed' : 'badge-inprogress'}`}>
+                          <span className={`badge ${
+                            b.status === 'Pending' ? 'badge-pending' : 
+                            ['Confirmed', 'Driver Assigned', 'Vehicle Assigned', 'Trip Scheduled'].includes(b.status) ? 'badge-confirmed' : 
+                            ['Completed', 'Trip Completed'].includes(b.status) ? 'badge-completed' : 
+                            'badge-inprogress'
+                          }`}>
                             {b.status}
                           </span>
                           <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>({b.vehicleType})</span>

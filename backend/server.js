@@ -471,11 +471,8 @@ app.post('/api/bookings', authenticateToken, requireAdmin, async (req, res) => {
     
     const [tDate, tTime] = pickupDateTime.split('T');
 
-    // Derive 4-digit Start OTP using customer's registered mobile number (last 4 digits)
-    const rawPhone = (customerContact || '').replace(/[^0-9]/g, '');
-    const startOtp = rawPhone.length >= 4 
-      ? rawPhone.slice(-4) 
-      : Math.floor(1000 + Math.random() * 9000).toString();
+    // Generate a random 4-digit Start OTP
+    const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
     const newBooking = { 
       id: 'b' + (maxNum + 1), 
@@ -835,11 +832,8 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
 
     const [tDate, tTime] = pickupDateTime.split('T');
 
-    // Derive 4-digit Start OTP using customer's registered mobile number (last 4 digits)
-    const rawPhone = (customerContact || req.user.phone || '').replace(/[^0-9]/g, '');
-    const startOtp = rawPhone.length >= 4 
-      ? rawPhone.slice(-4) 
-      : Math.floor(1000 + Math.random() * 9000).toString();
+    // Generate a random 4-digit Start OTP
+    const startOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
     const newBooking = { 
       id: nextId, 
@@ -860,6 +854,7 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
       assignedDriverId: null,
       notes: notes || specialRequirements || '', 
       fareEstimated: finalFare, 
+      startOtp: startOtp,
       createdAt: new Date().toISOString() 
     };
 

@@ -365,13 +365,18 @@ body {
 }
 .badge-inprogress,
 .badge-ontrip,
-.badge-on-trip {
+.badge-on-trip,
+.badge-tripstarted,
+.badge-customerpickedup,
+.badge-ongoing,
+.badge-destinationreached {
   background-color: rgba(245, 158, 11, 0.15) !important;
   color: #f59e0b !important;
   border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
 .badge-completed,
-.badge-available {
+.badge-available,
+.badge-tripcompleted {
   background-color: rgba(16, 185, 129, 0.15) !important;
   color: #10b981 !important;
   border: 1px solid rgba(16, 185, 129, 0.3) !important;
@@ -685,14 +690,19 @@ body.light-theme input[type="datetime-local"] {
   color-scheme: light;
 }
 
-body.light-theme .badge-completed {
+body.light-theme .badge-completed,
+body.light-theme .badge-tripcompleted {
   background-color: rgba(16, 185, 129, 0.12);
   color: #047857;
 }
 
 body.light-theme .badge-inprogress,
 body.light-theme .badge-ontrip,
-body.light-theme .badge-on-trip {
+body.light-theme .badge-on-trip,
+body.light-theme .badge-tripstarted,
+body.light-theme .badge-customerpickedup,
+body.light-theme .badge-ongoing,
+body.light-theme .badge-destinationreached {
   background-color: rgba(245, 158, 11, 0.15);
   color: #d97706;
 }

@@ -239,8 +239,8 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
     }
   };
 
-  const activeBookings = bookings.filter(b => b.status === 'Pending' || b.status === 'Confirmed' || b.status === 'In Progress');
-  const archivedBookings = bookings.filter(b => b.status === 'Completed' || b.status === 'Cancelled');
+  const activeBookings = bookings.filter(b => !['Completed', 'Trip Completed', 'Cancelled'].includes(b.status));
+  const archivedBookings = bookings.filter(b => ['Completed', 'Trip Completed', 'Cancelled'].includes(b.status));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
