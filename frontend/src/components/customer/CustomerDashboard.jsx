@@ -584,7 +584,7 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
       </div>
 
       {/* ─── MAIN CONTENT PANEL ─── */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'visible' }}>
         {renderTabContent()}
       </div>
 

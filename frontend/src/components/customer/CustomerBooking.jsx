@@ -690,7 +690,7 @@ function CustomerBooking({ token, customer }) {
                   <div style={{ fontWeight: '700' }}>No vehicles available</div>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(152px, 1fr))', gap: '12px', maxHeight: '420px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(152px, 1fr))', gap: '12px', paddingRight: '4px' }}>
                   {filteredVehicles.map(vehicle => {
                     const isAvail = vehicle.availableCount > 0;
                     const isSel = selectedVehicle?.name === vehicle.name;
