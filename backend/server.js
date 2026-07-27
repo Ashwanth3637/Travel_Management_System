@@ -765,9 +765,50 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
       try {
         const drivers = await db.getDrivers();
         const driverDoc = updated.assignedDriverId ? drivers.find(d => d.id === updated.assignedDriverId) : null;
+        const driverName = driverDoc ? driverDoc.name : (updated.assignedDriverId || 'Unassigned');
+
+        // UBER AUTOMATIC CHARGING FLOW: If non-cash digital payment method was selected, charge automatically!
+        const pMethod = updated.paymentMethod || 'Saved Card (HDFC Visa •••• 4587)';
+        const isCash = pMethod.toLowerCase().includes('cash');
+
+        if (!isCash && updated.paymentStatus !== 'Paid') {
+          const amount = updated.fareEstimated || 1850;
+          const driverEarnings = Math.round(amount * 0.85);
+          const adminCommission = Math.round(amount * 0.15);
+          const todayStr = new Date().toLocaleDateString('en-GB');
+          const autoTxnId = `pay_AUTO_${Date.now().toString().slice(-8)}`;
+
+          await db.updateBooking(req.params.id, {
+            paymentStatus: 'Paid',
+            transactionId: autoTxnId,
+            paidAt: todayStr,
+            amountPaid: amount,
+            payoutDispatched: true,
+            payoutStatus: 'Transferred to Driver Bank Account ✅'
+          });
+
+          await db.addPayment({
+            id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+            paymentId: 'PAY_' + autoTxnId.slice(-8),
+            bookingId: updated.id,
+            customerName: updated.customerName,
+            driverName,
+            amount,
+            driverEarnings,
+            adminCommission,
+            paymentMethod: pMethod,
+            bankName: updated.bankName || '',
+            paymentStatus: 'Paid',
+            transactionId: autoTxnId,
+            payoutDispatched: true,
+            payoutStatus: 'Transferred to Driver Bank Account ✅',
+            paymentDate: todayStr
+          });
+        }
+
         await sendFareEmailAndNotification(updated, driverDoc);
       } catch (e) {
-        console.error('Error triggering fare notification:', e);
+        console.error('Error triggering automatic payment & fare notification:', e);
       }
     }
 

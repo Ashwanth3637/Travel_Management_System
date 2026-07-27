@@ -17,10 +17,13 @@ async function connectDB() {
 
 const UserSchema = new mongoose.Schema({
   id:       { type: String, required: true, unique: true },
-  email:    { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role:     { type: String, default: 'admin' },
-  name:     { type: String, required: true }
+  email:                { type: String, required: true, unique: true },
+  password:             { type: String, required: true },
+  role:                 { type: String, default: 'admin' },
+  name:                 { type: String, required: true },
+  defaultPaymentMethod: { type: String, default: 'Saved Card (HDFC Visa •••• 4587)' },
+  savedCardDetails:     { type: String, default: 'HDFC Visa •••• 4587' },
+  savedUpiId:           { type: String, default: 'sam@okaxis' }
 }, { timestamps: true });
 
 const VehicleSchema = new mongoose.Schema({

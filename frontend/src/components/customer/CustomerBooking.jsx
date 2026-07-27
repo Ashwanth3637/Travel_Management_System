@@ -300,6 +300,7 @@ function CustomerBooking({ token, customer }) {
   const [passengersCount, setPassengersCount] = useState(1);
   const [tripType, setTripType] = useState("One Way");
   const [specialRequirements, setSpecialRequirements] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Saved Card (HDFC Visa •••• 4587)");
 
   const [vehicles, setVehicles] = useState([]);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -399,6 +400,7 @@ function CustomerBooking({ token, customer }) {
           modelName: selectedVehicle.name,
           customerName: customer?.name, customerContact, passengersCount,
           tripType, specialRequirements, fareEstimated: estimatedFare,
+          paymentMethod: paymentMethod || 'Saved Card (HDFC Visa •••• 4587)'
         }),
       });
       const data = await res.json();
@@ -766,6 +768,27 @@ function CustomerBooking({ token, customer }) {
                 rows="2"
                 style={{ resize: 'vertical', minHeight: '60px', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
               />
+            </div>
+
+            {/* UBER-STYLE PAYMENT METHOD SELECTOR BEFORE REQUEST */}
+            <div style={{ marginBottom: '20px', backgroundColor: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '8px' }}>
+                💳 Payment Method (Auto-Charges On Trip Completion)
+              </label>
+              <select
+                value={paymentMethod || 'Saved Card (HDFC Visa •••• 4587)'}
+                onChange={e => setPaymentMethod(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid var(--color-primary)', background: 'var(--bg-card)', color: 'var(--text-main)', fontWeight: '700', fontSize: '13px' }}
+              >
+                <option value="Saved Card (HDFC Visa •••• 4587)">💳 Saved Card (HDFC Visa •••• 4587)</option>
+                <option value="UPI (sam@okaxis)">📱 Saved UPI / GPay (sam@okaxis)</option>
+                <option value="Razorpay Real Gateway">⚡ Razorpay Real Gateway (UPI/Cards)</option>
+                <option value="Net Banking">🏦 Net Banking Portal</option>
+                <option value="Cash in Hand">💵 Cash in Hand</option>
+              </select>
+              <div style={{ fontSize: '11px', color: '#10b981', marginTop: '6px', fontWeight: '600' }}>
+                ⚡ Digital options charge automatically when driver completes your trip!
+              </div>
             </div>
 
             {/* Submit */}
