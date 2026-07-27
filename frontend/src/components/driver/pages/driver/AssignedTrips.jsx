@@ -217,7 +217,10 @@ export default function AssignedTrips() {
                             Payment Received ✔ {trip.paymentMethod || 'Google Pay'}
                           </span>
                           <span style={{ fontSize: '12px', fontWeight: '800', color: '#10b981', backgroundColor: '#ecfdf5', padding: '4px 10px', borderRadius: '6px' }}>
-                            🎉 Driver Net Earning: ₹{Math.round((trip.fareEstimated || 1850) * 0.85).toLocaleString('en-IN')} (85%)
+                            🎉 Driver Net Earning (85%): ₹{Math.round((trip.fareEstimated || 1850) * 0.85).toLocaleString('en-IN')}
+                          </span>
+                          <span style={{ fontSize: '11px', fontWeight: '700', color: '#6366f1', backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '6px' }}>
+                            🏢 Admin Commission (15%): ₹{Math.round((trip.fareEstimated || 1850) * 0.15).toLocaleString('en-IN')}
                           </span>
                           {trip.status === "Destination Reached" && (
                             <button
