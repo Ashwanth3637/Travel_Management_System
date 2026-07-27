@@ -672,6 +672,52 @@ app.get('/api/driver/dashboard', authenticateToken, requireDriver, async (req, r
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
 
+// Helper: Send Fare Email & Notification to Customer when driver ends trip
+async function sendFareEmailAndNotification(trip, driver) {
+  try {
+    const customers = await db.getCustomers();
+    const customer = customers.find(c => c.name.toLowerCase() === trip.customerName.toLowerCase());
+    const email = customer ? customer.email : (trip.customerName.toLowerCase().replace(/\s+/g, '') + '@gmail.com');
+    const fare = trip.fareEstimated || 1850;
+    const driverName = driver ? driver.name : 'Rajesh (Verified Driver)';
+
+    const emailSubject = `📧 [TRIP FARE E-RECEIPT] Trip #${trip.id} Ended by Driver ${driverName}`;
+    const emailBody = `
+==============================================================
+🚖 TRAVELGO RIDE FARE NOTIFICATION & E-RECEIPT 🚖
+==============================================================
+Hello ${trip.customerName},
+
+Driver ${driverName} has ended your trip #${trip.id}.
+
+TRIP DETAILS:
+- Route: ${trip.pickupLocation} ➔ ${trip.dropLocation}
+- Vehicle Category: ${trip.vehicleType}
+- Trip Date: ${trip.travelDate || trip.bookingDate || new Date().toLocaleDateString()}
+--------------------------------------------------------------
+TOTAL FARE DUE: ₹${fare}
+--------------------------------------------------------------
+
+PAYMENT METHODS AVAILABLE:
+1. 📱 GPay Scanner (Google Pay QR Code in your Customer App)
+2. 💵 Cash in Hand to Driver
+
+Thank you for traveling with TravelGo!
+==============================================================
+`;
+
+    console.log(`\n=============================================================`);
+    console.log(`📧 SENT FARE E-RECEIPT EMAIL TO CUSTOMER (${email}):`);
+    console.log(`SUBJECT: ${emailSubject}`);
+    console.log(emailBody);
+    console.log(`=============================================================\n`);
+    return { sent: true, email, fare };
+  } catch (err) {
+    console.error('Error sending fare email:', err);
+    return { sent: false };
+  }
+}
+
 app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async (req, res) => {
   try {
     const { status, otp } = req.body;
@@ -713,6 +759,18 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
     }
 
     const updated = await db.updateBooking(req.params.id, { status });
+
+    // When driver ends/completes trip or reaches destination, send fare email & notification to customer
+    if (['Completed', 'Trip Completed', 'Destination Reached'].includes(status)) {
+      try {
+        const drivers = await db.getDrivers();
+        const driverDoc = updated.assignedDriverId ? drivers.find(d => d.id === updated.assignedDriverId) : null;
+        await sendFareEmailAndNotification(updated, driverDoc);
+      } catch (e) {
+        console.error('Error triggering fare notification:', e);
+      }
+    }
+
     res.json(updated);
   } catch (err) { res.status(500).json({ error: 'Server error.' }); }
 });
@@ -720,25 +778,162 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
 // Driver/Admin update payment status (Cash Received / GPay Received / Unpaid)
 app.put('/api/driver/bookings/:id/payment-status', async (req, res) => {
   try {
-    const { paymentStatus, paymentMethod } = req.body;
-    if (!['PAID', 'UNPAID'].includes(paymentStatus)) {
-      return res.status(400).json({ error: 'Invalid payment status. Must be PAID or UNPAID.' });
+    const { paymentStatus, paymentMethod, driverPaymentMsg } = req.body;
+    if (!['PAID', 'UNPAID', 'CONFIRMED_BY_DRIVER'].includes(paymentStatus)) {
+      return res.status(400).json({ error: 'Invalid payment status.' });
     }
     const bookings = await db.getBookings();
     const booking = bookings.find(b => b.id === req.params.id);
     if (!booking) return res.status(404).json({ error: 'Booking not found.' });
 
-    const txnId = paymentStatus === 'PAID' ? ('TXN-DRV-' + Math.floor(10000000 + Math.random() * 90000000)) : null;
-    const updated = await db.updateBooking(req.params.id, {
-      paymentStatus: paymentStatus,
-      paymentMethod: paymentMethod || 'CASH',
-      paidAt: paymentStatus === 'PAID' ? new Date().toISOString() : null,
-      transactionId: txnId || booking.transactionId
-    });
-    res.json(updated || { ...booking, paymentStatus, paymentMethod: paymentMethod || 'CASH' });
+    const normalizedMethod = (paymentMethod || 'CASH').toUpperCase();
+    const isPaid = ['PAID', 'CONFIRMED_BY_DRIVER'].includes(paymentStatus);
+    const txnId = isPaid ? (booking.transactionId || ('TXN-DRV-' + Math.floor(10000000 + Math.random() * 90000000))) : '';
+    const nowIso = new Date().toISOString();
+
+    const updateFields = {
+      paymentStatus: isPaid ? 'PAID' : 'UNPAID',
+      paymentMethod: normalizedMethod,
+      paidAt: isPaid ? (booking.paidAt || nowIso) : '',
+      transactionId: txnId,
+      driverPaymentMsg: driverPaymentMsg || `Driver confirmed payment received via ${normalizedMethod === 'GPAY' ? 'GPay Scanner' : 'Cash in Hand'}`,
+      driverConfirmedAt: nowIso
+    };
+
+    const updated = await db.updateBooking(req.params.id, updateFields);
+    res.json(updated || { ...booking, ...updateFields });
   } catch (err) {
     console.error('Driver payment update error:', err);
     res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// Driver reset all payment records
+app.post('/api/driver/payments/reset-all', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await db.getBookings();
+    for (const b of bookings) {
+      await db.updateBooking(b.id, {
+        paymentStatus: 'UNPAID',
+        paymentMethod: 'UNPAID',
+        transactionId: '',
+        paidAt: '',
+        amountPaid: 0,
+        driverPaymentMsg: '',
+        driverConfirmedAt: ''
+      });
+    }
+    res.json({ message: 'All payment data reset successfully!' });
+  } catch (err) {
+    console.error('Reset all payments error:', err);
+    res.status(500).json({ error: 'Server error resetting payments.' });
+  }
+});
+
+// Delete individual booking permanently
+app.delete('/api/driver/bookings/:id', async (req, res) => {
+  try {
+    await db.deleteBooking(req.params.id);
+    res.json({ message: 'Booking record deleted permanently.' });
+  } catch (err) {
+    console.error('Delete booking error:', err);
+    res.status(500).json({ error: 'Server error deleting booking.' });
+  }
+});
+
+// Delete all bookings permanently (supports both POST and DELETE)
+const handleClearAllBookings = async (req, res) => {
+  try {
+    await db.deleteAllBookings();
+    res.json({ message: 'All booking records deleted permanently.' });
+  } catch (err) {
+    console.error('Delete all bookings error:', err);
+    res.status(500).json({ error: 'Server error deleting all bookings.' });
+  }
+};
+
+app.post('/api/driver/bookings/clear-all-data', handleClearAllBookings);
+app.delete('/api/driver/bookings/clear-all-data', handleClearAllBookings);
+
+// ─── Payment Architecture APIs (Customer, Driver & Admin) ────────────────────
+
+// Customer Process Payment API (Cash, GPay, UPI, Card)
+app.post('/api/customer/pay', async (req, res) => {
+  try {
+    const { bookingId, paymentMethod } = req.body;
+    if (!bookingId) return res.status(400).json({ error: 'Booking ID is required.' });
+
+    const bookings = await db.getBookings();
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return res.status(404).json({ error: 'Booking not found.' });
+
+    const drivers = await db.getDrivers();
+    const driver = drivers.find(d => d.id === booking.assignedDriverId);
+    const driverName = driver ? driver.name : (booking.assignedDriverId || 'Unassigned');
+
+    const method = (paymentMethod || 'GPay').trim();
+    const amount = booking.fareEstimated || 1850;
+    const driverEarnings = Math.round(amount * 0.85);
+    const adminCommission = Math.round(amount * 0.15);
+    const paymentId = 'PAY' + Math.floor(100000 + Math.random() * 900000);
+    const transactionId = 'TXN' + Math.floor(100000 + Math.random() * 900000);
+    const todayStr = new Date().toLocaleDateString('en-GB');
+
+    // Update booking in MongoDB
+    const updatedBooking = await db.updateBooking(bookingId, {
+      paymentStatus: 'Paid',
+      paymentMethod: method,
+      transactionId: transactionId,
+      paidAt: todayStr,
+      amountPaid: amount
+    });
+
+    // Save payment ledger record
+    const paymentRecord = await db.addPayment({
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      paymentId,
+      bookingId,
+      customerName: booking.customerName,
+      driverName,
+      amount,
+      driverEarnings,
+      adminCommission,
+      paymentMethod: method,
+      paymentStatus: 'Paid',
+      transactionId,
+      paymentDate: todayStr
+    });
+
+    res.json({
+      message: 'Payment Successful!',
+      payment: paymentRecord,
+      booking: updatedBooking
+    });
+  } catch (err) {
+    console.error('Customer payment error:', err);
+    res.status(500).json({ error: 'Server error processing payment.' });
+  }
+});
+
+// Get Payments API (Admin & Customer)
+app.get('/api/payments', async (req, res) => {
+  try {
+    const payments = await db.getPayments();
+    res.json(payments);
+  } catch (err) {
+    console.error('Get payments error:', err);
+    res.status(500).json({ error: 'Server error fetching payments.' });
+  }
+});
+
+// Clear Payments API (Admin)
+app.post('/api/payments/clear-history', async (req, res) => {
+  try {
+    await db.clearPayments();
+    res.json({ message: 'Payment history cleared successfully.' });
+  } catch (err) {
+    console.error('Clear payments error:', err);
+    res.status(500).json({ error: 'Server error clearing payments.' });
   }
 });
 
@@ -871,6 +1066,7 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
       dropLocation, 
       pickupDateTime, 
       vehicleType,
+      assignedVehicleName: selectedVehicle.name,
       passengersCount: passengersCount ? parseInt(passengersCount) : 1,
       tripType: tripType || 'One Way',
       specialRequirements: specialRequirements || notes || '',
@@ -1001,6 +1197,32 @@ app.post('/api/customer/payments/pay', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Payment error:', err);
     res.status(500).json({ error: 'Server error processing payment.' });
+  }
+});
+
+// Clear Customer Payment History
+app.post('/api/customer/payments/clear-history', authenticateToken, async (req, res) => {
+  try {
+    const targetName = req.body.customerName || req.user.name;
+    const bookings = await db.getBookings();
+    const customerBookings = bookings.filter(b => b.customerName.toLowerCase() === targetName.toLowerCase());
+
+    for (const b of customerBookings) {
+      await db.updateBooking(b.id, {
+        paymentStatus: 'UNPAID',
+        paymentMethod: 'PENDING',
+        transactionId: '',
+        paidAt: '',
+        amountPaid: 0,
+        driverPaymentMsg: '',
+        driverConfirmedAt: ''
+      });
+    }
+
+    res.json({ message: 'Payment history cleared successfully!' });
+  } catch (err) {
+    console.error('Clear payment history error:', err);
+    res.status(500).json({ error: 'Server error clearing payment history.' });
   }
 });
 

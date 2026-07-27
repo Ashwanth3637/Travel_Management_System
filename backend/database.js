@@ -75,6 +75,13 @@ const BookingSchema = new mongoose.Schema({
   notes:              { type: String, default: '' },
   fareEstimated:      { type: Number, default: 0 },
   startOtp:           { type: String, default: '' },
+  paymentStatus:      { type: String, default: 'UNPAID' }, // UNPAID, PAID, CONFIRMED_BY_DRIVER
+  paymentMethod:      { type: String, default: 'PENDING' }, // GPAY, CASH, PENDING
+  driverPaymentMsg:   { type: String, default: '' },
+  driverConfirmedAt:  { type: String, default: '' },
+  paidAt:             { type: String, default: '' },
+  transactionId:      { type: String, default: '' },
+  amountPaid:         { type: Number, default: 0 },
   createdAt:          { type: String },
   rating:             { type: Number, default: 0 },
   feedback:           { type: String, default: '' },
@@ -100,6 +107,22 @@ const QuerySchema = new mongoose.Schema({
   createdAt: { type: String, default: () => new Date().toLocaleString() }
 });
 
+const PaymentSchema = new mongoose.Schema({
+  id:             { type: String, required: true, unique: true },
+  paymentId:      { type: String, required: true, unique: true },
+  bookingId:      { type: String, required: true },
+  customerName:   { type: String, required: true },
+  driverName:     { type: String, default: 'Unassigned' },
+  amount:         { type: Number, required: true },
+  driverEarnings: { type: Number, default: 0 },
+  adminCommission:{ type: Number, default: 0 },
+  paymentMethod:  { type: String, default: 'GPay' },
+  paymentStatus:  { type: String, default: 'Paid' },
+  transactionId:  { type: String, required: true },
+  paymentDate:    { type: String, default: () => new Date().toLocaleDateString('en-GB') },
+  createdAt:      { type: String, default: () => new Date().toISOString() }
+}, { timestamps: true });
+
 // ─── Models (guard re-compile) ────────────────────────────────────────────────
 
 const User     = mongoose.models.User     || mongoose.model('User',     UserSchema);
@@ -107,6 +130,7 @@ const Driver   = mongoose.models.Driver   || mongoose.model('Driver',   DriverSc
 const Booking  = mongoose.models.Booking  || mongoose.model('Booking',  BookingSchema);
 const Customer = mongoose.models.Customer || mongoose.model('Customer', CustomerSchema);
 const Query    = mongoose.models.Query    || mongoose.model('Query',    QuerySchema);
+const Payment  = mongoose.models.Payment  || mongoose.model('Payment',  PaymentSchema);
 
 // Separate vehicle collections per category
 const SeданModel  = mongoose.models.Sedan    || mongoose.model('Sedan',    VehicleSchema, 'sedans');
@@ -373,6 +397,16 @@ module.exports = {
     const doc = await Booking.findOneAndUpdate({ id }, fields, { new: true });
     return toPlain(doc);
   },
+  deleteBooking: async (id) => {
+    await connectDB();
+    await Booking.deleteOne({ id });
+    return true;
+  },
+  deleteAllBookings: async () => {
+    await connectDB();
+    await Booking.deleteMany({});
+    return true;
+  },
 
   // Customers
   getCustomers: async () => {
@@ -401,5 +435,22 @@ module.exports = {
     await connectDB();
     const doc = await Query.findOneAndUpdate({ id }, { status: 'Resolved' }, { new: true });
     return toPlain(doc);
+  },
+
+  // Payments Ledger
+  getPayments: async () => {
+    await connectDB();
+    const docs = await Payment.find({});
+    return docs.map(toPlain);
+  },
+  addPayment: async (paymentData) => {
+    await connectDB();
+    const doc = await Payment.create(paymentData);
+    return toPlain(doc);
+  },
+  clearPayments: async () => {
+    await connectDB();
+    await Payment.deleteMany({});
+    return true;
   }
 };

@@ -131,6 +131,7 @@ import DriverDashboard from "./components/driver/pages/driver/DriverDashboard";
 import DriverProfile from "./components/driver/pages/driver/DriverProfile";
 import AssignedTrips from "./components/driver/pages/driver/AssignedTrips";
 import TripHistory from "./components/driver/pages/driver/TripHistory";
+import DriverPayments from "./components/driver/pages/driver/DriverPayments";
 import Availability from "./components/driver/pages/driver/Availability";
 
 import DriverLayout from "./components/driver/layouts/DriverLayout";
@@ -251,7 +252,8 @@ function App() {
             <Route path="dashboard" element={<DriverDashboard />} />
             <Route path="profile" element={<DriverProfile />} />
             <Route path="trips" element={<AssignedTrips />} />
-            <Route path="history" element={<TripHistory />} />
+            <Route path="history" element={<Navigate to="/driver/payments" replace />} />
+            <Route path="payments" element={<DriverPayments />} />
             <Route path="availability" element={<Availability />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Route>
@@ -337,7 +339,7 @@ function App() {
                 handleLogout={handleCustomerLogout}
               />
             } />
-            <Route path="*" element={<Navigate to="home" replace />} />
+            <Route path="*" element={<Navigate to="/customer/home" replace />} />
           </Route>
 
           <Route 

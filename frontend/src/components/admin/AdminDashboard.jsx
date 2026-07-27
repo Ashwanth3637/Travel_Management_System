@@ -10,6 +10,7 @@ import AdminOverview from './AdminOverview';
 import AdminProfile from './AdminProfile';
 import AdminFeedbacks from './AdminFeedbacks';
 import AdminQueries from './AdminQueries';
+import AdminPayments from './AdminPayments';
 
 function AdminDashboard({ token, handleLogout }) {
   const API_URL = 'http://localhost:5001/api';
@@ -435,6 +436,41 @@ function AdminDashboard({ token, handleLogout }) {
           </NavLink>
 
           <NavLink 
+            to="/admin/payments" 
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px 16px',
+              borderRadius: '10px',
+              textDecoration: 'none',
+              fontSize: '14.5px',
+              fontWeight: '800',
+              transition: 'all 0.25s ease-in-out',
+              color: isActive ? '#ffffff' : '#0f172a',
+              backgroundColor: isActive ? '#3b82f6' : 'transparent',
+              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
+            })}
+          >
+            {({ isActive }) => (
+              <>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 185, 129, 0.14)',
+                  fontSize: '17px',
+                  flexShrink: 0
+                }}>💳</span>
+                <span>Payment Reports</span>
+              </>
+            )}
+          </NavLink>
+
+          <NavLink 
             to="/admin/queries" 
             style={({ isActive }) => ({
               display: 'flex',
@@ -563,6 +599,7 @@ function AdminDashboard({ token, handleLogout }) {
                 toast={triggerToast}
               />
             } />
+            <Route path="payments" element={<AdminPayments />} />
             <Route path="feedbacks" element={
               <AdminFeedbacks 
                 token={token} 

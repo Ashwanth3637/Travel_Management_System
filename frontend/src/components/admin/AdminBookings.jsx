@@ -10,6 +10,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
   const [viewingBooking, setViewingBooking] = useState(null);
 
   const [historyCategory, setHistoryCategory] = useState(null);
+  const [historySubModel, setHistorySubModel] = useState(null);
 
   const HISTORY_CATEGORIES = [
     { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: '#2563eb' },
@@ -307,7 +308,9 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                       {shortenAddress(b.pickupLocation)} ➔ {shortenAddress(b.dropLocation)}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
-                    <td>{b.vehicleType}</td>
+                            <td>
+                              {vehicles.find(v => v.id === b.assignedVehicleId)?.name || (b.vehicleType !== 'Sedan' && b.vehicleType !== 'SUV' && b.vehicleType !== 'Luxury' && b.vehicleType !== 'Minivan' ? b.vehicleType : (historySubModel || b.vehicleType))}
+                            </td>
                     <td>
                       <div style={{ fontWeight: '800', color: '#1e293b' }}>₹{b.fareEstimated}</div>
                       <span style={{
@@ -321,7 +324,9 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                         color: b.paymentStatus === 'PAID' ? '#166534' : '#991b1b',
                         border: b.paymentStatus === 'PAID' ? '1px solid #86efac' : '1px solid #fca5a5'
                       }}>
-                        {b.paymentStatus === 'PAID' ? `PAID (${b.paymentMethod || 'GPAY'}) ✅` : 'UNPAID ⌛'}
+                        {b.paymentStatus === 'PAID' 
+                          ? (b.paymentMethod === 'GPAY' ? '📱 GPAY SCANNER ✅' : '💵 CASH IN HAND ✅')
+                          : 'UNPAID ⌛'}
                       </span>
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
@@ -472,7 +477,13 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <button 
                     className="btn btn-secondary" 
-                    onClick={() => setHistoryCategory(null)}
+                    onClick={() => {
+                      if (historySubModel) {
+                        setHistorySubModel(null);
+                      } else {
+                        setHistoryCategory(null);
+                      }
+                    }}
                     style={{ 
                       padding: '6px 12px', 
                       fontSize: '13px', 
@@ -482,7 +493,7 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                       borderRadius: '8px'
                     }}
                   >
-                    ← Back to History
+                    ← {historySubModel ? `Back to ${historyCategory} History Folders` : 'Back to History'}
                   </button>
                   <div>
                     <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -493,95 +504,255 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
                         borderRadius: '50%', 
                         backgroundColor: HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.color || 'var(--color-primary)'
                       }}></span>
-                      {historyCategory} Booking History
+                      {historySubModel ? `${historySubModel} History Folder` : `${historyCategory} Category History`}
                     </h3>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Showing all {archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length} archived booking(s)
+                      {historySubModel 
+                        ? `Showing archived bookings for ${historySubModel}` 
+                        : `Select a car model folder (WagonR, Brezza, Aura, Dzire, etc.)`
+                      }
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th style={{ whiteSpace: 'nowrap' }}>ID</th>
-                      <th>Customer</th>
-                      <th>Route (From - Destination)</th>
-                      <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
-                      <th>Vehicle Requested</th>
-                      <th>Estimated Fare</th>
-                      <th style={{ whiteSpace: 'nowrap' }}>Status</th>
-                      <th>Assigned Resources</th>
-                      <th>Feedback</th>
-                      <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length === 0 ? (
+              {!historySubModel ? (
+                /* Sub-model Folders Grid for Trip History */
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '20px',
+                  marginBottom: '20px'
+                }}>
+                  {(() => {
+                    const DEFAULT_SUBMODELS = {
+                      Sedan: ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'],
+                      SUV: ['Innova Crysta', 'Mahindra Thar', 'Mahindra Scorpio', 'Fortuner', 'Bolero'],
+                      Luxury: ['BMW 5 Series', 'Audi A6', 'Mercedes E-Class'],
+                      Minivan: ['Tempo Traveller', 'Urbania']
+                    };
+
+                    const categoryBookings = archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase());
+                    
+                    // Group by assigned vehicle name or specific model name
+                    const subModelGroups = {};
+                    categoryBookings.forEach(b => {
+                      const assignedV = vehicles.find(v => v.id === b.assignedVehicleId);
+                      const key = assignedV?.name || (b.vehicleType !== historyCategory ? b.vehicleType : null);
+                      if (key) {
+                        if (!subModelGroups[key]) subModelGroups[key] = [];
+                        subModelGroups[key].push(b);
+                      }
+                    });
+
+                    // Ensure default specific model folders also appear
+                    const defaults = DEFAULT_SUBMODELS[historyCategory] || [];
+                    defaults.forEach(defName => {
+                      if (!subModelGroups[defName]) {
+                        subModelGroups[defName] = [];
+                      }
+                    });
+
+                    const groupKeys = Object.keys(subModelGroups).filter(k => k.toLowerCase() !== historyCategory.toLowerCase());
+
+                    return groupKeys.map(modelName => {
+                      const subBookings = subModelGroups[modelName];
+                      const matchingVehicle = vehicles.find(v => v.name === modelName);
+                      const sampleImg = matchingVehicle?.image || HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.img;
+                      const catColor = HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.color || '#3b82f6';
+
+                      return (
+                        <div 
+                          key={modelName}
+                          className="glass-panel"
+                          onClick={() => setHistorySubModel(modelName)}
+                          style={{
+                            padding: '25px 20px',
+                            borderRadius: '12px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            transition: 'all 0.25s ease-in-out',
+                            borderLeft: `4px solid ${catColor}`,
+                            borderTop: '1px solid transparent',
+                            borderRight: '1px solid transparent',
+                            borderBottom: '1px solid transparent',
+                            backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '10px',
+                            boxSizing: 'border-box'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-4px)';
+                            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                            e.currentTarget.style.borderTop = `1px solid ${catColor}`;
+                            e.currentTarget.style.borderRight = `1px solid ${catColor}`;
+                            e.currentTarget.style.borderBottom = `1px solid ${catColor}`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                            e.currentTarget.style.borderTop = '1px solid transparent';
+                            e.currentTarget.style.borderRight = '1px solid transparent';
+                            e.currentTarget.style.borderBottom = '1px solid transparent';
+                          }}
+                        >
+                          {sampleImg ? (
+                            <img
+                              src={sampleImg}
+                              alt={modelName}
+                              style={{
+                                width: '100px',
+                                height: '65px',
+                                objectFit: 'contain',
+                                marginBottom: '8px',
+                                borderRadius: '4px'
+                              }}
+                            />
+                          ) : (
+                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📁</div>
+                          )}
+                          <div style={{ fontSize: '17px', fontWeight: '800', color: 'var(--text-main)' }}>{modelName} History</div>
+                          <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                            {subBookings.length} {subBookings.length === 1 ? 'booking' : 'bookings'} archived
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHistorySubModel(modelName);
+                            }}
+                            style={{ 
+                              marginTop: '10px', 
+                              width: '100%', 
+                              padding: '8px 0', 
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                              color: '#60a5fa',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            Open {modelName} History
+                          </button>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              ) : (
+                <div className="table-container" style={{ width: '100%', overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
                       <tr>
-                        <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
-                          No archived bookings found in the <strong>{historyCategory}</strong> history folder.
-                        </td>
+                        <th style={{ whiteSpace: 'nowrap' }}>ID</th>
+                        <th>Customer</th>
+                        <th>Route (From - Destination)</th>
+                        <th style={{ whiteSpace: 'nowrap' }}>Pickup Time</th>
+                        <th>Vehicle Requested</th>
+                        <th>Estimated Fare</th>
+                        <th style={{ whiteSpace: 'nowrap' }}>Status</th>
+                        <th>Assigned Resources</th>
+                        <th>Feedback</th>
+                        <th style={{ whiteSpace: 'nowrap' }}>Actions</th>
                       </tr>
-                    ) : (
-                      archivedBookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).map(b => (
-                        <tr key={b.id}>
-                          <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
-                          <td>{b.customerName}</td>
-                          <td title={`${b.pickupLocation} ➔ ${b.dropLocation}`} style={{ lineHeight: '1.4' }}>
-                            {shortenAddress(b.pickupLocation)} ➔ {shortenAddress(b.dropLocation)}
-                          </td>
-                          <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
-                          <td>{b.vehicleType}</td>
-                          <td>₹{b.fareEstimated}</td>
-                          <td style={{ whiteSpace: 'nowrap' }}>
-                            <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
-                              {b.status}
-                            </span>
-                          </td>
-                          <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                            {b.assignedVehicleId ? (
-                              <div>🚙 {vehicles.find(v => v.id === b.assignedVehicleId)?.name}</div>
-                            ) : null}
-                            {b.assignedDriverId ? (
-                              <div>👤 {drivers.find(d => d.id === b.assignedDriverId)?.name}</div>
-                            ) : (
-                              !b.assignedVehicleId && 'Unassigned'
-                            )}
-                          </td>
-                          <td>
-                            {b.rating > 0 ? (
-                              <div>
-                                <span style={{ color: '#fbbf24', fontWeight: '700' }}>{'★'.repeat(b.rating)}</span>
-                                {b.feedback && (
-                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.feedback}>
-                                    "{b.feedback}"
-                                  </div>
-                                )}
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const filtered = archivedBookings.filter(b => {
+                          if (!b.vehicleType || b.vehicleType.toLowerCase() !== historyCategory.toLowerCase()) return false;
+                          const assignedV = vehicles.find(v => v.id === b.assignedVehicleId);
+                          const modelKey = assignedV?.name || b.vehicleType || 'Other';
+                          return modelKey === historySubModel || b.vehicleType === historySubModel;
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                                No archived bookings found in <strong>{historySubModel}</strong> folder.
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return filtered.map(b => (
+                          <tr key={b.id}>
+                            <td style={{ whiteSpace: 'nowrap' }}><strong>{b.id}</strong></td>
+                            <td>{b.customerName}</td>
+                            <td title={`${b.pickupLocation} ➔ ${b.dropLocation}`} style={{ lineHeight: '1.4' }}>
+                              {shortenAddress(b.pickupLocation)} ➔ {shortenAddress(b.dropLocation)}
+                            </td>
+                            <td style={{ whiteSpace: 'nowrap' }}>{formatDate(b.pickupDateTime)}</td>
+                                    <td>
+                              {vehicles.find(v => v.id === b.assignedVehicleId)?.name || (b.vehicleType !== 'Sedan' && b.vehicleType !== 'SUV' && b.vehicleType !== 'Luxury' && b.vehicleType !== 'Minivan' ? b.vehicleType : (historySubModel || b.vehicleType))}
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: '800' }}>₹{b.fareEstimated}</div>
+                              <span style={{
+                                display: 'inline-block',
+                                marginTop: '2px',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '10px',
+                                fontWeight: '800',
+                                backgroundColor: b.paymentStatus === 'PAID' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                                color: b.paymentStatus === 'PAID' ? '#10b981' : '#ef4444'
+                              }}>
+                                {b.paymentStatus === 'PAID'
+                                  ? (b.paymentMethod === 'GPAY' ? '📱 GPAY SCANNER' : '💵 CASH IN HAND')
+                                  : 'UNPAID'}
+                              </span>
+                            </td>
+                            <td style={{ whiteSpace: 'nowrap' }}>
+                              <span className={`badge badge-${b.status.toLowerCase().replace(' ', '')}`}>
+                                {b.status}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                              {b.assignedVehicleId ? (
+                                <div>🚙 {vehicles.find(v => v.id === b.assignedVehicleId)?.name}</div>
+                              ) : null}
+                              {b.assignedDriverId ? (
+                                <div>👤 {drivers.find(d => d.id === b.assignedDriverId)?.name}</div>
+                              ) : (
+                                !b.assignedVehicleId && 'Unassigned'
+                              )}
+                            </td>
+                            <td>
+                              {b.rating > 0 ? (
+                                <div>
+                                  <span style={{ color: '#fbbf24', fontWeight: '700' }}>{'★'.repeat(b.rating)}</span>
+                                  {b.feedback && (
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.feedback}>
+                                      "{b.feedback}"
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No feedback</span>
+                              )}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>Archived</span>
+                                <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
+                                  View
+                                </button>
                               </div>
-                            ) : (
-                              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>No feedback</span>
-                            )}
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>Archived</span>
-                              <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingBooking(b)}>
-                                View
-                              </button>
-                              <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => handleEditBookingClick(b)}>
-                                Edit
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -942,33 +1113,50 @@ function AdminBookings({ token, bookings, vehicles, drivers, refresh, toast, onl
               </div>
 
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '8px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--text-muted)' }}>Dispatch Information</h4>
-                {viewingBooking.assignedVehicleId || viewingBooking.assignedDriverId ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {viewingBooking.assignedVehicleId && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span></span>
-                        <div>
-                          <div style={{ fontWeight: '500' }}>{vehicles.find(v => v.id === viewingBooking.assignedVehicleId)?.name || 'Unknown Vehicle'}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Plate: {vehicles.find(v => v.id === viewingBooking.assignedVehicleId)?.plateNumber || 'N/A'}</div>
-                        </div>
-                      </div>
-                    )}
-                    {viewingBooking.assignedDriverId && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                        <span></span>
-                        <div>
-                          <div style={{ fontWeight: '500' }}>{drivers.find(d => d.id === viewingBooking.assignedDriverId)?.name || 'Unknown Driver'}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Phone: {drivers.find(d => d.id === viewingBooking.assignedDriverId)?.phone || 'N/A'} | License: {drivers.find(d => d.id === viewingBooking.assignedDriverId)?.licenseNumber || 'N/A'}</div>
-                        </div>
-                      </div>
-                    )}
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--text-muted)' }}>💳 Payment & Driver Confirmation Details</h4>
+                <div style={{ padding: '14px', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Payment Status:</span>
+                    <span style={{
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      padding: '2px 10px',
+                      borderRadius: '12px',
+                      backgroundColor: viewingBooking.paymentStatus === 'PAID' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                      color: viewingBooking.paymentStatus === 'PAID' ? '#10b981' : '#ef4444'
+                    }}>
+                      {viewingBooking.paymentStatus === 'PAID' ? 'PAID ✅' : 'UNPAID ⌛'}
+                    </span>
                   </div>
-                ) : (
-                  <div style={{ fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)' }}>
-                    No vehicle or driver assigned to this booking yet.
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Payment Method:</span>
+                    <span style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-main)' }}>
+                      {viewingBooking.paymentMethod === 'GPAY' ? '📱 GPay Scanner' : viewingBooking.paymentMethod === 'CASH' ? '💵 Cash to Driver (In Hand)' : (viewingBooking.paymentMethod || 'PENDING')}
+                    </span>
                   </div>
-                )}
+
+                  {viewingBooking.transactionId && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Transaction ID:</span>
+                      <span style={{ fontWeight: '700', fontSize: '12px', color: 'var(--color-primary)' }}>{viewingBooking.transactionId}</span>
+                    </div>
+                  )}
+
+                  {viewingBooking.driverPaymentMsg && (
+                    <div style={{ marginTop: '6px', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>📩 Received Driver Message:</span>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-main)', marginTop: '2px', fontStyle: 'italic' }}>
+                        "{viewingBooking.driverPaymentMsg}"
+                      </div>
+                      {viewingBooking.driverConfirmedAt && (
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          Confirmed At: {new Date(viewingBooking.driverConfirmedAt).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {viewingBooking.rating > 0 && (

@@ -109,6 +109,7 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
   const renderTabContent = () => {
     switch (activeTab) {
       case "home":
+      case "dashboard":
         return (
           <div className="animate-fade-in" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             

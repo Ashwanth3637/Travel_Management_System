@@ -394,7 +394,9 @@ function CustomerBooking({ token, customer }) {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           pickupLocation: pickup, dropLocation: drop, pickupDateTime: dateTime,
-          vehicleType: selectedVehicle.type, modelName: selectedVehicle.name,
+          vehicleType: selectedVehicle.type, 
+          assignedVehicleName: selectedVehicle.name,
+          modelName: selectedVehicle.name,
           customerName: customer?.name, customerContact, passengersCount,
           tripType, specialRequirements, fareEstimated: estimatedFare,
         }),

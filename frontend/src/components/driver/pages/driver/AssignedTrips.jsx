@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FaMapMarkerAlt, FaCalendarAlt, FaPlay, FaFlag, FaRupeeSign } from "react-icons/fa";
 
 const API_URL = "http://localhost:5001/api";
@@ -42,6 +43,12 @@ export default function AssignedTrips() {
 
   const [otpTripId, setOtpTripId] = useState(null);
   const [otpInput, setOtpInput] = useState("");
+
+  // Payment confirmation modal states
+  const [payModalTrip, setPayModalTrip] = useState(null);
+  const [driverPayMethod, setDriverPayMethod] = useState("CASH");
+  const [driverMsgInput, setDriverMsgInput] = useState("");
+  const [submittingPay, setSubmittingPay] = useState(false);
 
   const updateStatus = async (tripId, status, otp = null) => {
     setUpdating(tripId);
@@ -198,43 +205,51 @@ export default function AssignedTrips() {
                       📍 {updating === trip.id ? "Updating..." : "Destination Reached"}
                     </button>
                   )}
-                  {trip.status === "Destination Reached" && (
+                  {["Destination Reached", "Completed", "Trip Completed"].includes(trip.status) && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-                      <div style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', textTransform: 'uppercase' }}>
-                        Collect Fare: ₹{trip.fareEstimated || 1850}
+                      <div style={{ fontSize: '13px', fontWeight: '900', color: '#2563eb' }}>
+                        Fare: ₹{(trip.fareEstimated || 1850).toLocaleString('en-IN')}
                       </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          className="btn btn-success"
-                          style={{ padding: "8px 12px", backgroundColor: "#10b981", color: "#fff", fontSize: '12px' }}
-                          disabled={updating === trip.id}
-                          onClick={async () => {
-                            await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: 'CASH' })
-                            });
-                            updateStatus(trip.id, "Completed");
-                          }}
-                        >
-                          💵 Cash Received
-                        </button>
-                        <button
-                          className="btn btn-primary"
-                          style={{ padding: "8px 12px", backgroundColor: "#2563eb", color: "#fff", fontSize: '12px' }}
-                          disabled={updating === trip.id}
-                          onClick={async () => {
-                            await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: 'GPAY' })
-                            });
-                            updateStatus(trip.id, "Completed");
-                          }}
-                        >
-                          📱 GPay Received
-                        </button>
-                      </div>
+
+                      {trip.paymentStatus === 'Paid' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: '800', backgroundColor: '#dcfce7', color: '#15803d', padding: '6px 12px', borderRadius: '8px', border: '1px solid #86efac' }}>
+                            Payment Received ✔ {trip.paymentMethod || 'Google Pay'}
+                          </span>
+                          <span style={{ fontSize: '12px', fontWeight: '800', color: '#10b981', backgroundColor: '#ecfdf5', padding: '4px 10px', borderRadius: '6px' }}>
+                            🎉 Driver Net Earning: ₹{Math.round((trip.fareEstimated || 1850) * 0.85).toLocaleString('en-IN')} (85%)
+                          </span>
+                          {trip.status === "Destination Reached" && (
+                            <button
+                              className="btn btn-success"
+                              style={{ padding: "8px 16px", backgroundColor: "#10b981", color: "#fff", fontSize: '12px', fontWeight: '800', borderRadius: '8px' }}
+                              disabled={updating === trip.id}
+                              onClick={() => updateStatus(trip.id, "Completed")}
+                            >
+                              🏁 Complete Ride
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11.5px', color: '#b45309', backgroundColor: '#fef3c7', padding: '4px 8px', borderRadius: '6px', fontWeight: '700' }}>
+                            ⏳ Waiting for Customer Payment...
+                          </span>
+                          <button
+                            style={{ padding: '8px 14px', fontSize: '12px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#fff', cursor: 'pointer' }}
+                            onClick={async () => {
+                              await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ paymentStatus: 'Paid', paymentMethod: 'Cash', driverPaymentMsg: 'Cash Received by Driver' })
+                              });
+                              await updateStatus(trip.id, "Completed");
+                            }}
+                          >
+                            💵 Cash Received
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -248,18 +263,38 @@ export default function AssignedTrips() {
         </div>
       )}
 
-      {/* OTP Verification Modal */}
-      {otpTripId && (
-        <div className="modal-overlay" style={{
-          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999
+
+
+      {/* OTP Verification Modal Portal (Renders at document.body level for full-screen coverage) */}
+      {otpTripId && createPortal(
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(15, 23, 42, 0.75)",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 999999
         }}>
-          <div className="glass-panel" style={{ width: "90%", maxWidth: "400px", padding: "28px", textAlign: "center" }}>
-            <h3 style={{ fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>
-              🔑 Enter Customer OTP
+          <div style={{
+            width: "90%",
+            maxWidth: "420px",
+            backgroundColor: "#ffffff",
+            borderRadius: "20px",
+            padding: "32px 28px",
+            textAlign: "center",
+            boxShadow: "0 25px 60px rgba(0,0,0,0.35)",
+            border: "1px solid #cbd5e1"
+          }}>
+            <div style={{ fontSize: "36px", marginBottom: "8px" }}>🔑</div>
+            <h3 style={{ fontSize: "22px", fontWeight: "900", color: "#1e293b", margin: "0 0 8px 0" }}>
+              Enter Customer OTP
             </h3>
-            <p style={{ color: "var(--text-muted)", fontSize: "13px", marginBottom: "20px" }}>
+            <p style={{ color: "#64748b", fontSize: "13.5px", margin: "0 0 24px 0", lineHeight: "1.5" }}>
               Ask customer for the 4-digit OTP displayed on their booking confirmation to verify and start the trip.
             </p>
 
@@ -271,31 +306,53 @@ export default function AssignedTrips() {
               onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ""))}
               style={{
                 width: "100%",
-                padding: "14px",
-                fontSize: "24px",
-                fontWeight: "800",
-                letterSpacing: "8px",
+                padding: "16px",
+                fontSize: "30px",
+                fontWeight: "900",
+                letterSpacing: "12px",
                 textAlign: "center",
-                borderRadius: "10px",
-                border: "1px solid var(--border-color)",
-                backgroundColor: "rgba(0,0,0,0.3)",
-                color: "#fff",
-                marginBottom: "20px"
+                borderRadius: "14px",
+                border: "2px solid #2563eb",
+                backgroundColor: "#f8fafc",
+                color: "#1e293b",
+                outline: "none",
+                marginBottom: "24px",
+                boxSizing: "border-box",
+                boxShadow: "0 4px 12px rgba(37, 99, 235, 0.15)"
               }}
               autoFocus
             />
 
             <div style={{ display: "flex", gap: "12px" }}>
               <button
-                className="btn btn-secondary"
-                style={{ flex: 1 }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  fontSize: "14px",
+                  fontWeight: "700",
+                  borderRadius: "10px",
+                  border: "1px solid #cbd5e1",
+                  backgroundColor: "#f1f5f9",
+                  color: "#475569",
+                  cursor: "pointer"
+                }}
                 onClick={() => { setOtpTripId(null); setOtpInput(""); }}
               >
                 Cancel
               </button>
               <button
-                className="btn btn-start"
-                style={{ flex: 1 }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  fontSize: "14px",
+                  fontWeight: "800",
+                  borderRadius: "10px",
+                  border: "none",
+                  backgroundColor: otpInput.length === 4 ? "#10b981" : "#cbd5e1",
+                  color: "#ffffff",
+                  cursor: otpInput.length === 4 ? "pointer" : "not-allowed",
+                  boxShadow: otpInput.length === 4 ? "0 4px 15px rgba(16, 185, 129, 0.4)" : "none"
+                }}
                 disabled={otpInput.length !== 4 || updating === otpTripId}
                 onClick={() => updateStatus(otpTripId, "Trip Started", otpInput)}
               >
@@ -303,7 +360,8 @@ export default function AssignedTrips() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 function CustomerPayments({ token, customer, onPaymentComplete }) {
   const API_URL = "http://localhost:5001/api";
@@ -6,18 +7,14 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('upi'); // 'upi', 'card', 'netbanking', 'cash'
+  const [paymentMethod, setPaymentMethod] = useState('Google Pay'); // 'Cash', 'Google Pay', 'PhonePe / UPI', 'Credit / Debit Card'
   
-  // Card Inputs
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-
-  // UPI Inputs
-  const [upiId, setUpiId] = useState('');
-
+  // Online Gateway & Custom GPay QR States
+  const [gpayUpiId, setGpayUpiId] = useState('ashwanth.gpay@okaxis'); // Custom GPay UPI ID
+  const [gpayMerchantName, setGpayMerchantName] = useState('Ashwanth (TravelGo)');
+  const [showGatewayModal, setShowGatewayModal] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
+  const [paymentSuccess, setPaymentSuccess] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const fetchBookings = async () => {
@@ -42,520 +39,534 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
     fetchBookings();
   }, [customer, token]);
 
-  const completedBookings = bookings.filter(b => ['Completed', 'Trip Completed'].includes(b.status));
-  const unpaidBookings = completedBookings.filter(b => b.paymentStatus !== 'PAID');
-  const paidBookings = completedBookings.filter(b => b.paymentStatus === 'PAID');
+  const isPaid = (b) => {
+    if (!b.paymentStatus) return false;
+    const s = String(b.paymentStatus).toUpperCase().trim();
+    return s === 'PAID' || s === 'CONFIRMED' || s === 'DRIVER CONFIRMED' || s === 'CONFIRMED_BY_DRIVER';
+  };
 
-  const totalPaidAmount = paidBookings.reduce((sum, b) => sum + (b.fareEstimated || 0), 0);
-  const totalUnpaidAmount = unpaidBookings.reduce((sum, b) => sum + (b.fareEstimated || 0), 0);
+  const pendingPaymentBookings = bookings.filter(b => {
+    const status = (b.status || '').trim();
+    const isCompletedOrEnded = [
+      "Destination Reached",
+      "Reached",
+      "Trip Ended",
+      "Ended",
+      "Completed",
+      "Trip Completed"
+    ].some(s => s.toLowerCase() === status.toLowerCase());
 
-  const handlePayNow = async (e) => {
-    e.preventDefault();
+    return isCompletedOrEnded && !isPaid(b);
+  });
+
+  const paidBookings = bookings.filter(b => isPaid(b));
+
+  const handleLaunchMobileUPI = () => {
     if (!selectedBooking) return;
-
-    if (paymentMethod === 'card' && (!cardNumber || !cardExpiry || !cardCvv)) {
-      setErrorMsg('Please enter valid Card Number, Expiry, and CVV.');
-      return;
+    const amount = selectedBooking.fareEstimated || 1850;
+    const upiUrl = `upi://pay?pa=${encodeURIComponent(gpayUpiId)}&pn=${encodeURIComponent(gpayMerchantName)}&am=${amount}&cu=INR&tn=Booking_${selectedBooking.id}`;
+    try {
+      const a = document.createElement('a');
+      a.href = upiUrl;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        if (document.body.contains(a)) document.body.removeChild(a);
+      }, 1000);
+    } catch (e) {
+      console.log('Mobile UPI trigger error:', e);
     }
+  };
 
-    if (paymentMethod === 'upi' && !upiId && !upiId.includes('@')) {
-      setErrorMsg('Please enter a valid UPI ID (e.g. rider@upi).');
-      return;
+  const handleOpenPaymentFlow = () => {
+    if (!selectedBooking) return;
+    if (paymentMethod === 'Cash') {
+      // Direct cash payment processing
+      executePaymentBackend();
+    } else {
+      // Launch mobile UPI deep link if on mobile, and open QR modal
+      handleLaunchMobileUPI();
+      setShowGatewayModal(true);
     }
+  };
 
+  const executePaymentBackend = async () => {
+    if (!selectedBooking) return;
     try {
       setProcessing(true);
-      setErrorMsg('');
+      setErrorMsg("");
 
-      const res = await fetch(`${API_URL}/customer/payments/pay`, {
+      // Simulate 2-3 seconds processing delay for professional viva demonstration
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const activeToken = token || sessionStorage.getItem('customerToken') || localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (activeToken && activeToken !== "null" && activeToken !== "undefined") {
+        headers['Authorization'] = `Bearer ${activeToken}`;
+      }
+
+      const res = await fetch(`${API_URL}/customer/pay`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           bookingId: selectedBooking.id,
-          paymentMethod: paymentMethod.toUpperCase(),
-          amountPaid: selectedBooking.fareEstimated || 1850
+          paymentMethod
         })
       });
 
       const data = await res.json();
-
       if (res.ok) {
-        setSuccessMsg(`✅ Payment of ₹${selectedBooking.fareEstimated || 1850} successful! Txn ID: ${data.transactionId}`);
-        setSelectedBooking(null);
+        setPaymentSuccess(data.payment || {
+          paymentId: 'PAY' + Math.floor(100000 + Math.random() * 900000),
+          transactionId: 'TXN' + Math.floor(100000 + Math.random() * 900000),
+          amount: selectedBooking.fareEstimated || 1850,
+          paymentMethod,
+          paymentDate: new Date().toLocaleDateString('en-GB')
+        });
+        setShowGatewayModal(false);
         fetchBookings();
         if (onPaymentComplete) onPaymentComplete();
-        setTimeout(() => setSuccessMsg(''), 5000);
       } else {
-        setErrorMsg(data.error || 'Payment failed. Please try again.');
+        setErrorMsg(data.error || "Payment failed to process.");
       }
     } catch (err) {
-      console.error(err);
-      setErrorMsg('Network error. Failed to process payment.');
+      console.error("Payment error:", err);
+      setErrorMsg("Failed to connect to payment server.");
     } finally {
       setProcessing(false);
     }
   };
 
   return (
-    <div className="animate-fade-in" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="animate-fade-in" style={{ textAlign: 'left', maxWidth: '1000px', margin: '0 auto' }}>
       
-      {/* ─── HEADER CARD ─── */}
-      <div className="glass-panel" style={{
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#ffffff',
         padding: '20px 28px',
-        borderLeft: '5px solid #10b981',
+        borderRadius: '16px',
+        boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)',
+        border: '1px solid #e2e8f0',
+        marginBottom: '24px',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '16px'
+        justify: 'space-between',
+        alignItems: 'center'
       }}>
         <div>
           <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '0 0 4px 0', color: '#1e293b' }}>
-            💳 Payments & Invoice Receipts
+            💳 Customer Payment Gateway
           </h2>
-          <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0, fontWeight: '600' }}>
-            Pay trip fares securely via UPI, Credit/Debit Card, Net Banking, or Cash
+          <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0 }}>
+            Select trip fare payment method (Cash, Google Pay, PhonePe/UPI, Credit/Debit Card)
           </p>
         </div>
-
-        <span className="badge badge-completed" style={{ fontSize: '12px', padding: '6px 14px' }}>
-          🔒 256-Bit SSL Encrypted
-        </span>
       </div>
 
-      {/* ─── STAT CARDS SUMMARY ROW ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+      {/* Payment Success Receipt Display */}
+      {paymentSuccess && (
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: '28px',
+          border: '2px solid #10b981',
+          boxShadow: '0 8px 30px rgba(16, 185, 129, 0.15)',
+          marginBottom: '28px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '8px' }}>✅</div>
+          <h3 style={{ fontSize: '24px', fontWeight: '900', color: '#10b981', margin: '0 0 16px 0' }}>
+            Payment Successful
+          </h3>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            backgroundColor: '#f8fafc',
+            padding: '20px',
+            borderRadius: '12px',
+            textAlign: 'left',
+            maxWidth: '500px',
+            margin: '0 auto 20px auto',
+            border: '1px solid #e2e8f0',
+            fontSize: '14px'
+          }}>
+            <div>
+              <span style={{ color: '#64748b', fontWeight: '600', display: 'block', fontSize: '12px' }}>Transaction ID</span>
+              <strong style={{ fontSize: '16px', color: '#2563eb' }}>{paymentSuccess.transactionId}</strong>
+            </div>
+
+            <div>
+              <span style={{ color: '#64748b', fontWeight: '600', display: 'block', fontSize: '12px' }}>Amount</span>
+              <strong style={{ fontSize: '18px', color: '#10b981' }}>₹{paymentSuccess.amount?.toLocaleString('en-IN')}</strong>
+            </div>
+
+            <div>
+              <span style={{ color: '#64748b', fontWeight: '600', display: 'block', fontSize: '12px' }}>Method</span>
+              <strong style={{ fontSize: '15px', color: '#1e293b' }}>{paymentSuccess.paymentMethod}</strong>
+            </div>
+
+            <div>
+              <span style={{ color: '#64748b', fontWeight: '600', display: 'block', fontSize: '12px' }}>Status</span>
+              <span style={{ padding: '3px 10px', borderRadius: '10px', backgroundColor: '#dcfce7', color: '#15803d', fontWeight: '800', fontSize: '12px' }}>
+                PAID ✅
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => { setPaymentSuccess(null); setSelectedBooking(null); }}
+            style={{
+              padding: '10px 24px',
+              backgroundColor: '#2563eb',
+              color: '#fff',
+              fontWeight: '800',
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            Done / Close Receipt
+          </button>
+        </div>
+      )}
+
+      {/* Main Grid: Pending Fare & Payment Options */}
+      <div style={{ display: 'grid', gridTemplateColumns: selectedBooking ? '1fr 1.2fr' : '1fr', gap: '24px' }}>
         
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800' }}>
-            UNPAID FARE DUE
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#ef4444', marginTop: '4px' }}>
-            ₹{totalUnpaidAmount.toLocaleString()}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#ef4444', fontWeight: '700', marginTop: '4px' }}>
-            {unpaidBookings.length} trip(s) pending payment
-          </div>
+        {/* Pending Fares List */}
+        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 16px 0', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⌛ Trips Pending Payment</span>
+            <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '10px', backgroundColor: '#fef3c7', color: '#b45309' }}>
+              {pendingPaymentBookings.length} PENDING
+            </span>
+          </h3>
+
+          {loading ? (
+            <p style={{ color: '#64748b', fontSize: '14px' }}>Loading trip details...</p>
+          ) : pendingPaymentBookings.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ fontSize: '36px', marginBottom: '8px' }}>🚗</div>
+              <strong style={{ fontSize: '15px', color: '#1e293b', display: 'block' }}>No Fares Due For Payment</strong>
+              <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+                Trip fares appear here for payment <strong>only after your driver ends the trip / reaches your destination!</strong>
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {pendingPaymentBookings.map(b => (
+                <div
+                  key={b.id}
+                  onClick={() => { setSelectedBooking(b); setPaymentSuccess(null); }}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '12px',
+                    border: selectedBooking?.id === b.id ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                    backgroundColor: selectedBooking?.id === b.id ? '#eff6ff' : '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    justify: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: '800', fontSize: '15px', color: '#1e293b' }}>
+                      Booking #{b.id} ({b.vehicleType})
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
+                      📍 {b.pickupLocation} → {b.dropLocation}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '18px', fontWeight: '900', color: '#2563eb' }}>
+                      ₹{(b.fareEstimated || 1850).toLocaleString('en-IN')}
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#b45309', backgroundColor: '#fef3c7', padding: '2px 8px', borderRadius: '8px' }}>
+                      Pay Due
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800' }}>
-            TOTAL FARES PAID
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#10b981', marginTop: '4px' }}>
-            ₹{totalPaidAmount.toLocaleString()}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#10b981', fontWeight: '700', marginTop: '4px' }}>
-            ✅ {paidBookings.length} paid invoices
-          </div>
-        </div>
+        {/* PAYMENT DETAILS FORM */}
+        {selectedBooking && !paymentSuccess && (
+          <div style={{
+            backgroundColor: '#ffffff',
+            padding: '24px',
+            borderRadius: '16px',
+            border: '2px solid #2563eb',
+            boxShadow: '0 8px 30px rgba(37, 99, 235, 0.1)'
+          }}>
+            <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '16px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                PAYMENT DETAILS
+              </div>
+              <h3 style={{ fontSize: '20px', fontWeight: '900', margin: '4px 0 0 0', color: '#1e293b' }}>
+                Confirm Fare Payment
+              </h3>
+            </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '4px solid #2563eb' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800' }}>
-            TOTAL TRIPS CLOSED
+            <div style={{
+              display: 'flex',
+              justify: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f1f5f9',
+              padding: '16px',
+              borderRadius: '12px',
+              marginBottom: '20px'
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: '700', color: '#475569' }}>Trip Fare</span>
+              <strong style={{ fontSize: '24px', fontWeight: '900', color: '#10b981' }}>
+                ₹{(selectedBooking.fareEstimated || 1850).toLocaleString('en-IN')}
+              </strong>
+            </div>
+
+            {/* Payment Method Selection */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>
+                Select Payment Method
+              </label>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  { id: 'Cash', label: 'Cash', icon: '💵' },
+                  { id: 'Google Pay', label: 'Google Pay', icon: '📱' },
+                  { id: 'PhonePe', label: 'PhonePe', icon: '📲' },
+                  { id: 'Card', label: 'Credit / Debit Card', icon: '💳' }
+                ].map(item => (
+                  <label
+                    key={item.id}
+                    onClick={() => setPaymentMethod(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      border: paymentMethod === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                      backgroundColor: paymentMethod === item.id ? '#eff6ff' : '#ffffff',
+                      cursor: 'pointer',
+                      fontWeight: '700',
+                      fontSize: '14px',
+                      color: '#1e293b'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="payMethod"
+                      checked={paymentMethod === item.id}
+                      onChange={() => setPaymentMethod(item.id)}
+                      style={{ accentColor: '#2563eb', transform: 'scale(1.2)' }}
+                    />
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {errorMsg && (
+              <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '10px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: '700' }}>
+                {errorMsg}
+              </div>
+            )}
+
+            <button
+              onClick={handleOpenPaymentFlow}
+              disabled={processing}
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                fontWeight: '900',
+                fontSize: '16px',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {processing ? "Processing..." : "Proceed to Pay"}
+            </button>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#2563eb', marginTop: '4px' }}>
-            {completedBookings.length}
-          </div>
-          <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>
-            Completed ride records
-          </div>
-        </div>
+        )}
 
       </div>
 
-      {successMsg && (
-        <div className="glass-panel" style={{ padding: '14px 20px', backgroundColor: '#dcfce7', color: '#166534', border: '1px solid #86efac', fontWeight: '700', fontSize: '14px', borderRadius: '12px' }}>
-          {successMsg}
-        </div>
-      )}
+      {/* Paid History Ledger */}
+      {paidBookings.length > 0 && (
+        <div style={{ marginTop: '32px', backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 16px 0', color: '#1e293b' }}>
+            ✅ Payment Receipt History ({paidBookings.length})
+          </h3>
 
-      {errorMsg && (
-        <div className="glass-panel" style={{ padding: '14px 20px', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontWeight: '700', fontSize: '14px', borderRadius: '12px' }}>
-          {errorMsg}
-        </div>
-      )}
-
-      {/* ─── UNPAID TRIPS SECTION (FARE PAYMENT DUE) ─── */}
-      <div>
-        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          🚨 Unpaid Completed Trips & Pending Fares
-        </h3>
-
-        {unpaidBookings.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: '#64748b' }}>
-            <div style={{ fontSize: '32px', marginBottom: '10px' }}>🎉</div>
-            <div style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b' }}>All Completed Trip Fares Settled!</div>
-            <p style={{ fontSize: '13px', margin: '4px 0 0 0' }}>You have no pending unpaid trip bills.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {unpaidBookings.map(b => (
-              <div key={b.id} className="glass-panel" style={{
-                padding: '24px',
-                borderLeft: '5px solid #ef4444',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '20px'
-              }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {paidBookings.map(b => (
+              <div
+                key={b.id}
+                style={{
+                  padding: '14px 18px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  display: 'flex',
+                  justify: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}
+              >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <span style={{ fontWeight: '800', fontSize: '18px', color: '#1e293b' }}>#{b.id}</span>
-                    <span className="badge badge-completed">TRIP COMPLETED</span>
-                    <span className="badge badge-cancelled" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>PAYMENT PENDING</span>
+                  <div style={{ fontWeight: '800', fontSize: '14.5px', color: '#1e293b' }}>
+                    Booking #{b.id} | {b.pickupLocation} → {b.dropLocation}
                   </div>
-                  <div style={{ fontSize: '14.5px', color: '#1e293b', fontWeight: '700', marginBottom: '4px' }}>
-                    📍 {b.pickupLocation} → {b.dropLocation}
-                  </div>
-                  <div style={{ fontSize: '12.5px', color: '#64748b' }}>
-                    🗓️ Date: {b.travelDate || b.bookingDate} | Vehicle: {b.vehicleType}
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Method: <strong>{b.paymentMethod || 'Google Pay'}</strong> | Txn ID: <strong style={{ color: '#2563eb' }}>{b.transactionId || 'TXN857421'}</strong>
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                  <div>
-                    <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800' }}>TOTAL FARE DUE</div>
-                    <div style={{ fontSize: '26px', fontWeight: '800', color: '#ef4444' }}>₹{b.fareEstimated || 1850}</div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedBooking(b)}
-                    style={{
-                      padding: '11px 22px',
-                      fontSize: '13.5px',
-                      fontWeight: '800',
-                      backgroundColor: '#10b981',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 16px rgba(16, 185, 129, 0.35)',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <span>💳 Pay ₹{b.fareEstimated || 1850} Now</span>
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: '900', color: '#10b981' }}>
+                    ₹{(b.fareEstimated || 1850).toLocaleString('en-IN')}
+                  </span>
+                  <span style={{ padding: '4px 10px', borderRadius: '8px', backgroundColor: '#dcfce7', color: '#15803d', fontWeight: '800', fontSize: '12px' }}>
+                    Paid ✅
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ─── PAYMENT CHECKOUT MODAL ─── */}
-      {selectedBooking && (
+      {/* ─── STEP 3: COLLEGE FINAL YEAR PROJECT RECOMMENDED POPUP ─── */}
+      {showGatewayModal && selectedBooking && createPortal(
         <div style={{
           position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.8)',
           backdropFilter: 'blur(8px)',
-          zIndex: 99999,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '20px'
+          zIndex: 999999
         }}>
-          <div className="glass-panel animate-fade-in" style={{
+          <div style={{
+            width: '90%',
+            maxWidth: '420px',
             backgroundColor: '#ffffff',
-            maxWidth: '540px',
-            width: '100%',
-            borderRadius: '20px',
-            padding: '30px',
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-            maxHeight: '90vh',
-            overflowY: 'auto'
+            borderRadius: '24px',
+            padding: '32px 28px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+            border: '1px solid #cbd5e1',
+            textAlign: 'center'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px' }}>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 2px 0', color: '#1e293b' }}>
-                  💳 Fare Settlement #{selectedBooking.id}
-                </h3>
-                <span style={{ fontSize: '12px', color: '#64748b' }}>Select preferred payment option to complete ride</span>
-              </div>
-              <button 
-                onClick={() => setSelectedBooking(null)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
-              >
-                ✕
-              </button>
+            
+            {/* Title & App Icon */}
+            <div style={{ fontSize: '40px', marginBottom: '8px' }}>
+              {paymentMethod === 'Google Pay' ? '📱' : paymentMethod === 'PhonePe' ? '📲' : '💳'}
+            </div>
+            
+            <h3 style={{ fontSize: '24px', fontWeight: '900', margin: '0 0 4px 0', color: '#1e293b' }}>
+              {paymentMethod}
+            </h3>
+
+            <div style={{ fontSize: '20px', fontWeight: '900', color: '#10b981', marginBottom: '20px' }}>
+              Amount : ₹{(selectedBooking.fareEstimated || 1850).toLocaleString('en-IN')}
             </div>
 
-            {/* FARE BREAKDOWN CARD */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', marginBottom: '10px' }}>
-                Trip Fare Breakdown
+            {/* QR Code Section */}
+            <div style={{
+              backgroundColor: '#f8fafc',
+              padding: '20px',
+              borderRadius: '16px',
+              border: '1px dashed #2563eb',
+              marginBottom: '24px'
+            }}>
+              <p style={{ color: '#475569', fontSize: '14px', fontWeight: '700', margin: '0 0 14px 0' }}>
+                Scan QR using your mobile
+              </p>
+
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${encodeURIComponent(gpayUpiId)}%26pn=${encodeURIComponent(gpayMerchantName)}%26am=${selectedBooking.fareEstimated || 1850}%26cu=INR`}
+                alt="Custom GPay QR Code"
+                style={{ width: '160px', height: '160px', borderRadius: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.1)', marginBottom: '10px' }}
+              />
+
+              <div style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', marginTop: '4px' }}>
+                UPI ID: <span style={{ color: '#2563eb' }}>{gpayUpiId}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
-                <span>Base Trip Fare</span>
-                <span>₹{Math.round((selectedBooking.fareEstimated || 1850) * 0.85)}</span>
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>
+                Payee: <strong>{gpayMerchantName}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
-                <span>Driver Allowance & Night Charges</span>
-                <span>₹{Math.round((selectedBooking.fareEstimated || 1850) * 0.10)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569', marginBottom: '10px' }}>
-                <span>GST (5%) & Toll Taxes</span>
-                <span>₹{Math.round((selectedBooking.fareEstimated || 1850) * 0.05)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', color: '#1e293b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
-                <span>Total Amount Payable</span>
-                <span style={{ color: '#10b981' }}>₹{selectedBooking.fareEstimated || 1850}</span>
-              </div>
-            </div>
-
-            {/* PAYMENT METHOD SELECTOR */}
-            <form onSubmit={handlePayNow} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                  Select Payment Method
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  
-                  {/* Option 1: UPI */}
-                  <div
-                    onClick={() => setPaymentMethod('upi')}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: paymentMethod === 'upi' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                      backgroundColor: paymentMethod === 'upi' ? 'rgba(37, 99, 235, 0.06)' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      fontWeight: '700',
-                      fontSize: '13px',
-                      color: paymentMethod === 'upi' ? '#2563eb' : '#475569'
-                    }}
-                  >
-                    📱 UPI / QR Code
-                  </div>
-
-                  {/* Option 2: Card */}
-                  <div
-                    onClick={() => setPaymentMethod('card')}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: paymentMethod === 'card' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                      backgroundColor: paymentMethod === 'card' ? 'rgba(37, 99, 235, 0.06)' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      fontWeight: '700',
-                      fontSize: '13px',
-                      color: paymentMethod === 'card' ? '#2563eb' : '#475569'
-                    }}
-                  >
-                    💳 Credit / Debit Card
-                  </div>
-
-                  {/* Option 3: Net Banking */}
-                  <div
-                    onClick={() => setPaymentMethod('netbanking')}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: paymentMethod === 'netbanking' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                      backgroundColor: paymentMethod === 'netbanking' ? 'rgba(37, 99, 235, 0.06)' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      fontWeight: '700',
-                      fontSize: '13px',
-                      color: paymentMethod === 'netbanking' ? '#2563eb' : '#475569'
-                    }}
-                  >
-                    🏦 Net Banking
-                  </div>
-
-                  {/* Option 4: Cash */}
-                  <div
-                    onClick={() => setPaymentMethod('cash')}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '10px',
-                      border: paymentMethod === 'cash' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                      backgroundColor: paymentMethod === 'cash' ? 'rgba(37, 99, 235, 0.06)' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      fontWeight: '700',
-                      fontSize: '13px',
-                      color: paymentMethod === 'cash' ? '#2563eb' : '#475569'
-                    }}
-                  >
-                    💵 Cash to Driver
-                  </div>
-
-                </div>
-              </div>
-
-              {/* UPI / GPAY SCANNER & VPA INPUT */}
-              {paymentMethod === 'upi' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', textAlign: 'center', backgroundColor: '#f8fafc', padding: '16px', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b' }}>
-                    📱 Scan Driver's GPay QR Code to Pay ₹{selectedBooking.fareEstimated || 1850}
-                  </div>
-                  
-                  {/* Real GPay QR Scanner Image */}
-                  <div style={{
-                    width: '210px',
-                    height: '240px',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '3px solid #2563eb',
-                    boxShadow: '0 8px 24px rgba(37, 99, 235, 0.25)',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <img 
-                      src="/gpay_qr.jpg" 
-                      alt="GPay QR Code - Ashwanth 2020 Sakthi" 
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
-                  </div>
-
-                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#2563eb' }}>
-                    Account: Ashwanth 2020 Sakthi (Verified Driver GPay)
-                  </div>
-
-                  <div style={{ width: '100%', textDecoration: 'none' }}>
-                    <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '4px', textAlign: 'left' }}>
-                      ENTER YOUR UPI ID OR TRANSACTION REF NO.
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. ashwanth@upi or Txn Ref No." 
-                      value={upiId}
-                      onChange={e => setUpiId(e.target.value)}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* CARD INPUT FIELDS */}
-              {paymentMethod === 'card' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '4px' }}>CARD NUMBER</label>
-                    <input 
-                      type="text" 
-                      placeholder="4532 •••• •••• 8920" 
-                      value={cardNumber}
-                      onChange={e => setCardNumber(e.target.value)}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '4px' }}>EXPIRY (MM/YY)</label>
-                      <input 
-                        type="text" 
-                        placeholder="08/28" 
-                        value={cardExpiry}
-                        onChange={e => setCardExpiry(e.target.value)}
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', boxSizing: 'border-box' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', display: 'block', marginBottom: '4px' }}>CVV CODE</label>
-                      <input 
-                        type="password" 
-                        placeholder="•••" 
-                        maxLength={4}
-                        value={cardCvv}
-                        onChange={e => setCardCvv(e.target.value)}
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13.5px', boxSizing: 'border-box' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <button
-                type="submit"
-                disabled={processing}
+                onClick={handleLaunchMobileUPI}
                 style={{
                   width: '100%',
-                  padding: '14px',
-                  fontSize: '15px',
+                  padding: '8px 12px',
+                  backgroundColor: '#eff6ff',
+                  color: '#2563eb',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '8px',
+                  fontSize: '12px',
                   fontWeight: '800',
-                  backgroundColor: '#10b981',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  cursor: processing ? 'wait' : 'pointer',
-                  boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)',
-                  marginTop: '10px'
+                  cursor: 'pointer'
                 }}
               >
-                {processing ? '🔄 Processing Payment...' : `✅ Pay ₹${selectedBooking.fareEstimated || 1850} Now`}
+                📲 Open GPay App (Mobile Only)
               </button>
-            </form>
+            </div>
+
+            {/* Complete Payment Button */}
+            <button
+              onClick={executePaymentBackend}
+              disabled={processing}
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: processing ? '#94a3b8' : '#10b981',
+                color: '#ffffff',
+                fontWeight: '900',
+                fontSize: '16px',
+                borderRadius: '14px',
+                border: 'none',
+                cursor: processing ? 'not-allowed' : 'pointer',
+                boxShadow: processing ? 'none' : '0 6px 20px rgba(16, 185, 129, 0.4)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {processing ? "⏳ Processing Payment..." : "[ I've Completed Payment ]"}
+            </button>
+
+            <button
+              onClick={() => setShowGatewayModal(false)}
+              disabled={processing}
+              style={{
+                marginTop: '12px',
+                background: 'none',
+                border: 'none',
+                color: '#64748b',
+                fontWeight: '700',
+                fontSize: '13px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel Payment
+            </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-
-      {/* ─── PAID INVOICES HISTORY ─── */}
-      <div>
-        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b', marginBottom: '14px' }}>
-          📄 Paid Invoices & Transaction History
-        </h3>
-
-        {paidBookings.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>
-            No past paid invoice receipts yet.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {paidBookings.map(b => (
-              <div key={b.id} className="glass-panel" style={{
-                padding: '16px 20px',
-                borderLeft: '4px solid #10b981',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '14px'
-              }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: '800', fontSize: '15px', color: '#1e293b' }}>#{b.id}</span>
-                    <span className="badge badge-completed">PAID ✅</span>
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>Method: {b.paymentMethod || 'UPI'}</span>
-                  </div>
-                  <div style={{ fontSize: '13.5px', color: '#475569', fontWeight: '600' }}>
-                    📍 {b.pickupLocation} → {b.dropLocation}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                    Txn ID: {b.transactionId || 'TXN-984210'} | Date: {b.paidAt ? new Date(b.paidAt).toLocaleDateString() : b.travelDate}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '18px', fontWeight: '800', color: '#10b981' }}>
-                    ₹{b.fareEstimated || 1850}
-                  </div>
-                  <button 
-                    onClick={() => alert(`Receipt #${b.id}\nCustomer: ${customer?.name}\nRoute: ${b.pickupLocation} -> ${b.dropLocation}\nAmount: ₹${b.fareEstimated}\nStatus: PAID ✅`)}
-                    style={{ fontSize: '11.5px', fontWeight: '700', color: '#2563eb', border: 'none', background: 'none', cursor: 'pointer', marginTop: '4px' }}
-                  >
-                    📄 View Digital Receipt
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
     </div>
   );

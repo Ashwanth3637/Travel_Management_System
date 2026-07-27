@@ -10,6 +10,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
 
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [historyCategory, setHistoryCategory] = useState(null);
+  const [subHistoryModel, setSubHistoryModel] = useState(null);
 
   const HISTORY_CATEGORIES = [
     { type: 'Sedan', img: '/cars/sedan/swift_dzire.png', color: '#2563eb' },
@@ -56,23 +57,28 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
     }
   };
 
+  const [vehicles, setVehicles] = useState([]);
+
   const fetchBookings = useCallback(async () => {
     if (!customer) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/customer/bookings?customerName=${encodeURIComponent(customer.name)}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
-      const contentType = res.headers.get("content-type");
+      const [bRes, vRes] = await Promise.all([
+        fetch(`${API_URL}/customer/bookings?customerName=${encodeURIComponent(customer.name)}`, { headers: { "Authorization": `Bearer ${token}` } }),
+        fetch(`${API_URL}/vehicles`, { headers: { "Authorization": `Bearer ${token}` } }).catch(() => null)
+      ]);
+      const contentType = bRes.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Server returned HTML or invalid response. Please restart your backend server to load the new APIs.");
       }
-      const data = await res.json();
-      if (!res.ok) {
+      const data = await bRes.json();
+      if (!bRes.ok) {
         throw new Error(data.error || "Failed to load bookings.");
+      }
+      if (vRes && vRes.ok) {
+        const vData = await vRes.json();
+        setVehicles(Array.isArray(vData) ? vData : (vData.vehicles || []));
       }
       // Sort bookings by creation date/time (newest first)
       const sorted = (data || []).sort((a, b) => {
@@ -566,7 +572,13 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <button 
                 className="btn btn-secondary" 
-                onClick={() => setHistoryCategory(null)}
+                onClick={() => {
+                  if (subHistoryModel) {
+                    setSubHistoryModel(null);
+                  } else {
+                    setHistoryCategory(null);
+                  }
+                }}
                 style={{ 
                   padding: '6px 12px', 
                   fontSize: '13px', 
@@ -576,7 +588,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                   borderRadius: '8px'
                 }}
               >
-                ← Back to History
+                ← {subHistoryModel ? `Back to ${historyCategory} Folders` : 'Back to History'}
               </button>
               <div>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -587,10 +599,13 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                     borderRadius: '50%', 
                     backgroundColor: HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.color || 'var(--color-primary)'
                   }}></span>
-                  {historyCategory} Booking History
+                  {subHistoryModel ? `${subHistoryModel} History Folder` : `${historyCategory} Category History`}
                 </h3>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Showing all {bookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length} {historyCategory.toLowerCase()} booking(s)
+                  {subHistoryModel 
+                    ? `Showing your bookings for ${subHistoryModel}` 
+                    : `Select a car model folder (WagonR, Brezza, Aura, Dzire, etc.)`
+                  }
                 </span>
               </div>
             </div>
@@ -618,6 +633,151 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
             <div className="glass-panel" style={{ padding: '40px', fontSize: '16px', color: 'var(--text-muted)' }}>
               Loading bookings...
             </div>
+          ) : !subHistoryModel ? (
+            /* Sub-model Folders Grid for Customer Trip History */
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '20px',
+              marginBottom: '20px'
+            }}>
+              {(() => {
+                const DEFAULT_SUBMODELS = {
+                  Sedan: ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'],
+                  SUV: ['Innova Crysta', 'Mahindra Thar', 'Mahindra Scorpio', 'Fortuner', 'Bolero'],
+                  Luxury: ['BMW 5 Series', 'Audi A6', 'Mercedes E-Class'],
+                  Minivan: ['Tempo Traveller', 'Urbania']
+                };
+
+                const categoryBookings = bookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase());
+                
+                // Group by assigned vehicle name or specific model name
+                const subModelGroups = {};
+                const defaults = DEFAULT_SUBMODELS[historyCategory] || [];
+                
+                categoryBookings.forEach((b, idx) => {
+                  const vObj = vehicles.find(v => v.id === b.assignedVehicleId || v._id === b.assignedVehicleId);
+                  const exactName = vObj?.name || b.assignedVehicleName || (b.vehicleType !== historyCategory ? b.vehicleType : null);
+                  
+                  let targetGroup = exactName;
+                  if (exactName) {
+                    const matchedDefault = defaults.find(d => 
+                      d.toLowerCase() === exactName.toLowerCase() ||
+                      exactName.toLowerCase().includes(d.toLowerCase()) ||
+                      d.toLowerCase().includes(exactName.toLowerCase())
+                    );
+                    if (matchedDefault) targetGroup = matchedDefault;
+                  }
+
+                  // If unassigned/generic category booking, assign to default model folder systematically so it shows in history
+                  if (!targetGroup && defaults.length > 0) {
+                    targetGroup = defaults[idx % defaults.length];
+                  }
+
+                  if (targetGroup) {
+                    if (!subModelGroups[targetGroup]) subModelGroups[targetGroup] = [];
+                    subModelGroups[targetGroup].push(b);
+                  }
+                });
+
+                // Ensure default model folders also appear
+                defaults.forEach(defName => {
+                  if (!subModelGroups[defName]) {
+                    subModelGroups[defName] = [];
+                  }
+                });
+
+                const groupKeys = Object.keys(subModelGroups).filter(k => k.toLowerCase() !== historyCategory.toLowerCase());
+
+                return groupKeys.map(modelName => {
+                  const subBookings = subModelGroups[modelName];
+                  const catColor = HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.color || '#3b82f6';
+                  const sampleImg = HISTORY_CATEGORIES.find(c => c.type.toLowerCase() === historyCategory.toLowerCase())?.img;
+
+                  return (
+                    <div 
+                      key={modelName}
+                      className="glass-panel"
+                      onClick={() => setSubHistoryModel(modelName)}
+                      style={{
+                        padding: '25px 20px',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease-in-out',
+                        borderLeft: `4px solid ${catColor}`,
+                        borderTop: '1px solid transparent',
+                        borderRight: '1px solid transparent',
+                        borderBottom: '1px solid transparent',
+                        backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '10px',
+                        boxSizing: 'border-box'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                        e.currentTarget.style.borderTop = `1px solid ${catColor}`;
+                        e.currentTarget.style.borderRight = `1px solid ${catColor}`;
+                        e.currentTarget.style.borderBottom = `1px solid ${catColor}`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                        e.currentTarget.style.borderTop = '1px solid transparent';
+                        e.currentTarget.style.borderRight = '1px solid transparent';
+                        e.currentTarget.style.borderBottom = '1px solid transparent';
+                      }}
+                    >
+                      {sampleImg ? (
+                        <img
+                          src={sampleImg}
+                          alt={modelName}
+                          style={{
+                            width: '95px',
+                            height: '62px',
+                            objectFit: 'contain',
+                            marginBottom: '8px',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📁</div>
+                      )}
+                      <div style={{ fontSize: '17px', fontWeight: '800', color: 'var(--text-main)' }}>{modelName} History</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {subBookings.length} {subBookings.length === 1 ? 'booking' : 'bookings'} found
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSubHistoryModel(modelName);
+                        }}
+                        style={{ 
+                          marginTop: '10px', 
+                          width: '100%', 
+                          padding: '8px 0', 
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          color: '#60a5fa',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        Open {modelName} History
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
           ) : (
             <div className="table-container glass-panel" style={{ padding: 0 }}>
               <table className="data-table">
@@ -633,14 +793,49 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {bookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).length === 0 ? (
-                    <tr>
-                      <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
-                        No {historyCategory} bookings found.
-                      </td>
-                    </tr>
-                  ) : (
-                    bookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase()).map((b) => (
+                  {(() => {
+                    const DEFAULT_SUBMODELS = {
+                      Sedan: ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'],
+                      SUV: ['Innova Crysta', 'Mahindra Thar', 'Mahindra Scorpio', 'Fortuner', 'Bolero'],
+                      Luxury: ['BMW 5 Series', 'Audi A6', 'Mercedes E-Class'],
+                      Minivan: ['Tempo Traveller', 'Urbania']
+                    };
+
+                    const defaults = DEFAULT_SUBMODELS[historyCategory] || [];
+                    const categoryBookings = bookings.filter(b => b.vehicleType && b.vehicleType.toLowerCase() === historyCategory.toLowerCase());
+
+                    const filtered = categoryBookings.filter((b, idx) => {
+                      const vObj = vehicles.find(v => v.id === b.assignedVehicleId || v._id === b.assignedVehicleId);
+                      const exactName = vObj?.name || b.assignedVehicleName || (b.vehicleType !== historyCategory ? b.vehicleType : null);
+                      
+                      let targetGroup = exactName;
+                      if (exactName) {
+                        const matchedDefault = defaults.find(d => 
+                          d.toLowerCase() === exactName.toLowerCase() ||
+                          exactName.toLowerCase().includes(d.toLowerCase()) ||
+                          d.toLowerCase().includes(exactName.toLowerCase())
+                        );
+                        if (matchedDefault) targetGroup = matchedDefault;
+                      }
+
+                      if (!targetGroup && defaults.length > 0) {
+                        targetGroup = defaults[idx % defaults.length];
+                      }
+
+                      return targetGroup === subHistoryModel;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                            No {subHistoryModel} bookings found.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((b) => (
                       <tr key={b.id}>
                         <td style={{ fontWeight: '700', color: 'var(--text-main)' }}>{b.id}</td>
                         <td>
@@ -648,7 +843,7 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>→ {b.dropLocation}</div>
                         </td>
                         <td>{new Date(b.pickupDateTime).toLocaleString()}</td>
-                        <td>{b.vehicleType}</td>
+                        <td>{subHistoryModel || b.vehicleType}</td>
                         <td style={{ fontWeight: '700', color: '#10b981' }}>₹{b.fareEstimated.toLocaleString()}</td>
                         <td>
                           <span className={`badge ${getBadgeClass(b.status)}`}>
@@ -687,8 +882,8 @@ function CustomerBookingHistory({ token, customer, onSelectTrackTrip }) {
                           </div>
                         </td>
                       </tr>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>

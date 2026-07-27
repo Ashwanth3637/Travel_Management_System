@@ -12,6 +12,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
   ];
 
   const [activeCategory, setActiveCategory] = useState(null);
+  const [activeSubModel, setActiveSubModel] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
@@ -263,7 +264,13 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <button 
                 className="btn btn-secondary" 
-                onClick={() => setActiveCategory(null)}
+                onClick={() => {
+                  if (activeSubModel) {
+                    setActiveSubModel(null);
+                  } else {
+                    setActiveCategory(null);
+                  }
+                }}
                 style={{ 
                   padding: '6px 12px', 
                   fontSize: '13px', 
@@ -273,7 +280,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                   borderRadius: '8px'
                 }}
               >
-                ← Back to Registry
+                ← {activeSubModel ? `Back to ${activeCategory} Folders` : 'Back to Registry'}
               </button>
               <div>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -284,10 +291,13 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                     borderRadius: '50%', 
                     backgroundColor: CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.color || 'var(--color-primary)'
                   }}></span>
-                  {activeCategory} Folder
+                  {activeSubModel ? `${activeSubModel} Folder` : `${activeCategory} Category Folder`}
                 </h3>
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  Showing all {vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase()).length} registered {activeCategory.toLowerCase()}(s)
+                  {activeSubModel 
+                    ? `Showing registered ${activeSubModel} vehicles` 
+                    : `Select a car folder (WagonR, Brezza, Aura, Dzire, etc.)`
+                  }
                 </span>
               </div>
             </div>
@@ -320,29 +330,155 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
             </button>
           </div>
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Vehicle ID</th>
-                  <th>Vehicle Details</th>
-                  <th>Vehicle Number</th>
-                  <th>Category & Type</th>
-                  <th>Specs & Fuel</th>
-                  <th>Status & Availability</th>
-                  <th>Reg & Ins Details</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase()).length === 0 ? (
+          {!activeSubModel ? (
+            /* Sub-model Folders Grid */
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '20px',
+              marginBottom: '20px'
+            }}>
+              {(() => {
+                const DEFAULT_SUBMODELS = {
+                  Sedan: ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'],
+                  SUV: ['Innova Crysta', 'Mahindra Thar', 'Mahindra Scorpio', 'Fortuner', 'Bolero'],
+                  Luxury: ['BMW 5 Series', 'Audi A6', 'Mercedes E-Class'],
+                  Minivan: ['Tempo Traveller', 'Urbania']
+                };
+
+                const categoryVehicles = vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase());
+                
+                // Group existing vehicles
+                const subModelGroups = {};
+                categoryVehicles.forEach(v => {
+                  const key = v.name || v.model || 'Other';
+                  if (!subModelGroups[key]) subModelGroups[key] = [];
+                  subModelGroups[key].push(v);
+                });
+
+                // Ensure default model folders also appear even if count is 0
+                const defaults = DEFAULT_SUBMODELS[activeCategory] || [];
+                defaults.forEach(defName => {
+                  if (!subModelGroups[defName]) {
+                    subModelGroups[defName] = [];
+                  }
+                });
+
+                const groupKeys = Object.keys(subModelGroups).filter(k => k.toLowerCase() !== activeCategory.toLowerCase());
+
+                return groupKeys.map(modelName => {
+                  const subVehicles = subModelGroups[modelName];
+                  const sampleImg = subVehicles.find(v => v.image)?.image || CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.img;
+                  const catColor = CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.color || '#3b82f6';
+
+                  return (
+                    <div 
+                      key={modelName}
+                      className="glass-panel"
+                      onClick={() => setActiveSubModel(modelName)}
+                      style={{
+                        padding: '25px 20px',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.25s ease-in-out',
+                        borderLeft: `4px solid ${catColor}`,
+                        borderTop: '1px solid transparent',
+                        borderRight: '1px solid transparent',
+                        borderBottom: '1px solid transparent',
+                        backgroundColor: 'rgba(255, 255, 255, 0.01)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '10px',
+                        boxSizing: 'border-box'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                        e.currentTarget.style.borderTop = `1px solid ${catColor}`;
+                        e.currentTarget.style.borderRight = `1px solid ${catColor}`;
+                        e.currentTarget.style.borderBottom = `1px solid ${catColor}`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
+                        e.currentTarget.style.borderTop = '1px solid transparent';
+                        e.currentTarget.style.borderRight = '1px solid transparent';
+                        e.currentTarget.style.borderBottom = '1px solid transparent';
+                      }}
+                    >
+                      {sampleImg ? (
+                        <img
+                          src={sampleImg}
+                          alt={modelName}
+                          style={{
+                            width: '100px',
+                            height: '65px',
+                            objectFit: 'contain',
+                            marginBottom: '8px',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      ) : (
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📁</div>
+                      )}
+                      <div style={{ fontSize: '17px', fontWeight: '800', color: 'var(--text-main)' }}>{modelName} Folder</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                        {subVehicles.length} {subVehicles.length === 1 ? 'vehicle' : 'vehicles'} stored
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSubModel(modelName);
+                        }}
+                        style={{ 
+                          marginTop: '10px', 
+                          width: '100%', 
+                          padding: '8px 0', 
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                          color: '#60a5fa',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        Open {modelName} Folder
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          ) : (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
-                      No vehicles stored in the <strong>{activeCategory}</strong> folder.
-                    </td>
+                    <th>Vehicle ID</th>
+                    <th>Vehicle Details</th>
+                    <th>Vehicle Number</th>
+                    <th>Category & Type</th>
+                    <th>Specs & Fuel</th>
+                    <th>Status & Availability</th>
+                    <th>Reg & Ins Details</th>
+                    <th>Action</th>
                   </tr>
-                ) : (
-                  vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase()).map(v => (
+                </thead>
+                <tbody>
+                  {vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase() && (v.name === activeSubModel || v.model === activeSubModel)).length === 0 ? (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
+                        No vehicles found in <strong>{activeSubModel}</strong> folder.
+                      </td>
+                    </tr>
+                  ) : (
+                    vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase() && (v.name === activeSubModel || v.model === activeSubModel)).map(v => (
                     <tr key={`${v.id}-${v.type}`}>
                       <td><strong>{v.id}</strong></td>
                       <td>
@@ -432,6 +568,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
               </tbody>
             </table>
           </div>
+          )}
         </>
       )}
 

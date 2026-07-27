@@ -4,6 +4,7 @@ import {
   FaUser,
   FaCar,
   FaHistory,
+  FaCreditCard,
   FaToggleOn,
   FaSignOutAlt,
 } from "react-icons/fa";
@@ -71,8 +72,8 @@ const DriverSidebar = () => {
           <FaCar /> Assigned Trips
         </NavLink>
 
-        <NavLink to="/driver/history" style={linkStyle}>
-          <FaHistory /> Trip History
+        <NavLink to="/driver/payments" style={linkStyle}>
+          <FaCreditCard /> Payment Details & Earnings
         </NavLink>
 
         <NavLink to="/driver/availability" style={linkStyle}>
