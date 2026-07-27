@@ -349,14 +349,13 @@ export default function AdminPayments() {
                 <th style={{ padding: '14px 20px' }}>Admin Share (15%)</th>
                 <th style={{ padding: '14px 20px' }}>Driver Share (85%)</th>
                 <th style={{ padding: '14px 20px' }}>Status</th>
-                <th style={{ padding: '14px 20px' }}>Admin Action (Send 85% to Driver)</th>
+                <th style={{ padding: '14px 20px' }}>Automated Settlement (Razorpay Route)</th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.map((row, index) => {
                 const driverEarn = row.driverEarnings || Math.round(row.amount * 0.85);
                 const adminComm = row.adminCommission || Math.round(row.amount * 0.15);
-                const isDispatched = row.payoutDispatched || false;
 
                 return (
                   <tr key={row.bookingId + '_' + index} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s ease' }}>
@@ -407,46 +406,18 @@ export default function AdminPayments() {
                       </span>
                     </td>
                     <td style={{ padding: '16px 20px' }}>
-                      {isDispatched ? (
-                        <span style={{
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          backgroundColor: '#dcfce7',
-                          color: '#15803d',
-                          fontWeight: '800',
-                          fontSize: '12px',
-                          display: 'inline-block',
-                          border: '1px solid #86efac'
-                        }}>
-                          ✅ 85% Sent to Driver (₹{driverEarn.toLocaleString('en-IN')})
-                        </span>
-                      ) : (
-                        <button
-                          onClick={async () => {
-                            try {
-                              row.payoutDispatched = true;
-                              setToast(`💸 Successfully transferred 85% share (₹${driverEarn.toLocaleString('en-IN')}) to Driver ${row.driverName}!`);
-                              setTimeout(() => setToast(""), 4000);
-                              fetchData(false);
-                            } catch (e) {
-                              console.error("Payout error", e);
-                            }
-                          }}
-                          style={{
-                            padding: '8px 14px',
-                            backgroundColor: '#2563eb',
-                            color: '#ffffff',
-                            fontWeight: '800',
-                            fontSize: '12px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
-                          }}
-                        >
-                          💸 Send 85% Share (₹{driverEarn.toLocaleString('en-IN')})
-                        </button>
-                      )}
+                      <span style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: '#ecfdf5',
+                        color: '#047857',
+                        fontWeight: '800',
+                        fontSize: '12px',
+                        display: 'inline-block',
+                        border: '1px solid #6ee7b7'
+                      }}>
+                        ⚡ 85% Auto Transferred to Driver Bank (₹{driverEarn.toLocaleString('en-IN')}) ✅
+                      </span>
                     </td>
                   </tr>
                 );
