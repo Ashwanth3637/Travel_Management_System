@@ -239,17 +239,22 @@ export default function AssignedTrips() {
                             ⏳ Waiting for Customer Payment...
                           </span>
                           <button
-                            style={{ padding: '8px 14px', fontSize: '12px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#fff', cursor: 'pointer' }}
+                            style={{ padding: '8px 14px', fontSize: '12px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.3)' }}
                             onClick={async () => {
+                              const fare = trip.fareEstimated || 1850;
+                              const adminShare = Math.round(fare * 0.15);
+                              const driverShare = Math.round(fare * 0.85);
+
                               await fetch(`${API_URL}/driver/bookings/${trip.id}/payment-status`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                                body: JSON.stringify({ paymentStatus: 'Paid', paymentMethod: 'Cash', driverPaymentMsg: 'Cash Received by Driver' })
+                                body: JSON.stringify({ paymentStatus: 'PAID', paymentMethod: 'Cash in Hand', driverPaymentMsg: 'Cash Received by Driver — 15% Admin Share Auto-Deducted' })
                               });
+                              setMsg(`⚡ Cash Collected: ₹${fare.toLocaleString()} | 15% Admin Share (₹${adminShare.toLocaleString()}) auto-deducted from Driver Wallet! Driver Net Kept: ₹${driverShare.toLocaleString()} (85%)`);
                               await updateStatus(trip.id, "Completed");
                             }}
                           >
-                            💵 Cash Received
+                            💵 Confirm Cash Received (100%: ₹{(trip.fareEstimated || 1850).toLocaleString('en-IN')})
                           </button>
                         </div>
                       )}
