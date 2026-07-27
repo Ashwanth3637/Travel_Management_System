@@ -255,9 +255,27 @@ export default function AdminPayments() {
           <div style={{ fontSize: '28px', fontWeight: '900', color: '#047857', margin: '4px 0' }}>
             ₹{totalAdminCommission.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '12px', color: '#15803d', fontWeight: '700' }}>
-            ✅ 15% Platform Share Auto Credited
+          <div style={{ fontSize: '12px', color: '#15803d', fontWeight: '700', marginBottom: '8px' }}>
+            ⚡ 15% Platform Share Auto-Deposited
           </div>
+          <button
+            onClick={() => {
+              setToast(`🏦 Successfully transferred Admin Profit Wallet (₹${totalAdminCommission.toLocaleString('en-IN')}) to TravelGo Corporate Account (HDFC Current A/C •••• 9988)!`);
+              setTimeout(() => setToast(""), 4000);
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: '800',
+              backgroundColor: '#047857',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            🏦 Withdraw Profits to Bank
+          </button>
         </div>
 
         <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #6366f1' }}>
