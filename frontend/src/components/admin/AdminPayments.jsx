@@ -345,74 +345,112 @@ export default function AdminPayments() {
                 <th style={{ padding: '14px 20px' }}>Customer</th>
                 <th style={{ padding: '14px 20px' }}>Driver</th>
                 <th style={{ padding: '14px 20px' }}>Payment Method</th>
-                <th style={{ padding: '14px 20px' }}>Bank</th>
-                <th style={{ padding: '14px 20px' }}>Amount</th>
-                <th style={{ padding: '14px 20px' }}>Commission (15%)</th>
+                <th style={{ padding: '14px 20px' }}>Total Fare</th>
+                <th style={{ padding: '14px 20px' }}>Admin Share (15%)</th>
+                <th style={{ padding: '14px 20px' }}>Driver Share (85%)</th>
                 <th style={{ padding: '14px 20px' }}>Status</th>
-                <th style={{ padding: '14px 20px' }}>Transaction ID</th>
-                <th style={{ padding: '14px 20px' }}>Date</th>
+                <th style={{ padding: '14px 20px' }}>Admin Action (Send 85% to Driver)</th>
               </tr>
             </thead>
             <tbody>
-              {filteredRecords.map((row, index) => (
-                <tr key={row.bookingId + '_' + index} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s ease' }}>
-                  <td style={{ padding: '16px 20px', fontWeight: '800', color: '#2563eb' }}>
-                    #{row.bookingId}
-                  </td>
-                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#1e293b' }}>
-                    {row.customerName}
-                  </td>
-                  <td style={{ padding: '16px 20px', color: '#475569' }}>
-                    {row.driverName}
-                  </td>
-                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#334155' }}>
-                    {row.paymentMethod}
-                  </td>
-                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#2563eb' }}>
-                    {row.bankName || '—'}
-                  </td>
-                  <td style={{ padding: '16px 20px', fontWeight: '900', color: '#10b981' }}>
-                    ₹{row.amount.toLocaleString('en-IN')}
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <div style={{ color: '#6366f1', fontWeight: '800' }}>₹{row.adminCommission.toLocaleString('en-IN')}</div>
-                    <span style={{
-                      fontSize: '10.5px',
-                      fontWeight: '700',
-                      color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#b45309' : '#15803d',
-                      backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#fef3c7' : '#dcfce7',
-                      padding: '2px 6px',
-                      borderRadius: '6px',
-                      marginTop: '3px',
-                      display: 'inline-block'
-                    }}>
-                      {(row.paymentMethod || '').toUpperCase().includes('CASH') ? '15% Due from Driver' : '15% Admin Retained'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#334155' }}>
-                    {row.paymentMethod}
-                  </td>
-                  <td style={{ padding: '16px 20px' }}>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '800',
-                      backgroundColor: row.paymentStatus === 'Paid' ? '#dcfce7' : '#fef3c7',
-                      color: row.paymentStatus === 'Paid' ? '#15803d' : '#b45309',
-                      border: row.paymentStatus === 'Paid' ? '1px solid #86efac' : '1px solid #fde68a'
-                    }}>
-                      {row.paymentStatus === 'Paid' ? 'Paid ✅' : 'Pending ⌛'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px 20px', fontFamily: 'monospace', fontSize: '12.5px', color: '#64748b' }}>
-                    {row.transactionId}
-                  </td>
-                  <td style={{ padding: '16px 20px', color: '#64748b', fontSize: '13px' }}>
-                    {row.date}
-                  </td>
-                </tr>
-              ))}
+              {filteredRecords.map((row, index) => {
+                const driverEarn = row.driverEarnings || Math.round(row.amount * 0.85);
+                const adminComm = row.adminCommission || Math.round(row.amount * 0.15);
+                const isDispatched = row.payoutDispatched || false;
+
+                return (
+                  <tr key={row.bookingId + '_' + index} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s ease' }}>
+                    <td style={{ padding: '16px 20px', fontWeight: '800', color: '#2563eb' }}>
+                      #{row.bookingId}
+                    </td>
+                    <td style={{ padding: '16px 20px', fontWeight: '700', color: '#1e293b' }}>
+                      {row.customerName}
+                    </td>
+                    <td style={{ padding: '16px 20px', color: '#475569' }}>
+                      👤 {row.driverName}
+                    </td>
+                    <td style={{ padding: '16px 20px', fontWeight: '700', color: '#334155' }}>
+                      {row.paymentMethod} {row.bankName ? `(${row.bankName})` : ''}
+                    </td>
+                    <td style={{ padding: '16px 20px', fontWeight: '900', color: '#10b981' }}>
+                      ₹{row.amount.toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div style={{ color: '#6366f1', fontWeight: '800' }}>₹{adminComm.toLocaleString('en-IN')}</div>
+                      <span style={{
+                        fontSize: '10.5px',
+                        fontWeight: '700',
+                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#b45309' : '#15803d',
+                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#fef3c7' : '#dcfce7',
+                        padding: '2px 6px',
+                        borderRadius: '6px',
+                        marginTop: '3px',
+                        display: 'inline-block'
+                      }}>
+                        {(row.paymentMethod || '').toUpperCase().includes('CASH') ? '15% Due from Driver' : '15% Admin Retained'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px', fontWeight: '800', color: '#10b981' }}>
+                      ₹{driverEarn.toLocaleString('en-IN')}
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      <span style={{
+                        padding: '4px 12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '800',
+                        backgroundColor: row.paymentStatus === 'Paid' ? '#dcfce7' : '#fef3c7',
+                        color: row.paymentStatus === 'Paid' ? '#15803d' : '#b45309',
+                        border: row.paymentStatus === 'Paid' ? '1px solid #86efac' : '1px solid #fde68a'
+                      }}>
+                        {row.paymentStatus === 'Paid' ? 'Paid to Admin ✅' : 'Pending ⌛'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '16px 20px' }}>
+                      {isDispatched ? (
+                        <span style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: '#dcfce7',
+                          color: '#15803d',
+                          fontWeight: '800',
+                          fontSize: '12px',
+                          display: 'inline-block',
+                          border: '1px solid #86efac'
+                        }}>
+                          ✅ 85% Sent to Driver (₹{driverEarn.toLocaleString('en-IN')})
+                        </span>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            try {
+                              row.payoutDispatched = true;
+                              setToast(`💸 Successfully transferred 85% share (₹${driverEarn.toLocaleString('en-IN')}) to Driver ${row.driverName}!`);
+                              setTimeout(() => setToast(""), 4000);
+                              fetchData(false);
+                            } catch (e) {
+                              console.error("Payout error", e);
+                            }
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            backgroundColor: '#2563eb',
+                            color: '#ffffff',
+                            fontWeight: '800',
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                          }}
+                        >
+                          💸 Send 85% Share (₹{driverEarn.toLocaleString('en-IN')})
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
