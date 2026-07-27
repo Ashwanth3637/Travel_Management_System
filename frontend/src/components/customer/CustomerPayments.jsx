@@ -7,7 +7,7 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('Razorpay'); // 'Razorpay', 'Cash', 'Google Pay', 'PhonePe', 'Card', 'Net Banking'
+  const [paymentMethod, setPaymentMethod] = useState('UPI_QR'); // 'UPI_QR' or 'Cash'
   
   // Net Banking States
   const [selectedBank, setSelectedBank] = useState('HDFC Bank');
@@ -232,16 +232,13 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
 
   const handleOpenPaymentFlow = () => {
     if (!selectedBooking) return;
-    if (paymentMethod === 'Razorpay') {
-      handleRazorpayCheckout();
-    } else if (paymentMethod === 'Cash') {
-      executePaymentBackend();
-    } else {
-      setNetBankingStep(1);
-      if (paymentMethod === 'Google Pay' || paymentMethod === 'PhonePe') {
-        handleLaunchMobileUPI();
-      }
+    if (paymentMethod === 'UPI_QR') {
+      // Show UPI QR modal — works with GPay, PhonePe, Paytm, all UPI apps
+      handleLaunchMobileUPI();
       setShowGatewayModal(true);
+    } else if (paymentMethod === 'Cash') {
+      // Cash in Hand — mark booking as cash pending
+      executePaymentBackend();
     }
   };
 
@@ -312,10 +309,10 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
       }}>
         <div>
           <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '0 0 4px 0', color: '#1e293b' }}>
-            💳 Real Razorpay & UPI Payment Gateway
+            💳 Trip Fare Payment
           </h2>
           <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0 }}>
-            Select Razorpay Real Gateway (GPay, PhonePe, Cards, Net Banking, Paytm) or direct methods
+            Pay via UPI QR Code (GPay, PhonePe, Paytm, all UPI apps) or Cash in Hand
           </p>
         </div>
       </div>
@@ -505,14 +502,10 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
                 Select Payment Method
               </label>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {[
-                  { id: 'Razorpay', label: 'Razorpay Gateway (⭐ Real UPI, GPay, PhonePe, Cards, Net Banking)', icon: '⚡' },
-                  { id: 'Cash', label: 'Cash in Hand', icon: '💵' },
-                  { id: 'Google Pay', label: 'Google Pay (GPay Direct)', icon: '📱' },
-                  { id: 'PhonePe', label: 'PhonePe / UPI Direct', icon: '📲' },
-                  { id: 'Card', label: 'Credit / Debit Card Direct', icon: '💳' },
-                  { id: 'Net Banking', label: 'Net Banking (Bank Simulation)', icon: '🏦' }
+                  { id: 'UPI_QR', label: 'Online Payment QR — GPay, PhonePe, Paytm & All UPI Apps', icon: '📱' },
+                  { id: 'Cash', label: 'Cash in Hand — Pay Driver Directly', icon: '💵' }
                 ].map(item => (
                   <label
                     key={item.id}
@@ -521,66 +514,69 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
-                      padding: '12px 16px',
-                      borderRadius: '10px',
-                      border: paymentMethod === item.id ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                      backgroundColor: paymentMethod === item.id ? '#eff6ff' : '#ffffff',
+                      padding: '16px 18px',
+                      borderRadius: '14px',
+                      border: paymentMethod === item.id ? '2.5px solid #2563eb' : '1.5px solid #e2e8f0',
+                      backgroundColor: paymentMethod === item.id ? '#eff6ff' : '#f8fafc',
                       cursor: 'pointer',
-                      fontWeight: '700',
-                      fontSize: '13.5px',
-                      color: '#1e293b'
+                      transition: 'all 0.2s ease',
+                      fontWeight: '800',
+                      fontSize: '14px',
+                      color: paymentMethod === item.id ? '#1e40af' : '#334155',
+                      boxShadow: paymentMethod === item.id ? '0 4px 16px rgba(37,99,235,0.12)' : 'none'
                     }}
                   >
                     <input
                       type="radio"
-                      name="payMethod"
+                      name="payment_method"
                       checked={paymentMethod === item.id}
                       onChange={() => setPaymentMethod(item.id)}
-                      style={{ accentColor: '#2563eb', transform: 'scale(1.2)' }}
+                      style={{ accentColor: '#2563eb', transform: 'scale(1.25)' }}
                     />
-                    <span>{item.icon}</span>
+                    <span style={{ fontSize: '22px' }}>{item.icon}</span>
                     <span>{item.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {/* Bank Selection Dropdown when Net Banking is selected */}
-            {paymentMethod === 'Net Banking' && (
+            {/* UPI QR info banner */}
+            {paymentMethod === 'UPI_QR' && (
               <div style={{
-                backgroundColor: '#f8fafc',
-                padding: '16px',
+                backgroundColor: '#eff6ff',
+                padding: '12px 16px',
                 borderRadius: '12px',
-                border: '1px solid #cbd5e1',
-                marginBottom: '20px'
+                border: '1px solid #bfdbfe',
+                marginBottom: '16px',
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#1d4ed8',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}>
-                <label style={{ fontSize: '12px', fontWeight: '800', color: '#475569', display: 'block', marginBottom: '8px' }}>
-                  Select Your Bank
-                </label>
-                <select
-                  value={selectedBank}
-                  onChange={e => setSelectedBank(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    border: '2px solid #2563eb',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    color: '#1e293b',
-                    outline: 'none',
-                    backgroundColor: '#ffffff'
-                  }}
-                >
-                  {BANKS_LIST.map(b => (
-                    <option key={b} value={b}>▼ {b}</option>
-                  ))}
-                </select>
+                <span style={{ fontSize: '18px' }}>ℹ️</span>
+                <span>A QR code will appear — scan it with <strong>GPay, PhonePe, Paytm</strong> or any UPI app to pay instantly.</span>
+              </div>
+            )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '12px', color: '#64748b' }}>
-                  <span>Selected Bank :</span>
-                  <strong style={{ color: '#2563eb' }}>{selectedBank}</strong>
-                </div>
+            {/* Cash info banner */}
+            {paymentMethod === 'Cash' && (
+              <div style={{
+                backgroundColor: '#fefce8',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid #fde68a',
+                marginBottom: '16px',
+                fontSize: '13px',
+                fontWeight: '700',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '18px' }}>💵</span>
+                <span>Pay the fare in cash to your driver. 15% admin commission will be auto-deducted from driver wallet.</span>
               </div>
             )}
 
@@ -595,22 +591,24 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
               disabled={processing}
               style={{
                 width: '100%',
-                padding: '14px',
-                backgroundColor: paymentMethod === 'Razorpay' ? '#2563eb' : '#10b981',
+                padding: '16px',
+                backgroundColor: paymentMethod === 'UPI_QR' ? '#2563eb' : '#f59e0b',
                 color: '#ffffff',
                 fontWeight: '900',
                 fontSize: '16px',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 border: 'none',
-                cursor: 'pointer',
-                boxShadow: paymentMethod === 'Razorpay' ? '0 6px 20px rgba(37, 99, 235, 0.4)' : '0 6px 20px rgba(16, 185, 129, 0.4)',
+                cursor: processing ? 'not-allowed' : 'pointer',
+                boxShadow: paymentMethod === 'UPI_QR' ? '0 6px 24px rgba(37, 99, 235, 0.4)' : '0 6px 24px rgba(245, 158, 11, 0.4)',
                 transition: 'all 0.2s ease'
               }}
             >
-              {processing ? "Launching Payment Gateway..." : (
-                paymentMethod === 'Razorpay' ? "⚡ Pay with Razorpay Checkout" :
-                paymentMethod === 'Net Banking' ? "[ Proceed to Net Banking ]" : "Proceed to Pay"
-              )}
+              {processing
+                ? '⏳ Processing...'
+                : paymentMethod === 'UPI_QR'
+                  ? '📱 Show UPI QR Code — Pay Now'
+                  : '💵 Confirm Cash in Hand Payment'
+              }
             </button>
           </div>
         )}
@@ -686,154 +684,51 @@ function CustomerPayments({ token, customer, onPaymentComplete }) {
             textAlign: 'left'
           }}>
             
-            {paymentMethod === 'Net Banking' ? (
-              <div>
-                <div style={{ borderBottom: '2px solid #2563eb', paddingBottom: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#2563eb', textTransform: 'uppercase' }}>
-                      🔒 SECURE BANKING PORTAL
-                    </span>
-                    <h3 style={{ fontSize: '22px', fontWeight: '900', color: '#1e293b', margin: '2px 0 0 0' }}>
-                      {selectedBank} Net Banking
-                    </h3>
+            {/* UPI QR Code Section — works with GPay, PhonePe, Paytm, all UPI apps */}
+            <div style={{ textAlign: 'center' }}>
+              {/* App logos row */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                {[
+                  { name: 'GPay', bg: '#4285f4', emoji: '🟦' },
+                  { name: 'PhonePe', bg: '#5f259f', emoji: '🟪' },
+                  { name: 'Paytm', bg: '#00b9f1', emoji: '🔵' },
+                  { name: 'Any UPI', bg: '#f59e0b', emoji: '📱' }
+                ].map(app => (
+                  <div key={app.name} style={{ padding: '6px 14px', borderRadius: '20px', backgroundColor: app.bg, color: '#fff', fontSize: '12px', fontWeight: '800' }}>
+                    {app.emoji} {app.name}
                   </div>
-                  <div style={{ fontSize: '32px' }}>🏦</div>
-                </div>
-
-                {netBankingStep === 1 ? (
-                  <div>
-                    <div style={{ backgroundColor: '#eff6ff', padding: '12px', borderRadius: '10px', color: '#1d4ed8', fontSize: '13px', fontWeight: '700', marginBottom: '18px' }}>
-                      Redirecting to {selectedBank} Net Banking portal...
-                    </div>
-
-                    <div style={{ marginBottom: '14px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '800', color: '#475569', display: 'block', marginBottom: '6px' }}>
-                        Customer ID
-                      </label>
-                      <input
-                        type="text"
-                        value={bankingCustId}
-                        onChange={e => setBankingCustId(e.target.value)}
-                        style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                    </div>
-
-                    <div style={{ marginBottom: '14px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '800', color: '#475569', display: 'block', marginBottom: '6px' }}>
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        value={bankingPass}
-                        onChange={e => setBankingPass(e.target.value)}
-                        style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', fontWeight: '700', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                    </div>
-
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '800', color: '#475569', display: 'block', marginBottom: '6px' }}>
-                        OTP
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={bankingOtp}
-                        onChange={e => setBankingOtp(e.target.value)}
-                        style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '2px solid #2563eb', fontSize: '16px', fontWeight: '900', letterSpacing: '4px', textAlign: 'center', outline: 'none', boxSizing: 'border-box' }}
-                      />
-                    </div>
-
-                    <button
-                      onClick={() => setNetBankingStep(2)}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        backgroundColor: '#2563eb',
-                        color: '#ffffff',
-                        fontWeight: '900',
-                        fontSize: '15px',
-                        borderRadius: '12px',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      [ Login & Verify ]
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#1e293b', marginBottom: '14px' }}>
-                      Transaction Summary
-                    </div>
-
-                    <div style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px', fontSize: '13.5px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#64748b' }}>
-                        <span>Merchant</span>
-                        <strong style={{ color: '#1e293b' }}>TravelGo</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: '#64748b' }}>
-                        <span>Amount</span>
-                        <strong style={{ color: '#10b981', fontSize: '16px' }}>₹{(selectedBooking.fareEstimated || 1850).toLocaleString('en-IN')}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                        <span>Account</span>
-                        <strong style={{ color: '#2563eb', fontFamily: 'monospace' }}>XXXXXX4587</strong>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={executePaymentBackend}
-                      disabled={processing}
-                      style={{
-                        width: '100%',
-                        padding: '16px',
-                        backgroundColor: processing ? '#94a3b8' : '#10b981',
-                        color: '#ffffff',
-                        fontWeight: '900',
-                        fontSize: '16px',
-                        borderRadius: '14px',
-                        border: 'none',
-                        cursor: processing ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {processing ? `⏳ Authenticating with ${selectedBank}...` : "[ Pay Now ]"}
-                    </button>
-                  </div>
-                )}
+                ))}
               </div>
-            ) : (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '40px', marginBottom: '8px' }}>📱</div>
-                <h3 style={{ fontSize: '24px', fontWeight: '900', margin: '0 0 4px 0', color: '#1e293b' }}>
-                  {paymentMethod}
-                </h3>
-                <div style={{ fontSize: '20px', fontWeight: '900', color: '#10b981', marginBottom: '20px' }}>
-                  Amount : ₹{(selectedBooking.fareEstimated || 1850).toLocaleString('en-IN')}
-                </div>
 
-                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px dashed #2563eb', marginBottom: '24px' }}>
-                  <p style={{ color: '#475569', fontSize: '14px', fontWeight: '700', margin: '0 0 14px 0' }}>
-                    Scan QR using your mobile
-                  </p>
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${encodeURIComponent(gpayUpiId)}%26pn=${encodeURIComponent(gpayMerchantName)}%26am=${selectedBooking.fareEstimated || 1850}%26cu=INR`}
-                    alt="Payment QR Code"
-                    style={{ width: '150px', height: '150px', borderRadius: '12px', boxShadow: '0 4px 14px rgba(0,0,0,0.1)', marginBottom: '10px' }}
-                  />
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', marginTop: '4px' }}>
-                    UPI ID: <span style={{ color: '#2563eb' }}>{gpayUpiId}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={executePaymentBackend}
-                  disabled={processing}
-                  style={{ width: '100%', padding: '16px', backgroundColor: processing ? '#94a3b8' : '#10b981', color: '#ffffff', fontWeight: '900', fontSize: '16px', borderRadius: '14px', border: 'none', cursor: 'pointer' }}
-                >
-                  {processing ? "⏳ Processing Payment..." : "[ I've Completed Payment ]"}
-                </button>
+              <div style={{ fontSize: '20px', fontWeight: '900', color: '#10b981', marginBottom: '16px' }}>
+                ₹{(selectedBooking.fareEstimated || 1850).toLocaleString('en-IN')} — Scan to Pay
               </div>
-            )}
+
+              <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '20px', border: '2px dashed #2563eb', marginBottom: '20px', display: 'inline-block' }}>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${encodeURIComponent(gpayUpiId)}%26pn=${encodeURIComponent(gpayMerchantName)}%26am=${selectedBooking.fareEstimated || 1850}%26cu=INR%26tn=TravelGo_Fare`}
+                  alt="UPI Payment QR Code"
+                  style={{ width: '200px', height: '200px', borderRadius: '16px', boxShadow: '0 6px 20px rgba(0,0,0,0.12)' }}
+                />
+              </div>
+
+              <div style={{ backgroundColor: '#eff6ff', padding: '12px 16px', borderRadius: '12px', border: '1px solid #bfdbfe', marginBottom: '20px', fontSize: '13.5px' }}>
+                <div style={{ fontWeight: '800', color: '#1d4ed8', marginBottom: '4px' }}>UPI ID: <span style={{ fontFamily: 'monospace', color: '#2563eb' }}>{gpayUpiId}</span></div>
+                <div style={{ color: '#475569', fontWeight: '600' }}>Merchant: <strong style={{ color: '#1e293b' }}>{gpayMerchantName}</strong></div>
+              </div>
+
+              <p style={{ color: '#64748b', fontSize: '13px', fontWeight: '600', marginBottom: '20px' }}>
+                Open <strong>GPay / PhonePe / Paytm / Any UPI</strong> → Scan QR → Pay → Click below
+              </p>
+
+              <button
+                onClick={executePaymentBackend}
+                disabled={processing}
+                style={{ width: '100%', padding: '16px', backgroundColor: processing ? '#94a3b8' : '#10b981', color: '#ffffff', fontWeight: '900', fontSize: '16px', borderRadius: '14px', border: 'none', cursor: processing ? 'not-allowed' : 'pointer', boxShadow: '0 6px 20px rgba(16,185,129,0.35)' }}
+              >
+                {processing ? '⏳ Confirming Payment...' : "✅ I've Paid — Confirm Payment"}
+              </button>
+            </div>
 
             <button
               onClick={() => setShowGatewayModal(false)}
