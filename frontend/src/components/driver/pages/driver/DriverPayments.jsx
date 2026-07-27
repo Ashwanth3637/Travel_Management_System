@@ -168,12 +168,24 @@ export default function DriverPayments() {
   const gpayCollected = gpayTrips.reduce((sum, t) => sum + (t.fareEstimated || 0), 0);
   const pendingAmount = unpaidTrips.reduce((sum, t) => sum + (t.fareEstimated || 0), 0);
 
-  // Filter trips based on tab selection
-  let filteredTrips = trips;
-  if (activeFilter === "PAID") filteredTrips = paidTrips;
-  else if (activeFilter === "CASH") filteredTrips = cashTrips;
-  else if (activeFilter === "GPAY") filteredTrips = gpayTrips;
-  else if (activeFilter === "UNPAID") filteredTrips = unpaidTrips;
+  // Sort helper: newest ride first (by pickupDateTime descending), with UNPAID pinned to top
+  const sortNewestFirst = (list) =>
+    [...list].sort((a, b) => {
+      // UNPAID rides always rise to the top
+      const aUnpaid = a.paymentStatus !== 'PAID';
+      const bUnpaid = b.paymentStatus !== 'PAID';
+      if (aUnpaid && !bUnpaid) return -1;
+      if (!aUnpaid && bUnpaid) return 1;
+      // Then newest date first
+      return new Date(b.pickupDateTime || 0) - new Date(a.pickupDateTime || 0);
+    });
+
+  // Filter trips based on tab selection, always sorted newest-first
+  let filteredTrips = sortNewestFirst(trips);
+  if (activeFilter === "PAID") filteredTrips = sortNewestFirst(paidTrips);
+  else if (activeFilter === "CASH") filteredTrips = sortNewestFirst(cashTrips);
+  else if (activeFilter === "GPAY") filteredTrips = sortNewestFirst(gpayTrips);
+  else if (activeFilter === "UNPAID") filteredTrips = sortNewestFirst(unpaidTrips);
 
   return (
     <div className="animate-fade-in">
