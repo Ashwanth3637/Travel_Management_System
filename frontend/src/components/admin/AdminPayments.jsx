@@ -24,8 +24,12 @@ export default function AdminPayments() {
       const bookingsData = await bookingsRes.json();
       const paymentsData = await paymentsRes.json();
 
-      setBookings(Array.isArray(bookingsData) ? bookingsData : []);
-      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
+      const newB = Array.isArray(bookingsData) ? bookingsData : [];
+      const newP = Array.isArray(paymentsData) ? paymentsData : [];
+
+      // Avoid unnecessary state updates if data has not changed
+      setBookings(prev => JSON.stringify(prev) === JSON.stringify(newB) ? prev : newB);
+      setPayments(prev => JSON.stringify(prev) === JSON.stringify(newP) ? prev : newP);
     } catch (err) {
       console.error("Failed to load admin payment records:", err);
     } finally {
@@ -146,7 +150,7 @@ export default function AdminPayments() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '24px', textAlign: 'left' }}>
+    <div style={{ padding: '24px', textAlign: 'left' }}>
       
       {/* Header & CSV Download */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
