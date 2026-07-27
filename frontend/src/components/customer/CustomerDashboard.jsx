@@ -368,10 +368,6 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
         display: 'flex',
         flexDirection: 'column',
         gap: '6px',
-        position: 'sticky',
-        top: '80px',
-        maxHeight: 'calc(100vh - 90px)',
-        overflowY: 'auto',
         boxSizing: 'border-box'
       }}>
 

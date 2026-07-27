@@ -788,7 +788,7 @@ function CustomerBooking({ token, customer }) {
           </div>
 
           {/* ── RIGHT COLUMN: FARE PANEL ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
             {/* Fare estimate */}
             <div style={{
