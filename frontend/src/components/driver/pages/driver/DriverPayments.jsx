@@ -409,6 +409,38 @@ export default function DriverPayments() {
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+
+                    {/* Driver action buttons — FIRST so driver can act immediately */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {!isPaid ? (
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'CASH'); }}
+                            style={{ padding: '8px 16px', fontSize: '12px', fontWeight: '800', borderRadius: '10px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.4)' }}
+                          >
+                            💵 Mark Cash Paid
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'GPAY'); }}
+                            style={{ padding: '8px 16px', fontSize: '12px', fontWeight: '800', borderRadius: '10px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.4)' }}
+                          >
+                            📱 Mark GPay Paid
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#166534', backgroundColor: '#dcfce7', padding: '6px 14px', borderRadius: '10px', border: '1px solid #86efac' }}>
+                          🔒 Payment Verified & Settled
+                        </span>
+                      )}
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteSingleBooking(trip.id); }}
+                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', borderRadius: '8px', border: '1px solid #fca5a5', backgroundColor: '#fee2e2', color: '#ef4444', cursor: 'pointer' }}
+                      >
+                        🗑️ Delete Record
+                      </button>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <span style={{
                         padding: "4px 12px", borderRadius: "14px", fontSize: "12px", fontWeight: "800",
@@ -432,36 +464,6 @@ export default function DriverPayments() {
                       </span>
                     </div>
 
-                    {/* Driver action buttons */}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {!isPaid ? (
-                        <>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'CASH'); }}
-                            style={{ padding: '7px 14px', fontSize: '11.5px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', boxShadow: '0 3px 10px rgba(16,185,129,0.35)' }}
-                          >
-                            💵 Mark Cash Paid
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'GPAY'); }}
-                            style={{ padding: '7px 14px', fontSize: '11.5px', fontWeight: '800', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', boxShadow: '0 3px 10px rgba(37,99,235,0.35)' }}
-                          >
-                            📱 Mark GPay Paid
-                          </button>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#166534', backgroundColor: '#dcfce7', padding: '5px 12px', borderRadius: '8px', border: '1px solid #86efac' }}>
-                          🔒 Payment Verified & Settled
-                        </span>
-                      )}
-
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteSingleBooking(trip.id); }}
-                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', borderRadius: '8px', border: '1px solid #fca5a5', backgroundColor: '#fee2e2', color: '#ef4444', cursor: 'pointer' }}
-                      >
-                        🗑️ Delete Record
-                      </button>
-                    </div>
                   </div>
                 </div>
               );
