@@ -117,6 +117,7 @@ const PaymentSchema = new mongoose.Schema({
   driverEarnings: { type: Number, default: 0 },
   adminCommission:{ type: Number, default: 0 },
   paymentMethod:  { type: String, default: 'GPay' },
+  bankName:       { type: String, default: '' },
   paymentStatus:  { type: String, default: 'Paid' },
   transactionId:  { type: String, required: true },
   paymentDate:    { type: String, default: () => new Date().toLocaleDateString('en-GB') },

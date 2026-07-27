@@ -73,6 +73,7 @@ export default function AdminPayments() {
       adminCommission: p.adminCommission || Math.round(amount * 0.15),
       driverEarnings: p.driverEarnings || Math.round(amount * 0.85),
       paymentMethod: p.paymentMethod || 'GPay',
+      bankName: p.bankName || '',
       paymentStatus: 'Paid',
       transactionId: p.transactionId || ('TXN' + Math.floor(100000 + Math.random() * 900000)),
       date: p.paymentDate || new Date().toLocaleDateString('en-GB')
@@ -93,6 +94,7 @@ export default function AdminPayments() {
         adminCommission: Math.round(amount * 0.15),
         driverEarnings: Math.round(amount * 0.85),
         paymentMethod: b.paymentMethod || existing.paymentMethod || 'GPay',
+        bankName: b.bankName || existing.bankName || '',
         paymentStatus: isPaid ? 'Paid' : (existing.paymentStatus || 'Pending'),
         transactionId: b.transactionId || existing.transactionId || (isPaid ? 'TXN' + Math.floor(100000 + Math.random() * 900000) : '—'),
         date: b.paidAt || existing.date || new Date().toLocaleDateString('en-GB')
@@ -342,9 +344,10 @@ export default function AdminPayments() {
                 <th style={{ padding: '14px 20px' }}>Booking ID</th>
                 <th style={{ padding: '14px 20px' }}>Customer</th>
                 <th style={{ padding: '14px 20px' }}>Driver</th>
+                <th style={{ padding: '14px 20px' }}>Payment Method</th>
+                <th style={{ padding: '14px 20px' }}>Bank</th>
                 <th style={{ padding: '14px 20px' }}>Amount</th>
                 <th style={{ padding: '14px 20px' }}>Commission (15%)</th>
-                <th style={{ padding: '14px 20px' }}>Payment Method</th>
                 <th style={{ padding: '14px 20px' }}>Status</th>
                 <th style={{ padding: '14px 20px' }}>Transaction ID</th>
                 <th style={{ padding: '14px 20px' }}>Date</th>
@@ -361,6 +364,12 @@ export default function AdminPayments() {
                   </td>
                   <td style={{ padding: '16px 20px', color: '#475569' }}>
                     {row.driverName}
+                  </td>
+                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#334155' }}>
+                    {row.paymentMethod}
+                  </td>
+                  <td style={{ padding: '16px 20px', fontWeight: '700', color: '#2563eb' }}>
+                    {row.bankName || '—'}
                   </td>
                   <td style={{ padding: '16px 20px', fontWeight: '900', color: '#10b981' }}>
                     ₹{row.amount.toLocaleString('en-IN')}

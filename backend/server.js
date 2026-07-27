@@ -860,7 +860,7 @@ app.delete('/api/driver/bookings/clear-all-data', handleClearAllBookings);
 // Customer Process Payment API (Cash, GPay, UPI, Card)
 app.post('/api/customer/pay', async (req, res) => {
   try {
-    const { bookingId, paymentMethod } = req.body;
+    const { bookingId, paymentMethod, bankName } = req.body;
     if (!bookingId) return res.status(400).json({ error: 'Booking ID is required.' });
 
     const bookings = await db.getBookings();
@@ -872,17 +872,23 @@ app.post('/api/customer/pay', async (req, res) => {
     const driverName = driver ? driver.name : (booking.assignedDriverId || 'Unassigned');
 
     const method = (paymentMethod || 'GPay').trim();
+    const isNetBanking = method.toLowerCase().includes('net banking') || method.toLowerCase().includes('bank');
+    const selectedBank = bankName || (isNetBanking ? 'HDFC Bank' : '');
     const amount = booking.fareEstimated || 1850;
     const driverEarnings = Math.round(amount * 0.85);
     const adminCommission = Math.round(amount * 0.15);
     const paymentId = 'PAY' + Math.floor(100000 + Math.random() * 900000);
-    const transactionId = 'TXN' + Math.floor(100000 + Math.random() * 900000);
+    const dateCode = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const transactionId = isNetBanking
+      ? `NB${dateCode}${Math.floor(1000 + Math.random() * 9000)}`
+      : `TXN${Math.floor(100000 + Math.random() * 900000)}`;
     const todayStr = new Date().toLocaleDateString('en-GB');
 
     // Update booking in MongoDB
     const updatedBooking = await db.updateBooking(bookingId, {
       paymentStatus: 'Paid',
-      paymentMethod: method,
+      paymentMethod: isNetBanking ? `Net Banking (${selectedBank})` : method,
+      bankName: selectedBank,
       transactionId: transactionId,
       paidAt: todayStr,
       amountPaid: amount
@@ -898,7 +904,8 @@ app.post('/api/customer/pay', async (req, res) => {
       amount,
       driverEarnings,
       adminCommission,
-      paymentMethod: method,
+      paymentMethod: isNetBanking ? 'Net Banking' : method,
+      bankName: selectedBank,
       paymentStatus: 'Paid',
       transactionId,
       paymentDate: todayStr
