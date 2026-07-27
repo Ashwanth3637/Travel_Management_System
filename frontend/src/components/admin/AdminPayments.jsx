@@ -379,14 +379,14 @@ export default function AdminPayments() {
                       <span style={{
                         fontSize: '10.5px',
                         fontWeight: '700',
-                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#b45309' : '#15803d',
-                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#fef3c7' : '#dcfce7',
+                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#15803d' : '#15803d',
+                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#dcfce7' : '#dcfce7',
                         padding: '2px 6px',
                         borderRadius: '6px',
                         marginTop: '3px',
                         display: 'inline-block'
                       }}>
-                        {(row.paymentMethod || '').toUpperCase().includes('CASH') ? '15% Due from Driver' : '15% Admin Retained'}
+                        {(row.paymentMethod || '').toUpperCase().includes('CASH') ? '15% Auto-Deducted from Driver Wallet ✅' : '15% Admin Retained'}
                       </span>
                     </td>
                     <td style={{ padding: '16px 20px', fontWeight: '800', color: '#10b981' }}>
@@ -409,14 +409,16 @@ export default function AdminPayments() {
                       <span style={{
                         padding: '6px 12px',
                         borderRadius: '8px',
-                        backgroundColor: '#ecfdf5',
-                        color: '#047857',
+                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#fff7ed' : '#ecfdf5',
+                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#c2410c' : '#047857',
                         fontWeight: '800',
                         fontSize: '12px',
                         display: 'inline-block',
-                        border: '1px solid #6ee7b7'
+                        border: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '1px solid #ffedd5' : '1px solid #6ee7b7'
                       }}>
-                        ⚡ 85% Auto Transferred to Driver Bank (₹{driverEarn.toLocaleString('en-IN')}) ✅
+                        {(row.paymentMethod || '').toUpperCase().includes('CASH')
+                          ? `💵 Cash Kept by Driver (100%: ₹${row.amount.toLocaleString('en-IN')}) — 15% Admin Share (₹${adminComm.toLocaleString('en-IN')}) Auto-Deducted ✅`
+                          : `⚡ 85% Auto Transferred to Driver Bank (₹${driverEarn.toLocaleString('en-IN')}) ✅`}
                       </span>
                     </td>
                   </tr>

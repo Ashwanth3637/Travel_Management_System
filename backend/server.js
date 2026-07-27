@@ -767,16 +767,20 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
         const driverDoc = updated.assignedDriverId ? drivers.find(d => d.id === updated.assignedDriverId) : null;
         const driverName = driverDoc ? driverDoc.name : (updated.assignedDriverId || 'Unassigned');
 
-        // UBER AUTOMATIC CHARGING FLOW: If non-cash digital payment method was selected, charge automatically!
+        // UBER AUTOMATIC CHARGING & CASH AUTO-DEDUCTION FLOW
         const pMethod = updated.paymentMethod || 'Saved Card (HDFC Visa •••• 4587)';
         const isCash = pMethod.toLowerCase().includes('cash');
 
-        if (!isCash && updated.paymentStatus !== 'Paid') {
+        if (updated.paymentStatus !== 'Paid') {
           const amount = updated.fareEstimated || 1850;
           const driverEarnings = Math.round(amount * 0.85);
           const adminCommission = Math.round(amount * 0.15);
           const todayStr = new Date().toLocaleDateString('en-GB');
           const autoTxnId = `pay_AUTO_${Date.now().toString().slice(-8)}`;
+
+          const payoutMsg = isCash
+            ? '15% Admin Share Auto-Deducted from Driver Wallet ✅'
+            : 'Transferred to Driver Bank Account ✅';
 
           await db.updateBooking(req.params.id, {
             paymentStatus: 'Paid',
@@ -784,7 +788,7 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
             paidAt: todayStr,
             amountPaid: amount,
             payoutDispatched: true,
-            payoutStatus: 'Transferred to Driver Bank Account ✅'
+            payoutStatus: payoutMsg
           });
 
           await db.addPayment({
@@ -796,12 +800,12 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
             amount,
             driverEarnings,
             adminCommission,
-            paymentMethod: pMethod,
+            paymentMethod: isCash ? 'Cash in Hand' : pMethod,
             bankName: updated.bankName || '',
             paymentStatus: 'Paid',
             transactionId: autoTxnId,
             payoutDispatched: true,
-            payoutStatus: 'Transferred to Driver Bank Account ✅',
+            payoutStatus: payoutMsg,
             paymentDate: todayStr
           });
         }
