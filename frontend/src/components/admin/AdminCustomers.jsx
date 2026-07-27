@@ -58,7 +58,12 @@ function AdminCustomers({ token, toast }) {
                         <span className="badge badge-confirmed bg-blue-100 text-blue-600 border-none">{c.role || 'Customer'}</span>
                       </td>
                       <td className="whitespace-nowrap">
-                        <button className="btn btn-view px-2 py-1 text-[11px] rounded-md" onClick={() => setViewingCustomer(c)}>View</button>
+                        <button 
+                          onClick={() => setViewingCustomer(c)}
+                          className="px-2.5 h-7 text-[11px] font-bold rounded-md bg-slate-800 hover:bg-slate-700 text-white border-none cursor-pointer transition inline-flex items-center justify-center"
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   ))

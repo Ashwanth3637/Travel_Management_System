@@ -6,6 +6,20 @@
       "password": "$2a$10$p34AmmWi29T75sRI1x2sHOjQuRQE69QVHufcuBm/30QPFsN77bWAO",
       "role": "admin",
       "name": "Super Admin"
+    },
+    {
+      "id": "u2",
+      "email": "arvin@travels.com",
+      "password": "$2a$10$76ZA6ys5nbPIGQWrex7FbOblZR45kK19vf0Cx9llV7qKcgfYx4Rkm",
+      "role": "admin",
+      "name": "Arvin (Admin)"
+    },
+    {
+      "id": "u3",
+      "email": "gobi@travels.com",
+      "password": "$2a$10$1ZTXE2cQGS7.PFd/wHqKY.rHLx8kOnidIDLI.68RdQ/RfQsi0M/7W",
+      "role": "admin",
+      "name": "Gobi (Admin)"
     }
   ],
   "vehicles": [
@@ -113,12 +127,30 @@
   "drivers": [
     {
       "id": "d1",
-      "name": "Sakthi",
-      "phone": "+919865234445",
+      "name": "Rajesh",
+      "phone": "+919876543210",
       "licenseNumber": "DL-12345TN",
-      "status": "Available",
+      "status": "Assigned",
       "email": "rajesh@travels.com",
       "password": "$2a$10$cIh4i/n7D1K4.XeCcuQ6A.UbchJNEVMT/TJGnITsfqUWlxwfuj3V6"
+    },
+    {
+      "id": "d11",
+      "name": "Arvin",
+      "phone": "+919443322110",
+      "licenseNumber": "DL-99112TN",
+      "status": "Available",
+      "email": "arvin@travels.com",
+      "password": "$2a$10$OWCJ8VfMKeM6HAYHHqfcJuytLvfDtgt5VnDsOW5SLQDxvuw8PZzH2"
+    },
+    {
+      "id": "d12",
+      "name": "Gobi",
+      "phone": "+919554433221",
+      "licenseNumber": "DL-88223TN",
+      "status": "Available",
+      "email": "gobi@travels.com",
+      "password": "$2a$10$SXMxV8nKR9UKB1rNJqsp6OFK83oiuMs0VmZqc728XmI/MVTRlqLFm"
     },
     {
       "id": "d2",
@@ -360,7 +392,7 @@
       "name": "Sam",
       "email": "sam@gmail.com",
       "phone": "9345285647",
-      "password": "$2a$10$H5PR3ZPoNNTUUJqjj6/eu.j2NK4K0etNMWBeqTOp7AMdtuPFNDO4i",
+      "password": "$2a$10$YHuz7N.s.eudNbhb9yi3re4TFg4OoRUtfA2IjCAqTqoVZkzMAtXxW",
       "role": "customer"
     },
     {

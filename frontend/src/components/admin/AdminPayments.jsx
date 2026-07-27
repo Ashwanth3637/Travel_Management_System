@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaDownload, FaSearch, FaFilter, FaMoneyBillWave, FaPercentage, FaChartLine, FaTrash } from 'react-icons/fa';
+import { FaDownload, FaSearch, FaTrash } from 'react-icons/fa';
 
 export default function AdminPayments() {
   const API_URL = "http://localhost:5001/api";
@@ -27,7 +27,6 @@ export default function AdminPayments() {
       const newB = Array.isArray(bookingsData) ? bookingsData : [];
       const newP = Array.isArray(paymentsData) ? paymentsData : [];
 
-      // Avoid unnecessary state updates if data has not changed
       setBookings(prev => JSON.stringify(prev) === JSON.stringify(newB) ? prev : newB);
       setPayments(prev => JSON.stringify(prev) === JSON.stringify(newP) ? prev : newP);
     } catch (err) {
@@ -59,10 +58,8 @@ export default function AdminPayments() {
     }
   };
 
-  // Merge payments ledger with bookings list into unified admin payment records
   const combinedMap = new Map();
 
-  // First add payments from DB payments collection
   payments.forEach(p => {
     const amount = p.amount || 1850;
     combinedMap.set(p.bookingId, {
@@ -80,7 +77,6 @@ export default function AdminPayments() {
     });
   });
 
-  // Then add or update from bookings list
   bookings.forEach(b => {
     const isPaid = (b.paymentStatus || '').toUpperCase() === 'PAID';
     if (!combinedMap.has(b.id) || isPaid) {
@@ -104,7 +100,6 @@ export default function AdminPayments() {
 
   const combinedRecords = Array.from(combinedMap.values());
 
-  // Calculate Revenue Stats
   const paidRecords = combinedRecords.filter(r => r.paymentStatus === 'Paid');
   const pendingRecords = combinedRecords.filter(r => r.paymentStatus === 'Pending');
 
@@ -112,7 +107,6 @@ export default function AdminPayments() {
   const totalAdminCommission = Math.round(totalGrossRevenue * 0.15);
   const totalDriverPayouts = Math.round(totalGrossRevenue * 0.85);
 
-  // Search & Filter
   const filteredRecords = combinedRecords.filter(r => {
     const matchesSearch = 
       r.bookingId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,7 +119,6 @@ export default function AdminPayments() {
     return matchesSearch && matchesStatus && matchesMethod;
   });
 
-  // Download CSV Report
   const handleDownloadCSV = () => {
     const headers = ["Booking ID", "Customer", "Driver", "Amount", "Admin Commission (15%)", "Driver Payout (85%)", "Method", "Status", "Transaction ID", "Date"];
     const rows = filteredRecords.map(r => [
@@ -152,79 +145,40 @@ export default function AdminPayments() {
   };
 
   return (
-    <div style={{ padding: '24px', textAlign: 'left' }}>
-      
+    <div className="p-6 text-left">
       {/* Header & CSV Download */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+      <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
         <div>
-          <h2 style={{ fontSize: '26px', fontWeight: '800', margin: '0 0 6px 0', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2 className="text-[26px] font-extrabold m-0 text-slate-800 flex items-center gap-2.5">
             💳 Admin Revenue & Payment Ledger
           </h2>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+          <p className="text-slate-500 text-sm m-0">
             Uber/Rapido style payment reconciliation, commission revenue (15%), driver payouts (85%), and transaction reports.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => {
               fetchData(true);
               setToast("🔄 Payment ledger refreshed successfully!");
               setTimeout(() => setToast(""), 3000);
             }}
-            style={{
-              padding: '10px 18px',
-              backgroundColor: '#10b981',
-              color: '#ffffff',
-              fontWeight: '800',
-              fontSize: '13px',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)'
-            }}
+            className="px-4 py-2.5 bg-emerald-500 text-white font-extrabold text-xs border-none rounded-xl cursor-pointer flex items-center gap-2 shadow-md hover:bg-emerald-600 transition"
           >
             🔄 Refresh Data
           </button>
 
           <button
             onClick={handleDownloadCSV}
-            style={{
-              padding: '10px 18px',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              fontWeight: '800',
-              fontSize: '13px',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
-            }}
+            className="px-4 py-2.5 bg-blue-600 text-white font-extrabold text-xs border-none rounded-xl cursor-pointer flex items-center gap-2 shadow-md hover:bg-blue-700 transition"
           >
             <FaDownload /> Download Report (CSV)
           </button>
 
           <button
             onClick={handleClearPaymentHistory}
-            style={{
-              padding: '10px 18px',
-              backgroundColor: '#fee2e2',
-              color: '#ef4444',
-              fontWeight: '700',
-              fontSize: '13px',
-              border: '1px solid #fca5a5',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className="px-4 py-2.5 bg-red-100 text-red-500 font-bold text-xs border border-red-300 rounded-xl cursor-pointer flex items-center gap-2 hover:bg-red-200 transition"
           >
             <FaTrash /> Clear History
           </button>
@@ -232,30 +186,29 @@ export default function AdminPayments() {
       </div>
 
       {toast && (
-        <div style={{ padding: '12px 18px', backgroundColor: '#dcfce7', color: '#15803d', borderRadius: '10px', fontWeight: '700', fontSize: '14px', marginBottom: '20px' }}>
+        <div className="px-4.5 py-3 bg-green-100 text-green-800 rounded-xl font-bold text-sm mb-5 shadow-sm">
           {toast}
         </div>
       )}
 
       {/* REVENUE STATS SUMMARY CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '20px', marginBottom: '28px' }}>
-        
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #2563eb' }}>
-          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>Total Gross Revenue</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#2563eb', margin: '4px 0' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-7">
+        <div className="glass-panel p-5 border-l-4 border-blue-600">
+          <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wider">Total Gross Revenue</div>
+          <div className="text-[26px] font-black text-blue-600 my-1">
             ₹{totalGrossRevenue.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '700' }}>
+          <div className="text-xs text-emerald-600 font-bold">
             {paidRecords.length} Successful Payments
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981', background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.02) 100%)' }}>
-          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#047857', fontWeight: '800', letterSpacing: '0.5px' }}>💼 ADMIN WALLET BALANCE (15%)</div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: '#047857', margin: '4px 0' }}>
+        <div className="glass-panel p-5 border-l-4 border-emerald-500 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+          <div className="text-[11.5px] uppercase text-emerald-800 font-extrabold tracking-wider">💼 ADMIN WALLET BALANCE (15%)</div>
+          <div className="text-[28px] font-black text-emerald-800 my-1">
             ₹{totalAdminCommission.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '12px', color: '#15803d', fontWeight: '700', marginBottom: '8px' }}>
+          <div className="text-xs text-emerald-700 font-bold mb-2">
             ⚡ 15% Platform Share Auto-Deposited
           </div>
           <button
@@ -263,71 +216,51 @@ export default function AdminPayments() {
               setToast(`🏦 Successfully transferred Admin Profit Wallet (₹${totalAdminCommission.toLocaleString('en-IN')}) to TravelGo Corporate Account (HDFC Current A/C •••• 9988)!`);
               setTimeout(() => setToast(""), 4000);
             }}
-            style={{
-              padding: '6px 12px',
-              fontSize: '11px',
-              fontWeight: '800',
-              backgroundColor: '#047857',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
+            className="px-3 py-1.5 text-[11px] font-extrabold bg-emerald-700 text-white border-none rounded cursor-pointer hover:bg-emerald-800 transition"
           >
             🏦 Withdraw Profits to Bank
           </button>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #6366f1' }}>
-          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>Driver Payouts (85%)</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#6366f1', margin: '4px 0' }}>
+        <div className="glass-panel p-5 border-l-4 border-indigo-500">
+          <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wider">Driver Payouts (85%)</div>
+          <div className="text-[26px] font-black text-indigo-500 my-1">
             ₹{totalDriverPayouts.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
+          <div className="text-xs text-slate-500 font-semibold">
             Distributed Driver Share
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #f59e0b' }}>
-          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>Pending Payments</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#f59e0b', margin: '4px 0' }}>
+        <div className="glass-panel p-5 border-l-4 border-amber-500">
+          <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wider">Pending Payments</div>
+          <div className="text-[26px] font-black text-amber-500 my-1">
             {pendingRecords.length}
           </div>
-          <div style={{ fontSize: '12px', color: '#b45309', fontWeight: '700' }}>
+          <div className="text-xs text-amber-700 font-bold">
             Uncollected Fares Due
           </div>
         </div>
-
       </div>
 
       {/* SEARCH AND FILTERS ROW */}
-      <div className="glass-panel" style={{ padding: '18px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        
-        {/* Search */}
-        <div style={{ position: 'relative', minWidth: '280px', flex: 1 }}>
-          <FaSearch style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+      <div className="glass-panel px-6 py-4.5 mb-6 flex justify-between items-center flex-wrap gap-4">
+        <div className="relative min-w-[280px] flex-1">
+          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search by Booking ID, Customer, or Driver..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 14px 10px 40px',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              fontSize: '13.5px',
-              outline: 'none'
-            }}
+            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-[13.5px] outline-none focus:border-blue-500"
           />
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex gap-3 flex-wrap">
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '700', color: '#334155' }}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 outline-none"
           >
             <option value="ALL">Status: All Statuses</option>
             <option value="PAID">Status: Paid</option>
@@ -337,7 +270,7 @@ export default function AdminPayments() {
           <select
             value={methodFilter}
             onChange={e => setMethodFilter(e.target.value)}
-            style={{ padding: '9px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '13px', fontWeight: '700', color: '#334155' }}
+            className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 outline-none"
           >
             <option value="ALL">Method: All Methods</option>
             <option value="GPAY">Google Pay (GPay)</option>
@@ -346,28 +279,27 @@ export default function AdminPayments() {
             <option value="CARD">Credit / Debit Card</option>
           </select>
         </div>
-
       </div>
 
       {/* ADMIN PAYMENT TABLE */}
-      <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+      <div className="glass-panel p-0 overflow-hidden">
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading payment ledger...</div>
+          <div className="p-10 text-center text-slate-500">Loading payment ledger...</div>
         ) : filteredRecords.length === 0 ? (
-          <div style={{ padding: '50px', textAlign: 'center', color: '#64748b' }}>No payment records found.</div>
+          <div className="p-12 text-center text-slate-500">No payment records found.</div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13.5px' }}>
+          <table className="w-full border-collapse text-left text-[13.5px]">
             <thead>
-              <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: '800', textTransform: 'uppercase', fontSize: '11.5px', letterSpacing: '0.5px' }}>
-                <th style={{ padding: '14px 20px' }}>Booking ID</th>
-                <th style={{ padding: '14px 20px' }}>Customer</th>
-                <th style={{ padding: '14px 20px' }}>Driver</th>
-                <th style={{ padding: '14px 20px' }}>Payment Method</th>
-                <th style={{ padding: '14px 20px' }}>Total Fare</th>
-                <th style={{ padding: '14px 20px' }}>Admin Share (15%)</th>
-                <th style={{ padding: '14px 20px' }}>Driver Share (85%)</th>
-                <th style={{ padding: '14px 20px' }}>Status</th>
-                <th style={{ padding: '14px 20px' }}>Automated Settlement (Razorpay Route)</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[11.5px] tracking-wider">
+                <th className="py-3.5 px-5">Booking ID</th>
+                <th className="py-3.5 px-5">Customer</th>
+                <th className="py-3.5 px-5">Driver</th>
+                <th className="py-3.5 px-5">Payment Method</th>
+                <th className="py-3.5 px-5">Total Fare</th>
+                <th className="py-3.5 px-5">Admin Share (15%)</th>
+                <th className="py-3.5 px-5">Driver Share (85%)</th>
+                <th className="py-3.5 px-5">Status</th>
+                <th className="py-3.5 px-5">Automated Settlement (Razorpay Route)</th>
               </tr>
             </thead>
             <tbody>
@@ -376,64 +308,46 @@ export default function AdminPayments() {
                 const adminComm = row.adminCommission || Math.round(row.amount * 0.15);
 
                 return (
-                  <tr key={row.bookingId + '_' + index} style={{ borderBottom: '1px solid #f1f5f9', transition: 'all 0.2s ease' }}>
-                    <td style={{ padding: '16px 20px', fontWeight: '800', color: '#2563eb' }}>
+                  <tr key={row.bookingId + '_' + index} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                    <td className="py-4 px-5 font-extrabold text-blue-600">
                       #{row.bookingId}
                     </td>
-                    <td style={{ padding: '16px 20px', fontWeight: '700', color: '#1e293b' }}>
+                    <td className="py-4 px-5 font-bold text-slate-800">
                       {row.customerName}
                     </td>
-                    <td style={{ padding: '16px 20px', color: '#475569' }}>
+                    <td className="py-4 px-5 text-slate-600">
                       👤 {row.driverName}
                     </td>
-                    <td style={{ padding: '16px 20px', fontWeight: '700', color: '#334155' }}>
+                    <td className="py-4 px-5 font-bold text-slate-700">
                       {row.paymentMethod} {row.bankName ? `(${row.bankName})` : ''}
                     </td>
-                    <td style={{ padding: '16px 20px', fontWeight: '900', color: '#10b981' }}>
+                    <td className="py-4 px-5 font-black text-emerald-500">
                       ₹{row.amount.toLocaleString('en-IN')}
                     </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ color: '#6366f1', fontWeight: '800' }}>₹{adminComm.toLocaleString('en-IN')}</div>
-                      <span style={{
-                        fontSize: '10.5px',
-                        fontWeight: '700',
-                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#15803d' : '#15803d',
-                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#dcfce7' : '#dcfce7',
-                        padding: '2px 6px',
-                        borderRadius: '6px',
-                        marginTop: '3px',
-                        display: 'inline-block'
-                      }}>
+                    <td className="py-4 px-5">
+                      <div className="text-indigo-600 font-extrabold">₹{adminComm.toLocaleString('en-IN')}</div>
+                      <span className="text-[10.5px] font-bold text-green-800 bg-green-100 px-1.5 py-0.5 rounded mt-1 inline-block">
                         {(row.paymentMethod || '').toUpperCase().includes('CASH') ? '15% Auto-Deducted from Driver Wallet ✅' : '15% Admin Retained'}
                       </span>
                     </td>
-                    <td style={{ padding: '16px 20px', fontWeight: '800', color: '#10b981' }}>
+                    <td className="py-4 px-5 font-extrabold text-emerald-500">
                       ₹{driverEarn.toLocaleString('en-IN')}
                     </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <span style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '800',
-                        backgroundColor: row.paymentStatus === 'Paid' ? '#dcfce7' : '#fef3c7',
-                        color: row.paymentStatus === 'Paid' ? '#15803d' : '#b45309',
-                        border: row.paymentStatus === 'Paid' ? '1px solid #86efac' : '1px solid #fde68a'
-                      }}>
+                    <td className="py-4 px-5">
+                      <span className={`px-3 py-1 rounded-full text-xs font-extrabold ${
+                        row.paymentStatus === 'Paid'
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                      }`}>
                         {row.paymentStatus === 'Paid' ? 'Paid to Admin ✅' : 'Pending ⌛'}
                       </span>
                     </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      <span style={{
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#fff7ed' : '#ecfdf5',
-                        color: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '#c2410c' : '#047857',
-                        fontWeight: '800',
-                        fontSize: '12px',
-                        display: 'inline-block',
-                        border: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '1px solid #ffedd5' : '1px solid #6ee7b7'
-                      }}>
+                    <td className="py-4 px-5">
+                      <span className={`px-3 py-1.5 rounded-lg font-extrabold text-xs inline-block ${
+                        (row.paymentMethod || '').toUpperCase().includes('CASH')
+                          ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                      }`}>
                         {(row.paymentMethod || '').toUpperCase().includes('CASH')
                           ? `💵 Driver Cash Collection — 15% Admin Share (₹${adminComm.toLocaleString('en-IN')}) Auto-Deducted from Driver Wallet ✅`
                           : `⚡ 85% Auto Transferred to Driver Bank (₹${driverEarn.toLocaleString('en-IN')}) ✅`}
@@ -446,7 +360,6 @@ export default function AdminPayments() {
           </table>
         )}
       </div>
-
     </div>
   );
 }

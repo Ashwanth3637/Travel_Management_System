@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 function ThemeToggle() {
   const [isLight, setIsLight] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) return savedTheme === 'light';
-    return true; // Default to Light theme
+    const saved = localStorage.getItem('theme');
+    return saved ? saved === 'light' : true;
   });
 
   const toggleTheme = () => {
@@ -15,8 +14,8 @@ function ThemeToggle() {
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const isL = savedTheme ? savedTheme === 'light' : true;
+    const saved = localStorage.getItem('theme');
+    const isL = saved ? saved === 'light' : true;
     setIsLight(isL);
     document.body.classList.toggle('light-theme', isL);
   }, []);
@@ -25,30 +24,8 @@ function ThemeToggle() {
     <button
       onClick={toggleTheme}
       title={isLight ? "Switch to Dark Mode" : "Switch to Light Mode"}
-      style={{
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '50%',
-        width: '36px',
-        height: '36px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        fontSize: '18px',
-        color: 'var(--text-main)',
-        transition: 'all 0.2s ease',
-        outline: 'none',
-        flexShrink: 0
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'scale(1.1)';
-        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-      }}
+      className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer text-lg transition-all hover:scale-110 outline-none shrink-0"
+      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}
     >
       {isLight ? '🌙' : '☀️'}
     </button>

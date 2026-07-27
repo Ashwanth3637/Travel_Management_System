@@ -23,7 +23,6 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
 
   const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, active: 0, completed: 0, cancelled: 0 });
 
-  // Inline edit profile states
   const [editingProfile, setEditingProfile] = useState(false);
   const [editName, setEditName]   = useState(customer ? customer.name  : "");
   const [editPhone, setEditPhone] = useState(customer ? customer.phone : "");
@@ -39,7 +38,6 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
   const [recentActiveBookings, setRecentActiveBookings] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
 
-  // Live Date & Time Clock
   const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
@@ -72,7 +70,6 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
           completed: data.filter(b => b.status === "Completed" || b.status === "Trip Completed").length,
           cancelled: data.filter(b => b.status === "Cancelled").length
         });
-        // Active or upcoming non-completed trips
         const actives = data.filter(b => !["Completed", "Trip Completed", "Cancelled"].includes(b.status));
         setRecentActiveBookings(actives);
       }
@@ -111,105 +108,107 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
       case "home":
       case "dashboard":
         return (
-          <div className="animate-fade-in" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* ─── STANDALONE CUSTOMER HEADER CARD ─── */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '16px',
-              backgroundColor: '#ffffff',
-              padding: '18px 28px',
-              borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)',
-              border: '1px solid #e2e8f0',
-              borderLeft: '5px solid #2563eb'
-            }}>
+          <div className="animate-fade-in text-left flex flex-col gap-5">
+            {/* STANDALONE CUSTOMER HEADER CARD */}
+            <div className="flex justify-between items-center flex-wrap gap-4 bg-white px-7 py-[18px] rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
               <div>
-                <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '0 0 4px 0', color: '#1e293b', letterSpacing: '-0.3px' }}>
+                <h2 className="text-[22px] font-extrabold m-0 text-slate-800 tracking-tight">
                   Welcome back, {customer ? customer.name : 'Valued Rider'}! 👋
                 </h2>
-                <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0, fontWeight: '600' }}>
+                <p className="text-slate-500 text-[13.5px] m-0 font-semibold">
                   Customer Dashboard & Live Dispatch Logistics
                 </p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  fontSize: '12.5px',
-                  fontWeight: '700',
-                  color: '#2563eb',
-                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                  padding: '8px 16px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(37, 99, 235, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+              <div className="flex items-center gap-3">
+                <div className="text-[12.5px] font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full border border-blue-200 flex items-center gap-1.5">
                   ⏱️ <span>{currentTime}</span>
                 </div>
               </div>
             </div>
 
-            {/* ─── 1. CUSTOMER STAT CARDS ROW (FIRST) ─── */}
-            <div className="dashboard-grid" style={{ marginTop: '10px' }}>
-              <div className="glass-panel stat-card" style={{ borderLeft: '4px solid #2563eb' }}>
+            {/* 1. CUSTOMER STAT CARDS ROW */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2.5">
+              <div className="glass-panel stat-card border-l-4 border-l-blue-600 flex justify-between items-center p-5">
                 <div>
-                  <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Total Bookings</div>
-                  <div className="stat-val" style={{ color: '#2563eb' }}>{stats.total}</div>
-                  <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginTop: '4px' }}>📈 +14% this month</div>
+                  <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wide">Total Bookings</div>
+                  <div className="text-3xl font-extrabold text-blue-600 my-1">{stats.total}</div>
+                  <div className="text-xs text-emerald-600 font-bold">📈 +14% this month</div>
                 </div>
-                <div style={{ fontSize: '24px', backgroundColor: 'rgba(37, 99, 235, 0.12)', padding: '12px', borderRadius: '12px' }}>📅</div>
+                <div className="text-2xl bg-blue-100 p-3 rounded-xl">📅</div>
               </div>
-              <div className="glass-panel stat-card" style={{ borderLeft: '4px solid #f97316' }}>
+
+              <div className="glass-panel stat-card border-l-4 border-l-orange-500 flex justify-between items-center p-5">
                 <div>
-                  <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Active & Dispatched</div>
-                  <div className="stat-val" style={{ color: '#f97316' }}>{stats.active + stats.confirmed}</div>
-                  <div style={{ fontSize: '11px', color: '#f97316', fontWeight: '700', marginTop: '4px' }}>⚡ Live tracking</div>
+                  <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wide">Active & Dispatched</div>
+                  <div className="text-3xl font-extrabold text-orange-500 my-1">{stats.active + stats.confirmed}</div>
+                  <div className="text-xs text-orange-500 font-bold">⚡ Live tracking</div>
                 </div>
-                <div style={{ fontSize: '24px', backgroundColor: 'rgba(249, 115, 22, 0.14)', padding: '12px', borderRadius: '12px' }}>🚗</div>
+                <div className="text-2xl bg-orange-100 p-3 rounded-xl">🚗</div>
               </div>
-              <div className="glass-panel stat-card" style={{ borderLeft: '4px solid #10b981' }}>
+
+              <div className="glass-panel stat-card border-l-4 border-l-emerald-500 flex justify-between items-center p-5">
                 <div>
-                  <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Completed Rides</div>
-                  <div className="stat-val" style={{ color: '#10b981' }}>{stats.completed}</div>
-                  <div style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', marginTop: '4px' }}>✅ 100% On Time</div>
+                  <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wide">Completed Rides</div>
+                  <div className="text-3xl font-extrabold text-emerald-500 my-1">{stats.completed}</div>
+                  <div className="text-xs text-emerald-600 font-bold">✅ 100% On Time</div>
                 </div>
-                <div style={{ fontSize: '24px', backgroundColor: 'rgba(16, 185, 129, 0.14)', padding: '12px', borderRadius: '12px' }}>✅</div>
+                <div className="text-2xl bg-emerald-100 p-3 rounded-xl">✅</div>
               </div>
-              <div className="glass-panel stat-card" style={{ borderLeft: '4px solid #ef4444' }}>
+
+              <div className="glass-panel stat-card border-l-4 border-l-red-500 flex justify-between items-center p-5">
                 <div>
-                  <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: '800', letterSpacing: '0.5px' }}>Cancelled Trips</div>
-                  <div className="stat-val" style={{ color: '#ef4444' }}>{stats.cancelled}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600', marginTop: '4px' }}>Aborted requests</div>
+                  <div className="text-[11.5px] uppercase text-slate-500 font-extrabold tracking-wide">Cancelled Trips</div>
+                  <div className="text-3xl font-extrabold text-red-500 my-1">{stats.cancelled}</div>
+                  <div className="text-xs text-slate-500 font-semibold">Aborted requests</div>
                 </div>
-                <div style={{ fontSize: '24px', backgroundColor: 'rgba(239, 68, 68, 0.15)', padding: '12px', borderRadius: '12px' }}>❌</div>
+                <div className="text-2xl bg-red-100 p-3 rounded-xl">❌</div>
               </div>
             </div>
 
-            {/* ─── 2. ACTIVE BOOKINGS & START OTP CODES (SECOND) ─── */}
+            {/* 0. LIVE PAYMENT DUE NOTIFICATION BANNER */}
+            {allBookings.filter(b => ["Destination Reached", "Reached", "Trip Ended", "Ended"].includes((b.status || '').trim()) && !['PAID', 'CONFIRMED', 'DRIVER CONFIRMED', 'CONFIRMED_BY_DRIVER'].includes((b.paymentStatus || '').toUpperCase().trim())).map(b => (
+              <div key={b.id} className="p-5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/5 border-2 border-amber-500/40 rounded-2xl shadow-lg flex justify-between items-center flex-wrap gap-4 animate-bounce-short">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-2xl font-black shadow-md shrink-0">
+                    💳
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-base text-slate-900">
+                        📍 Trip Ended! Payment Due for #{b.id} ({b.vehicleType})
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500 text-white animate-pulse">
+                        ACTION REQUIRED
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-600 font-semibold mt-1">
+                      Route: {b.pickupLocation} → {b.dropLocation} | Fare: <strong className="text-amber-800 font-black text-sm">₹{(b.fareEstimated || 1850).toLocaleString('en-IN')}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => navigate('/customer/payments')}
+                  className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-black rounded-xl border-none cursor-pointer shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 flex items-center gap-2"
+                >
+                  ⚡ Pay ₹{(b.fareEstimated || 1850).toLocaleString('en-IN')} Now (GPay / Cash)
+                </button>
+              </div>
+            ))}
+
+            {/* 2. ACTIVE BOOKINGS & START OTP CODES */}
             {recentActiveBookings.length > 0 && (
-              <div style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
+              <div className="mt-5">
+                <h3 className="text-lg font-extrabold mb-3.5 flex items-center gap-2 text-slate-800">
                   🔑 Active Bookings & Start OTP Code
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div className="flex flex-col gap-4">
                   {recentActiveBookings.map(b => (
-                    <div key={b.id} className="glass-panel" style={{
-                      padding: '20px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderLeft: '5px solid #2563eb',
-                      flexWrap: 'wrap',
-                      gap: '15px'
-                    }}>
+                    <div key={b.id} className="glass-panel p-5 flex justify-between items-center border-l-4 border-l-blue-600 flex-wrap gap-4">
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                          <span style={{ fontWeight: '800', fontSize: '16px', color: 'var(--text-main)' }}>#{b.id}</span>
+                        <div className="flex items-center gap-2.5 mb-1.5">
+                          <span className="font-extrabold text-base text-slate-900">#{b.id}</span>
                           <span className={`badge ${
                             b.status === 'Pending' ? 'badge-pending' : 
                             ['Confirmed', 'Driver Assigned', 'Vehicle Assigned', 'Trip Scheduled'].includes(b.status) ? 'badge-confirmed' : 
@@ -218,43 +217,26 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
                           }`}>
                             {b.status}
                           </span>
-                          <span style={{ fontSize: '13px', color: '#64748b' }}>({b.vehicleType})</span>
+                          <span className="text-xs text-slate-500">({b.vehicleType})</span>
                         </div>
-                        <div style={{ fontSize: '14px', color: '#64748b' }}>
+                        <div className="text-sm text-slate-500">
                           📍 {b.pickupLocation} → {b.dropLocation}
                         </div>
                       </div>
 
                       {b.startOtp && (
-                        <div style={{
-                          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0.05))',
-                          padding: '10px 18px',
-                          borderRadius: '12px',
-                          border: '1px solid #2563eb',
-                          textAlign: 'center'
-                        }}>
-                          <div style={{ fontSize: '10.5px', textTransform: 'uppercase', color: '#2563eb', fontWeight: '800', letterSpacing: '0.5px' }}>
+                        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 px-4 py-2.5 rounded-xl border border-blue-600 text-center">
+                          <div className="text-[10.5px] uppercase text-blue-600 font-extrabold tracking-wider">
                             DRIVER TRIP START OTP
                           </div>
-                          <div style={{ fontSize: '22px', fontWeight: '900', color: '#1d4ed8', letterSpacing: '3px', marginTop: '2px' }}>
+                          <div className="text-2xl font-black text-blue-700 tracking-widest mt-0.5">
                             {b.startOtp}
                           </div>
                         </div>
                       )}
 
                       <button 
-                        style={{ 
-                          padding: '9px 18px', 
-                          fontSize: '12.5px',
-                          fontWeight: '700',
-                          backgroundColor: '#10b981',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
-                          transition: 'all 0.2s ease'
-                        }} 
+                        className="px-4.5 py-2.5 text-[12.5px] font-bold bg-emerald-500 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-emerald-600 transition"
                         onClick={() => handleSelectTrackTrip(b)}
                       >
                         📍 Track Trip
@@ -265,17 +247,15 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
               </div>
             )}
 
-            {/* ─── EASY ANALYTICS CHARTS ROW ─── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '10px' }}>
-              
-              {/* Chart 1: Weekly Trip Volume */}
-              <div className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            {/* EASY ANALYTICS CHARTS ROW */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-2.5">
+              <div className="glass-panel p-6">
+                <div className="flex justify-between items-center mb-4">
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b' }}>Activity Overview</div>
-                    <h4 style={{ fontSize: '16px', fontWeight: '800', margin: '2px 0 0 0', color: '#1e293b' }}>Weekly Travel Demand</h4>
+                    <div className="text-[11px] font-extrabold uppercase text-slate-500">Activity Overview</div>
+                    <h4 className="text-base font-extrabold m-0 text-slate-800">Weekly Travel Demand</h4>
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', padding: '4px 10px', borderRadius: '12px' }}>
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-xl">
                     📊 Peak Activity: Sat
                   </span>
                 </div>
@@ -295,14 +275,13 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
                 />
               </div>
 
-              {/* Chart 2: Fleet Category Preference */}
-              <div className="glass-panel" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="glass-panel p-6">
+                <div className="flex justify-between items-center mb-4">
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b' }}>Fleet Preference</div>
-                    <h4 style={{ fontSize: '16px', fontWeight: '800', margin: '2px 0 0 0', color: '#1e293b' }}>Vehicle Class Distribution</h4>
+                    <div className="text-[11px] font-extrabold uppercase text-slate-500">Fleet Preference</div>
+                    <h4 className="text-base font-extrabold m-0 text-slate-800">Vehicle Class Distribution</h4>
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', backgroundColor: '#dcfce7', padding: '4px 10px', borderRadius: '12px' }}>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl">
                     🚘 Top: Sedan
                   </span>
                 </div>
@@ -315,7 +294,6 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
                   }}
                 />
               </div>
-
             </div>
 
           </div>
@@ -335,167 +313,94 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
     }
   };
 
-  const sidebarNavLink = (isActive) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px 16px',
-    borderRadius: '10px',
-    fontSize: '14.5px',
-    fontWeight: '800',
-    cursor: 'pointer',
-    border: 'none',
-    width: '100%',
-    textAlign: 'left',
-    transition: 'all 0.25s ease-in-out',
-    color:           isActive ? '#ffffff' : '#0f172a',
-    backgroundColor: isActive ? '#3b82f6' : 'transparent',
-    boxShadow:       isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none',
-  });
-
   return (
-    <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start', maxWidth: '1400px', margin: '0 auto' }}>
-
-      {/* ─── LEFT SIDEBAR (MATCHES ADMIN MENU 1:1) ─── */}
-      <div className="glass-panel" style={{
-        width: '240px',
-        minWidth: '240px',
-        background: 'var(--bg-card)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '16px',
-        padding: '14px 12px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        boxSizing: 'border-box'
-      }}>
-
-        {/* ── Customer Panel Title ── */}
-        <div style={{ padding: '8px 4px 12px', textAlign: 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
-          <div style={{
-            fontSize: '22px',
-            fontWeight: '800',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '0.5px'
-          }}>
+    <div className="flex gap-6 items-start max-w-[1400px] mx-auto">
+      {/* LEFT SIDEBAR */}
+      <div className="glass-panel w-[240px] min-w-[240px] p-3 flex flex-col gap-1.5 box-border">
+        {/* Customer Panel Title */}
+        <div className="py-2 px-1 text-center border-b border-slate-200 mb-2">
+          <div className="text-2xl font-extrabold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent tracking-wide">
             Customer Panel
           </div>
         </div>
 
-        {/* ── Profile block ── */}
+        {/* Profile block */}
         {!editingProfile ? (
-          <div style={{ textAlign: 'center', padding: '8px 4px 10px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
-            {/* Avatar */}
-            <div style={{
-              width: '56px', height: '56px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: '800', fontSize: '22px', color: '#fff',
-              margin: '0 auto 8px',
-              boxShadow: '0 4px 16px rgba(59, 130, 246, 0.35)'
-            }}>
+          <div className="text-center py-2 px-1 border-b border-slate-200 mb-2">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center font-extrabold text-2xl text-white mx-auto mb-2 shadow-md">
               {customer ? customer.name.charAt(0).toUpperCase() : 'R'}
             </div>
-            <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-main)', marginBottom: '3px' }}>
+            <div className="font-bold text-sm text-slate-800 mb-0.5">
               {customer ? customer.name : 'Rider'}
             </div>
             {customer?.email && (
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', wordBreak: 'break-all' }}>
+              <div className="text-[11px] text-slate-500 mb-1 break-all">
                 {customer.email}
               </div>
             )}
             {customer?.phone && (
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+              <div className="text-[11px] text-slate-500 mb-1.5">
                 📞 {customer.phone}
               </div>
             )}
-            <span className="badge badge-inprogress" style={{ fontSize: '10px', marginBottom: '8px', display: 'inline-block' }}>Rider</span>
-            {/* Edit Profile button */}
+            <span className="badge badge-inprogress text-[10px] mb-2 inline-block">Rider</span>
             <div>
               <button
                 onClick={() => setEditingProfile(true)}
-                style={{
-                  marginTop: '6px',
-                  padding: '7px 12px',
-                  fontSize: '11.5px',
-                  fontWeight: '700',
-                  borderRadius: '8px',
-                  width: '100%',
-                  backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                  color: '#2563eb',
-                  border: '1px solid rgba(37, 99, 235, 0.25)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2563eb';
-                  e.currentTarget.style.color = '#ffffff';
-                  e.currentTarget.style.borderColor = '#1d4ed8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(37, 99, 235, 0.08)';
-                  e.currentTarget.style.color = '#2563eb';
-                  e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.25)';
-                }}
+                className="mt-1.5 py-1.5 px-3 text-[11.5px] font-bold rounded-lg w-full bg-blue-50 text-blue-600 border border-blue-200 cursor-pointer transition hover:bg-blue-600 hover:text-white"
               >
                 ✏️ Edit Profile
               </button>
             </div>
           </div>
         ) : (
-          /* ── Inline Edit Profile Form ── */
-          <div style={{ padding: '8px 4px 10px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
-            <div style={{ fontWeight: '700', fontSize: '12px', color: 'var(--text-main)', marginBottom: '8px', textAlign: 'center' }}>
+          /* Inline Edit Profile Form */
+          <div className="py-2 px-1 border-b border-slate-200 mb-2">
+            <div className="font-bold text-xs text-slate-800 mb-2 text-center">
               ✏️ Edit Profile
             </div>
 
             {editSuccess && (
-              <div style={{ padding: '6px 8px', backgroundColor: 'var(--status-completed-bg)', color: 'var(--status-completed)', borderRadius: '6px', fontSize: '11px', marginBottom: '8px', textAlign: 'center', border: '1px solid var(--status-completed)' }}>
+              <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded text-[11px] mb-2 text-center border border-emerald-300">
                 {editSuccess}
               </div>
             )}
 
-            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {/* Email (read only) */}
+            <form onSubmit={handleSaveProfile} className="flex flex-col gap-2">
               <div>
-                <label style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Email</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Email</label>
                 <input
                   type="email"
                   value={customer?.email || ""}
                   disabled
-                  style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', fontSize: '11px', opacity: 0.6, cursor: 'not-allowed', boxSizing: 'border-box' }}
+                  className="w-full py-1.5 px-2 rounded border border-slate-200 bg-slate-50 text-slate-400 text-[11px] opacity-60 cursor-not-allowed box-border"
                 />
               </div>
-              {/* Full Name */}
               <div>
-                <label style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Full Name</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Full Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   required
-                  style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'var(--text-main)', fontSize: '11px', boxSizing: 'border-box', outline: 'none' }}
+                  className="w-full py-1.5 px-2 rounded border border-slate-300 text-[11px] box-border outline-none focus:border-blue-500"
                 />
               </div>
-              {/* Phone */}
               <div>
-                <label style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>Phone</label>
+                <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Phone</label>
                 <input
                   type="tel"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
                   required
-                  style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'var(--text-main)', fontSize: '11px', boxSizing: 'border-box', outline: 'none' }}
+                  className="w-full py-1.5 px-2 rounded border border-slate-300 text-[11px] box-border outline-none focus:border-blue-500"
                 />
               </div>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
-                <button type="submit" style={{ flex: 1, padding: '6px', fontSize: '11px', fontWeight: '700', borderRadius: '6px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.35)' }}>
+              <div className="flex gap-1.5 mt-0.5">
+                <button type="submit" className="flex-1 py-1.5 text-[11px] font-bold rounded border-none bg-blue-600 text-white cursor-pointer shadow-sm hover:bg-blue-700 transition">
                   Save
                 </button>
-                <button type="button" onClick={() => { setEditingProfile(false); setEditSuccess(""); }} style={{ flex: 1, padding: '6px', fontSize: '11px', fontWeight: '700', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <button type="button" onClick={() => { setEditingProfile(false); setEditSuccess(""); }} className="flex-1 py-1.5 text-[11px] font-bold rounded border border-slate-300 bg-transparent text-slate-500 cursor-pointer hover:bg-slate-100 transition">
                   Cancel
                 </button>
               </div>
@@ -504,39 +409,29 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
         )}
 
         {/* Section Header */}
-        <div style={{
-          fontSize: '11px',
-          fontWeight: '800',
-          color: 'var(--text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '1.5px',
-          padding: '4px 12px 10px 12px',
-          textAlign: 'left'
-        }}>
+        <div className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest px-3 py-1 text-left">
           Customer Menu
         </div>
 
         {/* Navigation links */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+        <div className="flex flex-col gap-1 flex-1">
           {NAV_ITEMS.map(item => {
             const isActive = activeTab === item.key;
             return (
               <button
                 key={item.key}
                 onClick={() => { navigate(`/customer/${item.key}`); setEditingProfile(false); }}
-                style={sidebarNavLink(isActive)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl no-underline text-[14.5px] font-extrabold transition-all border-none text-left cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-900 bg-transparent hover:bg-slate-100'
+                }`}
               >
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : item.bg,
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>{item.icon}</span>
+                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-lg shrink-0 ${
+                  isActive ? 'bg-white/25' : ''
+                }`} style={{ backgroundColor: isActive ? undefined : item.bg }}>
+                  {item.icon}
+                </span>
                 <span>{item.label}</span>
               </button>
             );
@@ -544,82 +439,29 @@ function CustomerDashboard({ token, customer, onUpdateProfile, activeTab, active
         </div>
 
         {/* Logout */}
-        <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+        <div className="mt-auto pt-4 border-t border-slate-200">
           <button
             onClick={handleLogout}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              backgroundColor: '#ef4444',
-              color: '#ffffff',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc2626';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#ef4444';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+            className="w-full py-3 px-4 text-[14.5px] font-extrabold rounded-xl flex items-center justify-center gap-2 bg-red-500 text-white border-none cursor-pointer shadow-md hover:bg-red-600 hover:-translate-y-0.5 transition"
           >
-            <span style={{ fontSize: '16px' }}>🔑</span>
+            <span className="text-base">🔑</span>
             <span>Logout</span>
           </button>
         </div>
       </div>
 
-      {/* ─── MAIN CONTENT PANEL ─── */}
-      <div style={{ flex: 1, minWidth: 0, overflowY: 'visible' }}>
+      {/* MAIN CONTENT PANEL */}
+      <div className="flex-1 min-w-0 overflow-y-visible">
         {renderTabContent()}
       </div>
 
-      {/* ─── FLOATING STICKY BOOK YOUR TRIP CTA BUTTON ─── */}
+      {/* FLOATING STICKY BOOK YOUR TRIP CTA BUTTON */}
       <button
         onClick={() => navigate("/customer/booking")}
-        className="animate-fade-in"
+        className="animate-fade-in fixed bottom-7 right-7 z-[999] px-5 py-3.5 rounded-full bg-blue-600 text-white font-extrabold text-sm border-none shadow-xl cursor-pointer flex items-center gap-2.5 transition hover:scale-105 hover:-translate-y-0.5 hover:bg-blue-700"
         title="Book Your Trip"
-        style={{
-          position: 'fixed',
-          bottom: '28px',
-          right: '28px',
-          zIndex: 999,
-          padding: '13px 22px',
-          borderRadius: '50px',
-          backgroundColor: '#2563eb',
-          color: '#ffffff',
-          fontWeight: '800',
-          fontSize: '14px',
-          border: 'none',
-          boxShadow: '0 8px 25px rgba(37, 99, 235, 0.45)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          transition: 'all 0.25s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
-          e.currentTarget.style.backgroundColor = '#1d4ed8';
-          e.currentTarget.style.boxShadow = '0 12px 30px rgba(37, 99, 235, 0.6)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.backgroundColor = '#2563eb';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(37, 99, 235, 0.45)';
-        }}
       >
-        <span style={{ fontSize: '18px' }}>🚗</span>
+        <span className="text-lg">🚗</span>
         <span>Book Your Trip</span>
       </button>
 

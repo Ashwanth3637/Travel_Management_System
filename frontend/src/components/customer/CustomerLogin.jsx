@@ -15,19 +15,11 @@ function CustomerLogin({ onLogin }) {
 
   const greetingText = "Welcome Back Customer!";
 
-  useEffect(() => {
-    let index = 0;
-    setDisplayText("");
-    const interval = setInterval(() => {
-      if (index < greetingText.length) {
-        setDisplayText((prev) => prev + greetingText[index]);
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 45);
-    return () => clearInterval(interval);
-  }, [refreshTrigger]);
+  const handleQuickFillSam = () => {
+    setEmail("sam@gmail.com");
+    setPassword("123456");
+  };
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -49,7 +41,7 @@ function CustomerLogin({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-6 relative overflow-hidden">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-100 p-6 relative overflow-hidden">
       {/* Ambient glow orbs */}
       <div className="absolute -top-[10%] -left-[5%] w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0) 70%)', filter: 'blur(50px)' }} />
@@ -57,11 +49,11 @@ function CustomerLogin({ onLogin }) {
         style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.16) 0%, rgba(139,92,246,0) 70%)', filter: 'blur(60px)' }} />
 
       {/* Main Card */}
-      <div className="animate-fade-in relative z-10 w-full max-w-[1050px] min-h-[620px] grid grid-cols-[1.05fr_1fr] bg-white rounded-3xl overflow-hidden"
+      <div className="animate-fade-in relative z-10 w-full max-w-[1050px] min-h-[620px] grid grid-cols-1 md:grid-cols-[1.05fr_1fr] bg-white rounded-3xl overflow-hidden"
         style={{ boxShadow: '0 30px 60px -12px rgba(15,23,42,0.16), 0 0 0 1px rgba(37,99,235,0.08)' }}>
 
         {/* LEFT Hero */}
-        <div className="relative flex flex-col justify-between p-10 text-white"
+        <div className="relative flex flex-col justify-between p-10 text-white min-h-[350px]"
           style={{ backgroundImage: "url('/travel_login_hero.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
           <div className="absolute inset-0 z-[1]"
             style={{ background: 'linear-gradient(180deg, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.82) 100%)' }} />
@@ -97,11 +89,10 @@ function CustomerLogin({ onLogin }) {
         </div>
 
         {/* RIGHT Form */}
-        <div className="flex flex-col justify-center px-11 py-12 bg-white">
-          <div className="mb-7">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-[42px] h-[42px] rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0"
-                style={{ boxShadow: '0 8px 16px rgba(37,99,235,0.3)' }}>
+        <div className="flex flex-col justify-center px-11 py-10 bg-white">
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-[42px] h-[42px] rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-md">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                   <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
@@ -114,52 +105,66 @@ function CustomerLogin({ onLogin }) {
                 <div className="text-[11px] text-slate-500 font-medium">Cab & Travel Booking System</div>
               </div>
             </div>
-            <h2 className="text-[28px] font-extrabold text-slate-900 mb-1.5 tracking-tight flex items-center gap-1 min-h-[38px]">
-              <span>{displayText}</span>
-              <span className="inline-block w-[3px] h-6 bg-blue-600 ml-0.5 rounded-sm animate-pulse" />
+            <h2 className="text-[26px] font-black text-slate-900 mb-1 tracking-tight flex items-center gap-1 min-h-[36px]">
+              <span>Welcome Back Customer!</span>
             </h2>
-            <p className="text-sm text-slate-500 m-0">Login to continue your journey</p>
+            <p className="text-xs text-slate-500 m-0">Login to continue your journey</p>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold mb-5 text-red-500 bg-red-50 border border-red-200">
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold mb-4 text-red-500 bg-red-50 border border-red-200">
               <span>⚠️</span><span>{error}</span>
             </div>
           )}
           {success && (
-            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold mb-5 text-emerald-600 bg-emerald-50 border border-emerald-200">
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-[13px] font-semibold mb-4 text-emerald-600 bg-emerald-50 border border-emerald-200">
               <span>✅</span><span>{success}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin}>
-            <div className="mb-[18px]">
+            <div className="mb-4">
               <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
               <div className="relative w-full">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 flex items-center justify-center z-10 pointer-events-none">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                   </svg>
                 </div>
-                <input type="email" className="form-input w-full pl-11 h-[46px] rounded-[10px] border border-slate-300 text-sm box-border focus:outline-none focus:border-blue-500 transition"
-                  placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input
+                  type="email"
+                  className="w-full pl-11 pr-4 h-[46px] rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
             </div>
 
-            <div className="mb-[22px]">
+            <div className="mb-5">
               <label className="block text-[13px] font-bold text-slate-700 mb-1.5">Password</label>
               <div className="relative w-full">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 flex items-center pointer-events-none">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 flex items-center justify-center z-10 pointer-events-none">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
                 </div>
-                <input type={showPassword ? "text" : "password"} className="form-input w-full pl-11 pr-11 h-[46px] rounded-[10px] border border-slate-300 text-sm box-border focus:outline-none focus:border-blue-500 transition"
-                  placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate-400 flex items-center p-0">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full pl-11 pr-11 h-[46px] rounded-xl border border-slate-300 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate-500 flex items-center p-0 z-10 hover:text-slate-800"
+                >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
@@ -175,20 +180,36 @@ function CustomerLogin({ onLogin }) {
               </div>
             </div>
 
-            <button type="submit"
-              className="btn btn-primary w-full h-[46px] text-[15px] font-bold rounded-[10px] bg-blue-600 text-white border-none cursor-pointer hover:bg-blue-700 transition"
-              style={{ boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
+            <button
+              type="submit"
+              className="w-full h-[46px] text-sm font-extrabold rounded-xl bg-blue-600 text-white border-none cursor-pointer hover:bg-blue-700 transition shadow-md"
+            >
               Login to Account
             </button>
           </form>
 
-          <div className="mt-5 text-center text-[13.5px]">
-            <span className="text-slate-500">Don't have a customer account? </span>
-            <Link to="/register" className="text-blue-600 no-underline font-bold hover:underline">Register Now</Link>
+          {/* Quick Demo Credentials Box for Sam */}
+          <div className="mt-5 p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-between text-xs">
+            <div>
+              <span className="font-extrabold text-blue-900 block">👤 Customer Credentials (Sam)</span>
+              <span className="text-slate-600 font-mono">Email: <strong>sam@gmail.com</strong> | Pass: <strong>123456</strong></span>
+            </div>
+            <button
+              type="button"
+              onClick={handleQuickFillSam}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[11px] rounded-lg border-none cursor-pointer transition shrink-0 ml-2"
+            >
+              Auto Fill
+            </button>
           </div>
-          <div className="mt-3 text-center text-[13px]">
+
+          <div className="mt-4 text-center text-[13px]">
+            <span className="text-slate-500">Don't have a customer account? </span>
+            <Link to="/register" className="text-blue-600 no-underline font-extrabold hover:underline">Register Now</Link>
+          </div>
+          <div className="mt-2 text-center text-[12.5px]">
             <span className="text-slate-500">Are you an admin? </span>
-            <Link to="/admin/overview" className="text-blue-600 no-underline font-bold hover:underline">Go to Admin Login</Link>
+            <Link to="/admin/overview" className="text-blue-600 no-underline font-extrabold hover:underline">Go to Admin Login</Link>
           </div>
         </div>
 

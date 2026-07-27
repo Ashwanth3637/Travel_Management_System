@@ -6,9 +6,156 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('./database');
 
+const nodemailer = require('nodemailer');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'travels_cab_jwt_secret_token_key_2026';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'ashwanth2567@gmail.com';
+
+// Nodemailer setup for admin email notifications
+const sendAdminBookingNotificationEmail = async (bookingDetails) => {
+  const adminEmail = ADMIN_EMAIL;
+  console.log(`\n==================================================`);
+  console.log(`✉️ [ADMIN RIDE BOOKED EMAIL NOTIFICATION TRIGGERED]`);
+  console.log(`To Admin Mail: ${adminEmail}`);
+  console.log(`Booking ID: #${bookingDetails.id}`);
+  console.log(`Customer: ${bookingDetails.customerName} (${bookingDetails.customerContact || 'N/A'})`);
+  console.log(`Pickup: ${bookingDetails.pickupLocation}`);
+  console.log(`Drop: ${bookingDetails.dropLocation}`);
+  console.log(`Travel Date/Time: ${bookingDetails.pickupDateTime}`);
+  console.log(`Vehicle: ${bookingDetails.assignedVehicleName || 'Standard Fleet'}`);
+  console.log(`Fare: ₹${bookingDetails.fareEstimated}`);
+  console.log(`==================================================\n`);
+
+  const mailOptions = {
+    from: '"TravelGo Fleet Dispatcher" <no-reply@travelgo.com>',
+    to: adminEmail,
+    subject: `🚨 NEW RIDE BOOKED (#${bookingDetails.id}) - Action Required: Assign Driver`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="background-color: #2563eb; color: #ffffff; padding: 16px 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h2 style="margin: 0; font-size: 20px;">🚗 New Customer Ride Booking</h2>
+          <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">TravelGo Fleet Dispatch System</p>
+        </div>
+        <div style="padding: 20px; color: #1e293b; line-height: 1.6;">
+          <p style="font-size: 15px;">Hello Admin (<strong>${adminEmail}</strong>),</p>
+          <p style="font-size: 14px;">A new ride has just been booked by a customer! Please review the trip details below and assign an available driver from the Admin Dashboard.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 8px; margin: 18px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Booking ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2563eb;">#${bookingDetails.id}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Customer Name:</td><td style="padding: 6px 0; font-weight: bold;">${bookingDetails.customerName}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Contact Phone:</td><td style="padding: 6px 0; font-weight: bold;">${bookingDetails.customerContact || 'Not provided'}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Pickup Location:</td><td style="padding: 6px 0;">${bookingDetails.pickupLocation}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Drop Location:</td><td style="padding: 6px 0;">${bookingDetails.dropLocation}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Pickup Date/Time:</td><td style="padding: 6px 0;">${bookingDetails.pickupDateTime}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Booked Vehicle:</td><td style="padding: 6px 0; font-weight: bold; color: #059669;">${bookingDetails.assignedVehicleName || 'Standard Fleet'}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Estimated Fare:</td><td style="padding: 6px 0; font-weight: bold; color: #16a34a;">₹${bookingDetails.fareEstimated}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Start OTP:</td><td style="padding: 6px 0; font-weight: bold; letter-spacing: 2px;">${bookingDetails.startOtp}</td></tr>
+            </table>
+          </div>
+
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="http://localhost:5173/admin/bookings" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">
+              ⚡ Open Admin Dashboard &amp; Assign Driver
+            </a>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
+          TravelGo Fleet Dispatcher • Admin Mail: ${adminEmail}
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    });
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ [GMAIL SENT TO ADMIN: ${adminEmail}] Message ID: ${info.messageId}`);
+  } catch (gmailErr) {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      const testTransporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email', port: 587, secure: false,
+        auth: { user: testAccount.user, pass: testAccount.pass }
+      });
+      const info = await testTransporter.sendMail(mailOptions);
+      console.log(`✅ [LIVE EMAIL NOTIFICATION GENERATED FOR ADMIN: ${adminEmail}]`);
+      console.log(`🔗 Click to Preview Sent Email HTML: ${nodemailer.getTestMessageUrl(info)}`);
+    } catch (err) {
+      console.log(`ℹ️ [ADMIN EMAIL LOGGED FOR ${adminEmail}]`);
+    }
+  }
+};
+
+const sendDriverAssignedNotificationEmail = async (bookingDetails, driverDetails) => {
+  const adminEmail = ADMIN_EMAIL;
+  console.log(`\n==================================================`);
+  console.log(`✉️ [DRIVER ASSIGNED EMAIL NOTIFICATION TRIGGERED]`);
+  console.log(`To Admin Mail: ${adminEmail}`);
+  console.log(`Booking ID: #${bookingDetails.id}`);
+  console.log(`Assigned Driver: ${driverDetails.name} (Phone: ${driverDetails.phone || 'N/A'})`);
+  console.log(`==================================================\n`);
+
+  const mailOptions = {
+    from: '"TravelGo Fleet Dispatcher" <no-reply@travelgo.com>',
+    to: adminEmail,
+    subject: `🚖 DRIVER ASSIGNED (#${bookingDetails.id}) - Driver ${driverDetails.name}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="background-color: #059669; color: #ffffff; padding: 16px 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h2 style="margin: 0; font-size: 20px;">🚖 Driver Assigned to Ride #${bookingDetails.id}</h2>
+          <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.9;">TravelGo Fleet Dispatch System</p>
+        </div>
+        <div style="padding: 20px; color: #1e293b; line-height: 1.6;">
+          <p style="font-size: 15px;">Hello Admin (<strong>${adminEmail}</strong>),</p>
+          <p style="font-size: 14px;">Driver <strong>${driverDetails.name}</strong> has been assigned to Ride <strong>#${bookingDetails.id}</strong>.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; border-radius: 8px; margin: 18px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Booking ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2563eb;">#${bookingDetails.id}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Customer:</td><td style="padding: 6px 0; font-weight: bold;">${bookingDetails.customerName}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Driver Name:</td><td style="padding: 6px 0; font-weight: bold; color: #059669;">${driverDetails.name}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Driver Phone:</td><td style="padding: 6px 0; font-weight: bold;">${driverDetails.phone || 'N/A'}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Driver License:</td><td style="padding: 6px 0;">${driverDetails.licenseNumber || 'N/A'}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Pickup Location:</td><td style="padding: 6px 0;">${bookingDetails.pickupLocation}</td></tr>
+              <tr><td style="padding: 6px 0; color: #64748b; font-weight: bold;">Drop Location:</td><td style="padding: 6px 0;">${bookingDetails.dropLocation}</td></tr>
+            </table>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
+          TravelGo Fleet Dispatcher • Admin Mail: ${adminEmail}
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+    });
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ [GMAIL DRIVER ASSIGNMENT SENT TO ADMIN: ${adminEmail}] Message ID: ${info.messageId}`);
+  } catch (gmailErr) {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      const testTransporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email', port: 587, secure: false,
+        auth: { user: testAccount.user, pass: testAccount.pass }
+      });
+      const info = await testTransporter.sendMail(mailOptions);
+      console.log(`✅ [LIVE DRIVER ASSIGNMENT EMAIL GENERATED FOR ADMIN: ${adminEmail}]`);
+      console.log(`🔗 Click to Preview Sent Email HTML: ${nodemailer.getTestMessageUrl(info)}`);
+    } catch (err) {
+      console.log(`ℹ️ [DRIVER ASSIGNMENT EMAIL LOGGED FOR ${adminEmail}]`);
+    }
+  }
+};
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -505,6 +652,16 @@ app.put('/api/bookings/:id', authenticateToken, requireAdmin, async (req, res) =
   try {
     const updated = await db.updateBooking(req.params.id, req.body);
     if (!updated) return res.status(404).json({ error: 'Booking not found.' });
+
+    if (req.body.assignedDriverId) {
+      db.getDrivers().then(drivers => {
+        const assignedDriver = drivers.find(d => String(d.id) === String(req.body.assignedDriverId));
+        if (assignedDriver) {
+          sendDriverAssignedNotificationEmail(updated, assignedDriver).catch(err => console.error("Driver email notify error:", err));
+        }
+      }).catch(console.error);
+    }
+
     res.json(updated);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
@@ -765,54 +922,9 @@ app.put('/api/driver/trips/:id/status', authenticateToken, requireDriver, async 
       try {
         const drivers = await db.getDrivers();
         const driverDoc = updated.assignedDriverId ? drivers.find(d => d.id === updated.assignedDriverId) : null;
-        const driverName = driverDoc ? driverDoc.name : (updated.assignedDriverId || 'Unassigned');
-
-        // UBER AUTOMATIC CHARGING & CASH AUTO-DEDUCTION FLOW
-        const pMethod = updated.paymentMethod || 'Saved Card (HDFC Visa •••• 4587)';
-        const isCash = pMethod.toLowerCase().includes('cash');
-
-        if (updated.paymentStatus !== 'Paid') {
-          const amount = updated.fareEstimated || 1850;
-          const driverEarnings = Math.round(amount * 0.85);
-          const adminCommission = Math.round(amount * 0.15);
-          const todayStr = new Date().toLocaleDateString('en-GB');
-          const autoTxnId = `pay_AUTO_${Date.now().toString().slice(-8)}`;
-
-          const payoutMsg = isCash
-            ? '15% Admin Share Auto-Deducted from Driver Wallet ✅'
-            : 'Transferred to Driver Bank Account ✅';
-
-          await db.updateBooking(req.params.id, {
-            paymentStatus: 'Paid',
-            transactionId: autoTxnId,
-            paidAt: todayStr,
-            amountPaid: amount,
-            payoutDispatched: true,
-            payoutStatus: payoutMsg
-          });
-
-          await db.addPayment({
-            id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-            paymentId: 'PAY_' + autoTxnId.slice(-8),
-            bookingId: updated.id,
-            customerName: updated.customerName,
-            driverName,
-            amount,
-            driverEarnings,
-            adminCommission,
-            paymentMethod: isCash ? 'Cash in Hand' : pMethod,
-            bankName: updated.bankName || '',
-            paymentStatus: 'Paid',
-            transactionId: autoTxnId,
-            payoutDispatched: true,
-            payoutStatus: payoutMsg,
-            paymentDate: todayStr
-          });
-        }
-
         await sendFareEmailAndNotification(updated, driverDoc);
       } catch (e) {
-        console.error('Error triggering automatic payment & fare notification:', e);
+        console.error('Error sending fare notification:', e);
       }
     }
 
@@ -846,6 +958,39 @@ app.put('/api/driver/bookings/:id/payment-status', async (req, res) => {
     };
 
     const updated = await db.updateBooking(req.params.id, updateFields);
+
+    if (isPaid) {
+      try {
+        const drivers = await db.getDrivers();
+        const driverDoc = booking.assignedDriverId ? drivers.find(d => d.id === booking.assignedDriverId) : null;
+        const driverName = driverDoc ? driverDoc.name : (booking.assignedDriverId || 'Unassigned');
+        const amount = booking.fareEstimated || 1850;
+        const driverEarnings = Math.round(amount * 0.85);
+        const adminCommission = Math.round(amount * 0.15);
+        const todayStr = new Date().toLocaleDateString('en-GB');
+
+        await db.addPayment({
+          id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          paymentId: 'PAY_' + (txnId ? txnId.slice(-8) : Date.now().toString().slice(-8)),
+          bookingId: booking.id,
+          customerName: booking.customerName,
+          driverName,
+          amount,
+          driverEarnings,
+          adminCommission,
+          paymentMethod: normalizedMethod === 'GPAY' ? 'GPay Scanner' : 'Cash in Hand',
+          bankName: booking.bankName || '',
+          paymentStatus: 'Paid',
+          transactionId: txnId || `TXN-DRV-${Date.now()}`,
+          payoutDispatched: true,
+          payoutStatus: normalizedMethod === 'CASH' ? '15% Admin Share Auto-Deducted from Driver Wallet ✅' : 'Transferred to Driver Bank Account ✅',
+          paymentDate: todayStr
+        });
+      } catch (e) {
+        console.error('Error recording payment to MongoDB ledger:', e);
+      }
+    }
+
     res.json(updated || { ...booking, ...updateFields });
   } catch (err) {
     console.error('Driver payment update error:', err);
@@ -960,8 +1105,18 @@ app.post('/api/customer/pay', async (req, res) => {
       paymentDate: todayStr
     });
 
+    // Update driver wallet balance in MongoDBAtlas
+    if (driver && driver.id) {
+      try {
+        const newWalletBalance = (driver.walletBalance || 0) + driverEarnings;
+        await db.updateDriver(driver.id, { walletBalance: newWalletBalance });
+      } catch (e) {
+        console.error('Error updating driver wallet balance:', e);
+      }
+    }
+
     res.json({
-      message: 'Payment Successful! Automatic 85% Driver Payout Transferred.',
+      message: 'Payment Successful! Automatic 85% Driver Share & 15% Admin Share Settled.',
       payment: paymentRecord,
       booking: updatedBooking
     });
@@ -1093,14 +1248,6 @@ app.post('/api/payments/verify-razorpay-payment', async (req, res) => {
       razorpayPaymentId: txnId,
       payoutDispatched: true,
       payoutStatus: 'Transferred to Driver Bank Account ✅',
-      paymentDate: todayStr
-    });
-      paymentMethod: method,
-      bankName: bankName || '',
-      paymentStatus: 'Paid',
-      transactionId: txnId,
-      razorpayOrderId: razorpay_order_id || '',
-      razorpayPaymentId: txnId,
       paymentDate: todayStr
     });
 
@@ -1284,7 +1431,14 @@ app.post('/api/customer/bookings', authenticateToken, async (req, res) => {
     await db.updateVehicle(selectedVehicle.id, { status: 'Booked', availability: false });
 
     const saved = await db.addBooking(newBooking);
-    res.status(201).json({ ...(saved || newBooking), vehicleName: selectedVehicle.name });
+    const finalBookingData = saved || newBooking;
+
+    // Send Admin Email Notification to ashwanth2567@gmail.com
+    sendAdminBookingNotificationEmail(finalBookingData).catch(err => {
+      console.error("Failed to send admin email notification async:", err);
+    });
+
+    res.status(201).json({ ...finalBookingData, vehicleName: selectedVehicle.name });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error.' }); }
 });
 

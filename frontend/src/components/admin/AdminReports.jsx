@@ -5,6 +5,10 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
   const [activeReport, setActiveReport] = useState('booking'); // 'booking' | 'trip' | 'driver' | 'vehicle' | 'completed' | 'cancelled' | 'revenue'
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const getVehicleTypeBadgeClass = () => {
+    return 'badge-confirmed bg-blue-100 text-blue-600 border border-blue-200';
+  };
+
   // ─── FILTER STATES ──────────────────────────────────────────────────────────
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -447,7 +451,7 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
                           <td style={{ fontWeight: '600' }}>{b.customerName}</td>
                           <td style={{ fontSize: '12px' }}>{b.pickupLocation} → {b.dropLocation}</td>
                           <td>{b.pickupDateTime || b.travelDate}</td>
-                          <td><span className="badge badge-confirmed">{b.vehicleType}</span></td>
+                          <td><span className={`badge ${getVehicleTypeBadgeClass(b.vehicleType)}`}>{b.vehicleType}</span></td>
                           <td>{dObj ? dObj.name : (b.assignedDriverId || 'Unassigned')}</td>
                           <td style={{ fontWeight: '700', color: '#10b981' }}>₹{b.fareEstimated}</td>
                           <td>
@@ -602,7 +606,7 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
                           <td><strong>{v.id}</strong></td>
                           <td style={{ fontWeight: '600' }}>{v.name}</td>
                           <td>{v.plateNumber}</td>
-                          <td><span className="badge badge-confirmed">{v.type}</span></td>
+                          <td><span className={`badge ${getVehicleTypeBadgeClass(v.type)}`}>{v.type}</span></td>
                           <td>₹{v.ratePerKm}/km</td>
                           <td style={{ fontWeight: '700' }}>{vCompleted}</td>
                           <td style={{ color: '#10b981', fontWeight: '800' }}>₹{vEarnings.toLocaleString("en-IN")}</td>
@@ -654,7 +658,7 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
                             <td style={{ fontWeight: '600' }}>{b.customerName}</td>
                             <td style={{ fontSize: '12px' }}>{b.pickupLocation} → {b.dropLocation}</td>
                             <td>{dObj ? dObj.name : (b.assignedDriverId || 'Unassigned')}</td>
-                            <td><span className="badge badge-confirmed">{b.vehicleType}</span></td>
+                            <td><span className={`badge ${getVehicleTypeBadgeClass(b.vehicleType)}`}>{b.vehicleType}</span></td>
                             <td>{b.pickupDateTime || b.travelDate}</td>
                             <td style={{ fontWeight: '800', color: '#10b981' }}>₹{b.fareEstimated}</td>
                           </tr>
@@ -697,7 +701,7 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
                           <td><strong>{b.id}</strong></td>
                           <td style={{ fontWeight: '600' }}>{b.customerName}</td>
                           <td style={{ fontSize: '12px' }}>{b.pickupLocation} → {b.dropLocation}</td>
-                          <td><span className="badge badge-pending">{b.vehicleType}</span></td>
+                          <td><span className={`badge ${getVehicleTypeBadgeClass(b.vehicleType)}`}>{b.vehicleType}</span></td>
                           <td>{b.createdAt || b.pickupDateTime}</td>
                           <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{b.notes || 'Cancelled by user/admin'}</td>
                           <td style={{ fontWeight: '700', color: '#ef4444' }}>₹{b.fareEstimated}</td>
@@ -740,7 +744,7 @@ function AdminReports({ token, stats, bookings = [], vehicles = [], drivers = []
                           <tr key={b.id}>
                             <td><strong>{b.id}</strong></td>
                             <td style={{ fontWeight: '600' }}>{b.customerName}</td>
-                            <td><span className="badge badge-confirmed">{b.vehicleType}</span></td>
+                            <td><span className={`badge ${getVehicleTypeBadgeClass(b.vehicleType)}`}>{b.vehicleType}</span></td>
                             <td>{dObj ? dObj.name : (b.assignedDriverId || 'Unassigned')}</td>
                             <td><span className="badge badge-completed">{b.status}</span></td>
                             <td style={{ fontWeight: '800', color: '#10b981', fontSize: '15px' }}>₹{b.fareEstimated}</td>

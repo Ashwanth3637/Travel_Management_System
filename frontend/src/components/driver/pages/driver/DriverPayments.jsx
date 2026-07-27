@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaWallet, FaMoneyBillWave, FaQrcode, FaExclamationTriangle, FaMapMarkerAlt, FaCalendarAlt, FaCheckCircle, FaStar } from "react-icons/fa";
+import { FaWallet, FaMoneyBillWave, FaQrcode, FaExclamationTriangle, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";
 
 const API_URL = "http://localhost:5001/api";
 
@@ -8,7 +8,25 @@ export default function DriverPayments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [activeFilter, setActiveFilter] = useState("UNPAID");
+  const [addedWalletAmount, setAddedWalletAmount] = useState(() => {
+    try { return Number(localStorage.getItem("driver_added_wallet_balance")) || 0; } catch { return 0; }
+  });
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
+  const [topupInput, setTopupInput] = useState("");
+
+  const handleAddMoney = (e) => {
+    e.preventDefault();
+    const val = Number(topupInput);
+    if (!val || val <= 0) return;
+    const newBalance = addedWalletAmount + val;
+    setAddedWalletAmount(newBalance);
+    localStorage.setItem("driver_added_wallet_balance", newBalance);
+    setShowAddMoneyModal(false);
+    setTopupInput("");
+    setToast(`💰 ₹${val.toLocaleString('en-IN')} added successfully to Driver Wallet via UPI/Bank!`);
+    setTimeout(() => setToast(""), 4000);
+  };
 
   const token = localStorage.getItem("token");
 
@@ -33,15 +51,9 @@ export default function DriverPayments() {
     })
       .then(res => res.json())
       .then(data => {
-        // Filter completed rides and apply current live payment state
         const completedTrips = Array.isArray(data) ? data.filter(t => ["Completed", "Trip Completed"].includes(t.status)) : [];
         const overrides = getStoredPaymentOverrides();
-        const mergedTrips = completedTrips.map(t => {
-          if (overrides[t.id]) {
-            return { ...t, ...overrides[t.id] };
-          }
-          return t;
-        });
+        const mergedTrips = completedTrips.map(t => overrides[t.id] ? { ...t, ...overrides[t.id] } : t);
         setTrips(mergedTrips);
         setLoading(false);
       })
@@ -80,10 +92,9 @@ export default function DriverPayments() {
         ? `Driver confirmed: Customer PAID via ${method === 'GPAY' ? 'GPay Scanner' : 'Cash in Hand'}.`
         : `Driver confirmed: Customer HAS NOT PAID yet.`;
 
-      // Save to localStorage immediately so data is never lost on refresh
       savePaymentOverride(tripId, isPaid ? 'PAID' : 'UNPAID', isPaid ? method : 'UNPAID', driverMsg);
 
-      const res = await fetch(`${API_URL}/driver/bookings/${tripId}/payment-status`, {
+      await fetch(`${API_URL}/driver/bookings/${tripId}/payment-status`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -92,7 +103,6 @@ export default function DriverPayments() {
           driverPaymentMsg: driverMsg
         })
       });
-      const data = await res.json();
       setToast(isPaid ? `✅ Payment for #${tripId} marked as ${method} Received & Saved!` : `⚠️ Payment for #${tripId} marked as NOT Received.`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(() => setToast(""), 5000);
@@ -156,9 +166,14 @@ export default function DriverPayments() {
     dateStyle: "medium", timeStyle: "short"
   });
 
-  // Calculate totals
-  const paidTrips = trips.filter(t => t.paymentStatus === 'PAID');
-  const unpaidTrips = trips.filter(t => t.paymentStatus !== 'PAID');
+  const isTripPaid = (t) => {
+    if (!t || !t.paymentStatus) return false;
+    const s = String(t.paymentStatus).toUpperCase().trim();
+    return s === 'PAID' || s === 'CONFIRMED_BY_DRIVER' || s === 'CONFIRMED' || s.includes('PAID');
+  };
+
+  const paidTrips = trips.filter(isTripPaid);
+  const unpaidTrips = trips.filter(t => !isTripPaid(t));
   const cashTrips = paidTrips.filter(t => (t.paymentMethod || '').toUpperCase() === 'CASH');
   const gpayTrips = paidTrips.filter(t => (t.paymentMethod || '').toUpperCase() === 'GPAY' || (t.paymentMethod || '').toUpperCase() === 'UPI');
 
@@ -168,19 +183,15 @@ export default function DriverPayments() {
   const gpayCollected = gpayTrips.reduce((sum, t) => sum + (t.fareEstimated || 0), 0);
   const pendingAmount = unpaidTrips.reduce((sum, t) => sum + (t.fareEstimated || 0), 0);
 
-  // Sort helper: newest ride first (by pickupDateTime descending), with UNPAID pinned to top
   const sortNewestFirst = (list) =>
     [...list].sort((a, b) => {
-      // UNPAID rides always rise to the top
-      const aUnpaid = a.paymentStatus !== 'PAID';
-      const bUnpaid = b.paymentStatus !== 'PAID';
+      const aUnpaid = !isTripPaid(a);
+      const bUnpaid = !isTripPaid(b);
       if (aUnpaid && !bUnpaid) return -1;
       if (!aUnpaid && bUnpaid) return 1;
-      // Then newest date first
       return new Date(b.pickupDateTime || 0) - new Date(a.pickupDateTime || 0);
     });
 
-  // Filter trips based on tab selection, always sorted newest-first
   let filteredTrips = sortNewestFirst(trips);
   if (activeFilter === "PAID") filteredTrips = sortNewestFirst(paidTrips);
   else if (activeFilter === "CASH") filteredTrips = sortNewestFirst(cashTrips);
@@ -189,55 +200,28 @@ export default function DriverPayments() {
 
   return (
     <div className="animate-fade-in">
-      
-      {/* ─── HEADER CARD ─── */}
-      <div style={{ marginBottom: "24px", display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+      {/* HEADER CARD */}
+      <div className="mb-6 flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h2 style={{ fontSize: "28px", fontWeight: "800", marginBottom: "6px", color: "var(--text-main)", display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2 className="text-[28px] font-extrabold mb-1.5 flex items-center gap-2.5">
             💳 Payment Details & Earnings Ledger
           </h2>
-          <p style={{ color: "var(--text-muted)", fontSize: "14px", margin: 0 }}>
+          <p className="text-slate-500 text-sm m-0">
             Detailed record of cash collections, GPay scanner payments, driver payouts, and pending trip fares.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <div className="flex gap-2.5 flex-wrap">
           <button
             onClick={handleResetToFreshData}
-            style={{
-              padding: '8px 16px',
-              fontSize: '12px',
-              fontWeight: '800',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className="px-4 py-2 text-xs font-extrabold bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md flex items-center gap-1.5 hover:bg-blue-700 transition"
           >
             ✨ Remove Older Payments & Start Fresh
           </button>
 
           <button
             onClick={handleClearAllPaymentData}
-            style={{
-              padding: '8px 16px',
-              fontSize: '12px',
-              fontWeight: '700',
-              backgroundColor: '#fee2e2',
-              color: '#ef4444',
-              border: '1px solid #fca5a5',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className="px-4 py-2 text-xs font-bold bg-red-100 text-red-500 border border-red-300 rounded-lg cursor-pointer flex items-center gap-1.5 hover:bg-red-200 transition"
           >
             🗑️ Reset All Data
           </button>
@@ -245,237 +229,231 @@ export default function DriverPayments() {
       </div>
 
       {toast && (
-        <div style={{
-          padding: "14px 18px", backgroundColor: "#dcfce7", color: "#15803d",
-          borderRadius: "10px", fontSize: "14px", fontWeight: "700",
-          marginBottom: "20px", border: "1px solid #86efac",
-          boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)'
-        }}>
+        <div className="px-[18px] py-3.5 bg-green-100 text-green-800 rounded-[10px] text-sm font-bold mb-5 border border-green-300 shadow-md">
           {toast}
         </div>
       )}
 
       {error && (
-        <div style={{
-          padding: "12px 16px", backgroundColor: "var(--status-cancelled-bg)",
-          color: "var(--status-cancelled)", borderRadius: "8px", fontSize: "14px",
-          fontWeight: "500", marginBottom: "20px", border: "1px solid var(--status-cancelled)"
-        }}>
+        <div className="px-4 py-3 rounded-lg text-sm font-medium mb-5 text-red-600 bg-red-50 border border-red-400">
           {error}
         </div>
       )}
 
-      {/* ─── EARNINGS SUMMARY STATS CARDS ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981', background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.02) 100%)' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#047857', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaWallet color="#10b981" /> 👛 DRIVER WALLET BALANCE
+      {/* EARNINGS SUMMARY STATS CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="glass-panel p-5 border-l-4 border-emerald-500 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
+          <div className="text-[11px] uppercase text-emerald-700 font-extrabold flex items-center gap-1.5 justify-between">
+            <span className="flex items-center gap-1.5">
+              <FaWallet className="text-emerald-500" /> 👛 DRIVER WALLET BALANCE
+            </span>
           </div>
-          <div style={{ fontSize: '28px', fontWeight: '900', color: '#047857', marginTop: '6px' }}>
-            ₹{(54805 + totalEarnings).toLocaleString('en-IN')}
+          <div className="text-[28px] font-black text-emerald-800 mt-1.5">
+            ₹{(totalEarnings + addedWalletAmount).toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '11.5px', color: '#15803d', fontWeight: '700', marginTop: '4px', marginBottom: '10px' }}>
-            ✅ 85% Net Share Automatically Credited
+          <div className="text-[11.5px] text-emerald-700 font-bold mt-1 mb-2.5">
+            ✅ 85% Trip Share + ₹{addedWalletAmount.toLocaleString('en-IN')} Added Money
           </div>
-          <button
-            onClick={() => {
-              setToast(`🏦 Withdrawal request for ₹${(54805 + totalEarnings).toLocaleString('en-IN')} sent to registered bank account (SBI A/C •••• 4587)!`);
-              setTimeout(() => setToast(""), 4000);
-            }}
-            style={{
-              padding: '6px 12px',
-              fontSize: '11px',
-              fontWeight: '800',
-              backgroundColor: '#047857',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
-            🏦 Withdraw to Bank Account
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setShowAddMoneyModal(true)}
+              className="px-3 py-1.5 text-[11px] font-extrabold bg-blue-600 text-white border-none rounded cursor-pointer hover:bg-blue-700 transition shadow-sm"
+            >
+              💳 + Add Money to Wallet
+            </button>
+
+            <button
+              onClick={() => {
+                setToast(`🏦 Withdrawal request for ₹${(totalEarnings + addedWalletAmount).toLocaleString('en-IN')} sent to registered bank account (SBI A/C •••• 4587)!`);
+                setTimeout(() => setToast(""), 4000);
+              }}
+              className="px-3 py-1.5 text-[11px] font-extrabold bg-emerald-700 text-white border-none rounded cursor-pointer hover:bg-emerald-800 transition"
+            >
+              🏦 Withdraw
+            </button>
+          </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #16a34a' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaMoneyBillWave color="#16a34a" /> CASH COLLECTED
+        <div className="glass-panel p-5 border-l-4 border-green-600">
+          <div className="text-[11px] uppercase text-slate-500 font-extrabold flex items-center gap-1.5">
+            <FaMoneyBillWave className="text-green-600" /> CASH COLLECTED
           </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#16a34a', marginTop: '6px' }}>
+          <div className="text-[26px] font-extrabold text-green-600 mt-1.5">
             ₹{cashCollected.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>
+          <div className="text-[11.5px] text-slate-500 font-semibold mt-1">
             {cashTrips.length} Cash Payments
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #2563eb' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaQrcode color="#2563eb" /> GPAY SCANNER FARES
+        <div className="glass-panel p-5 border-l-4 border-blue-600">
+          <div className="text-[11px] uppercase text-slate-500 font-extrabold flex items-center gap-1.5">
+            <FaQrcode className="text-blue-600" /> GPAY SCANNER FARES
           </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#2563eb', marginTop: '6px' }}>
+          <div className="text-[26px] font-extrabold text-blue-600 mt-1.5">
             ₹{gpayCollected.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '11.5px', color: '#64748b', fontWeight: '600', marginTop: '4px' }}>
+          <div className="text-[11.5px] text-slate-500 font-semibold mt-1">
             {gpayTrips.length} Online GPay Payments
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #ef4444' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaExclamationTriangle color="#ef4444" /> UNPAID FARES DUE
+        <div className="glass-panel p-5 border-l-4 border-red-500">
+          <div className="text-[11px] uppercase text-slate-500 font-extrabold flex items-center gap-1.5">
+            <FaExclamationTriangle className="text-red-500" /> UNPAID FARES DUE
           </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#ef4444', marginTop: '6px' }}>
+          <div className="text-[26px] font-extrabold text-red-500 mt-1.5">
             ₹{pendingAmount.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '11.5px', color: '#ef4444', fontWeight: '700', marginTop: '4px' }}>
+          <div className="text-[11.5px] text-red-500 font-bold mt-1">
             {unpaidTrips.length} Pending Trip(s)
           </div>
         </div>
-
       </div>
 
-      {/* ─── FILTER TABS ─── */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      {/* FILTER TABS */}
+      <div className="flex gap-2.5 mb-5 flex-wrap">
         {[
-          { key: 'ALL', label: `All Trips (${trips.length})` },
-          { key: 'PAID', label: `✅ Paid Fares (${paidTrips.length})` },
+          { key: 'UNPAID', label: `🔴 Live Payments (Unpaid: ${unpaidTrips.length})` },
+          { key: 'PAID', label: `✅ Completed Payments (${paidTrips.length})` },
+          { key: 'ALL', label: `📋 All Trips (${trips.length})` },
           { key: 'CASH', label: `💵 Cash (${cashTrips.length})` },
           { key: 'GPAY', label: `📱 GPay (${gpayTrips.length})` },
-          { key: 'UNPAID', label: `⌛ Unpaid (${unpaidTrips.length})` },
         ].map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveFilter(tab.key)}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '12px',
-              fontSize: '13px',
-              fontWeight: '800',
-              border: activeFilter === tab.key ? '2px solid #3b82f6' : '1px solid var(--border-color)',
-              backgroundColor: activeFilter === tab.key ? '#3b82f6' : 'rgba(255,255,255,0.05)',
-              color: activeFilter === tab.key ? '#ffffff' : 'var(--text-main)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: activeFilter === tab.key ? '0 4px 12px rgba(59,130,246,0.35)' : 'none'
-            }}
+            className={`px-[18px] py-2.5 rounded-xl text-[13.5px] font-extrabold cursor-pointer transition ${
+              activeFilter === tab.key
+                ? activeFilter === 'UNPAID'
+                  ? 'bg-red-500 text-white border-2 border-red-500 shadow-md'
+                  : activeFilter === 'PAID'
+                  ? 'bg-emerald-600 text-white border-2 border-emerald-600 shadow-md'
+                  : 'bg-blue-600 text-white border-2 border-blue-600 shadow-md'
+                : 'bg-white border border-slate-300 text-slate-800 hover:bg-slate-100'
+            }`}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* ─── PAYMENT DETAILS LIST ─── */}
+      {/* PAYMENT DETAILS LIST */}
       {loading ? (
-        <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+        <div className="glass-panel text-center py-10 text-slate-400">
           Loading payment details...
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div className="flex flex-col gap-4">
           {filteredTrips.length === 0 ? (
-            <div className="glass-panel" style={{ textAlign: "center", padding: "50px 0", color: "var(--text-muted)" }}>
+            <div className="glass-panel text-center py-12 text-slate-400">
               No payment records found under this filter.
             </div>
           ) : (
             filteredTrips.map(trip => {
-              const isPaid = trip.paymentStatus === 'PAID';
+              const isPaid = isTripPaid(trip);
               const pMethod = (trip.paymentMethod || 'CASH').toUpperCase();
 
               return (
                 <div 
                   key={trip.id} 
-                  className="glass-panel animate-fade-in" 
-                  style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
-                    alignItems: "center", 
-                    flexWrap: "wrap", 
-                    gap: "16px",
-                    borderLeft: isPaid ? '5px solid #10b981' : '5px solid #ef4444',
-                    backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.03)' : 'rgba(239, 68, 68, 0.03)'
-                  }}
+                  className={`glass-panel animate-fade-in flex justify-between items-center flex-wrap gap-4 border-l-4 ${
+                    isPaid ? 'border-emerald-500 bg-emerald-500/5' : 'border-red-500 bg-red-500/5'
+                  }`}
                 >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "17.5px", fontWeight: "800", marginBottom: "6px", color: "#1e293b", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="flex-1">
+                    <div className="text-[17.5px] font-extrabold mb-1.5 text-slate-800 flex items-center gap-2">
                       <span>{trip.customerName}</span>
-                      <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>(#{trip.id})</span>
+                      <span className="text-[13px] text-slate-500 font-semibold">(#{trip.id})</span>
                     </div>
 
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", color: "var(--text-muted)", fontSize: "13px", marginBottom: '8px' }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FaMapMarkerAlt color="var(--color-primary)" />
+                    <div className="flex flex-wrap gap-4 text-slate-500 text-[13px] mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <FaMapMarkerAlt className="text-blue-600" />
                         <strong>Route:</strong> {trip.pickupLocation} → {trip.dropLocation}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FaCalendarAlt color="var(--color-secondary)" />
+                      <div className="flex items-center gap-1.5">
+                        <FaCalendarAlt className="text-blue-500" />
                         {formatDate(trip.pickupDateTime)}
                       </div>
                     </div>
 
                     {trip.driverPaymentMsg && (
-                      <div style={{ fontSize: '12px', color: '#475569', backgroundColor: 'rgba(0,0,0,0.03)', padding: '6px 12px', borderRadius: '6px', borderLeft: '3px solid #64748b', display: 'inline-block', fontWeight: '600' }}>
+                      <div className="text-xs text-slate-600 bg-black/5 px-3 py-1.5 rounded-md border-l-2 border-slate-500 inline-block font-semibold">
                         📝 Settlement Note: {trip.driverPaymentMsg}
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-
-                    {/* Driver action buttons — FIRST so driver can act immediately */}
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div className="flex flex-col items-end gap-2.5">
+                    <div className="flex gap-2 flex-wrap items-center">
                       {!isPaid ? (
-                        <>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'CASH'); }}
-                            style={{ padding: '8px 16px', fontSize: '12px', fontWeight: '800', borderRadius: '10px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(16,185,129,0.4)' }}
-                          >
-                            💵 Mark Cash Paid
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'GPAY'); }}
-                            style={{ padding: '8px 16px', fontSize: '12px', fontWeight: '800', borderRadius: '10px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.4)' }}
-                          >
-                            📱 Mark GPay Paid
-                          </button>
-                        </>
+                        <span className="text-[11.5px] font-extrabold text-amber-800 bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-300">
+                          ⏳ Waiting for Customer Payment (Online / Cash)
+                        </span>
                       ) : (
-                        <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#166534', backgroundColor: '#dcfce7', padding: '6px 14px', borderRadius: '10px', border: '1px solid #86efac' }}>
+                        <span className="text-[11.5px] font-extrabold text-green-800 bg-green-100 px-3.5 py-1.5 rounded-xl border border-green-300">
                           🔒 Payment Verified & Settled
                         </span>
                       )}
 
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteSingleBooking(trip.id); }}
-                        style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700', borderRadius: '8px', border: '1px solid #fca5a5', backgroundColor: '#fee2e2', color: '#ef4444', cursor: 'pointer' }}
+                        className="px-3 py-1.5 text-[11px] font-bold rounded-lg border border-red-300 bg-red-100 text-red-500 cursor-pointer hover:bg-red-200 transition"
                       >
                         🗑️ Delete Record
                       </button>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{
-                        padding: "4px 12px", borderRadius: "14px", fontSize: "12px", fontWeight: "800",
-                        backgroundColor: isPaid ? "#dcfce7" : "#fee2e2",
-                        color: isPaid ? "#15803d" : "#991b1b",
-                        border: isPaid ? "1px solid #86efac" : "1px solid #fca5a5"
-                      }}>
+                    {/* LIVE PAYMENT UPDATE BUTTONS (CASH & ONLINE GPAY) */}
+                    <div className="flex gap-2 flex-wrap items-center bg-slate-100/80 p-1.5 rounded-xl border border-slate-200">
+                      <span className="text-[11px] font-extrabold text-slate-600 px-1">Update Status:</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'CASH'); }}
+                        className={`px-3 py-1 text-[11px] font-black rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          isPaid && pMethod === 'CASH'
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                        }`}
+                      >
+                        💵 Cash Received
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'PAID', 'GPAY'); }}
+                        className={`px-3 py-1 text-[11px] font-black rounded-lg border transition cursor-pointer flex items-center gap-1 ${
+                          isPaid && pMethod !== 'CASH'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                            : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
+                        📱 GPay / Online Paid
+                      </button>
+                      {isPaid && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleUpdatePayment(trip.id, 'UNPAID', 'UNPAID'); }}
+                          className="px-2.5 py-1 text-[10.5px] font-bold rounded-lg border border-slate-300 bg-white text-slate-600 cursor-pointer hover:bg-slate-100 transition"
+                        >
+                          ⚠️ Mark Unpaid
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                      <span className={`px-3 py-1 rounded-2xl text-xs font-extrabold ${
+                        isPaid ? "bg-green-100 text-green-700 border border-green-300" : "bg-red-100 text-red-800 border border-red-300"
+                      }`}>
                         {isPaid ? `PAID (${pMethod}) ✅` : 'UNPAID ⌛'}
                       </span>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px", fontWeight: "600", fontSize: "14px", flexWrap: "wrap" }}>
-                      <span style={{ color: isPaid ? "#10b981" : "#ef4444", fontWeight: '800', fontSize: '16px' }}>
+                    <div className="flex items-center gap-3.5 font-semibold text-sm flex-wrap">
+                      <span className={`font-extrabold text-base ${isPaid ? "text-emerald-600" : "text-red-500"}`}>
                         Fare: ₹{(trip.fareEstimated || 0).toLocaleString("en-IN")}
                       </span>
-                      <span style={{
-                        padding: "3px 10px", borderRadius: "10px", fontSize: "12px", fontWeight: "800",
-                        backgroundColor: "#dcfce7", color: "#166534", border: "1px solid #86efac"
-                      }}>
+                      <span className="px-2.5 py-1 rounded-xl text-xs font-extrabold bg-green-100 text-green-800 border border-green-300">
                         💰 Driver Earning (85%): ₹{Math.round((trip.fareEstimated || 0) * 0.85).toLocaleString("en-IN")}
                       </span>
                     </div>
-
                   </div>
                 </div>
               );
@@ -484,6 +462,67 @@ export default function DriverPayments() {
         </div>
       )}
 
+      {/* ADD MONEY TO DRIVER WALLET MODAL */}
+      {showAddMoneyModal && (
+        <div className="fixed inset-0 w-screen h-screen bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[99999]">
+          <div className="w-[90%] max-w-[420px] bg-white rounded-3xl p-7 border border-slate-200 shadow-2xl text-left animate-fade-in">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-black text-slate-800 m-0 flex items-center gap-2">
+                <span>💳 Add Money to Driver Wallet</span>
+              </h3>
+              <button
+                onClick={() => setShowAddMoneyModal(false)}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center border-none font-extrabold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-5 font-medium">
+              Top up your driver wallet balance directly via UPI or Bank Transfer to keep a positive balance for admin commissions.
+            </p>
+
+            <form onSubmit={handleAddMoney} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase">Enter Amount (₹)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-lg">₹</span>
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-full pl-9 pr-4 h-12 rounded-xl border border-slate-300 bg-white text-slate-900 text-lg font-black focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    placeholder="500"
+                    value={topupInput}
+                    onChange={(e) => setTopupInput(e.target.value)}
+                    autoFocus
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                {[200, 500, 1000, 2000].map(amt => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setTopupInput(String(amt))}
+                    className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-lg border border-slate-300 cursor-pointer"
+                  >
+                    +₹{amt}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-12 text-sm font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white border-none cursor-pointer transition shadow-md mt-2"
+              >
+                ✅ Confirm &amp; Add Money
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

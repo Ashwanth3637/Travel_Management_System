@@ -33,14 +33,74 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
   const [image, setImage] = useState('');
   const [viewingVehicle, setViewingVehicle] = useState(null);
 
-  const handleAddWithCategory = (cat) => {
+  const matchVehicleToSubmodel = (vName = '', fName = '') => {
+    const vn = vName.toLowerCase();
+    const fn = fName.toLowerCase();
+    if (vn.includes(fn) || fn.includes(vn)) return true;
+
+    if (fn.includes('dzire') && (vn.includes('dzire') || vn.includes('swift'))) return true;
+    if (fn.includes('brezza') && vn.includes('brezza')) return true;
+    if (fn.includes('wagon') && vn.includes('wagon')) return true;
+    if (fn.includes('baleno') && vn.includes('baleno')) return true;
+    if (fn.includes('aura') && vn.includes('aura')) return true;
+
+    if (fn.includes('innova') && (vn.includes('innova') || vn.includes('crysta'))) return true;
+    if (fn.includes('thar') && vn.includes('thar')) return true;
+    if (fn.includes('scorpio') && vn.includes('scorpio')) return true;
+    if (fn.includes('fortuner') && vn.includes('fortuner')) return true;
+    if (fn.includes('bolero') && vn.includes('bolero')) return true;
+
+    if (fn.includes('bmw') && vn.includes('bmw')) return true;
+    if (fn.includes('audi') && vn.includes('audi')) return true;
+    if (fn.includes('benz') && (vn.includes('benz') || vn.includes('mercedes'))) return true;
+
+    if (fn.includes('traveller') && (vn.includes('traveller') || vn.includes('tempo'))) return true;
+    if (fn.includes('urbania') && vn.includes('urbania')) return true;
+
+    return false;
+  };
+
+  const getCarImageForModel = (subName) => {
+    if (!subName) return '';
+    const s = subName.toLowerCase();
+    if (s.includes('dzire')) return '/cars/sedan/swift_dzire.png';
+    if (s.includes('brezza')) return '/cars/sedan/vitara_brezza.png';
+    if (s.includes('wagon')) return '/cars/sedan/wagonr.png';
+    if (s.includes('baleno')) return '/cars/sedan/suzuki_baleno.png';
+    if (s.includes('aura')) return '/cars/sedan/hyundai_aura.png';
+    if (s.includes('thar')) return '/cars/suv/mahindra_thar.png';
+    if (s.includes('innova') || s.includes('crysta')) return '/cars/suv/innova_crysta.png';
+    if (s.includes('scorpio')) return '/cars/suv/mahindra_scorpio.png';
+    if (s.includes('fortuner')) return '/cars/suv/toyota_fortuner.png';
+    if (s.includes('bolero')) return '/cars/suv/bolero.png';
+    if (s.includes('bmw')) return '/cars/luxury/bmw.png';
+    if (s.includes('audi')) return '/cars/luxury/audi.png';
+    if (s.includes('benz') || s.includes('mercedes')) return '/cars/luxury/benz.png';
+    if (s.includes('traveller')) return '/cars/minivan/tempo_traveller.png';
+    if (s.includes('urbania')) return '/cars/minivan/force_urbania.png';
+    return '';
+  };
+
+  const handleAddWithCategory = (cat, subModel = null) => {
     handleCloseModal();
-    setType(cat.type);
-    setCapacity(cat.defaultCapacity);
-    setRate(cat.defaultRate);
-    setImage('');
-    setName('');
-    setActiveCategory(cat.type);
+    const targetType = cat ? cat.type : (activeCategory || 'Sedan');
+    setType(targetType);
+    setCapacity(cat?.defaultCapacity || 4);
+    setRate(cat?.defaultRate || 12);
+
+    const chosenModel = subModel || activeSubModel;
+    if (chosenModel) {
+      setName(chosenModel);
+      setModel(chosenModel);
+      const defaultImg = getCarImageForModel(chosenModel);
+      setImage(defaultImg);
+    } else {
+      setName('');
+      setModel('');
+      setImage('');
+    }
+
+    setActiveCategory(targetType);
     setShowModal(true);
   };
 
@@ -146,71 +206,27 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
     <div className="glass-panel">
       {!activeCategory ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0 }}>Vehicle Management Registry</h3>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="m-0 text-xl font-bold">Vehicle Management Registry</h3>
           </div>
 
-          {/* Category Cards (Folders) Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-            marginBottom: '20px'
-          }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
             {CATEGORIES.map(cat => {
               const count = vehicles.filter(v => v.type && v.type.toLowerCase() === cat.type.toLowerCase()).length;
               return (
                 <div 
                   key={cat.type}
-                  className="glass-panel"
+                  className="glass-panel p-7 rounded-xl text-center cursor-pointer transition-all duration-300 flex flex-col items-center gap-2.5 hover:-translate-y-1 hover:shadow-xl hover:bg-white/5 border-l-4"
+                  style={{ borderLeftColor: cat.color }}
                   onClick={() => setActiveCategory(cat.type)}
-                  style={{
-                    padding: '30px 20px',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease-in-out',
-                    borderLeft: `4px solid ${cat.color}`,
-                    borderTop: '1px solid transparent',
-                    borderRight: '1px solid transparent',
-                    borderBottom: '1px solid transparent',
-                    backgroundColor: 'rgba(255, 255, 255, 0.01)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '10px',
-                    boxSizing: 'border-box'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderTop = `1px solid ${cat.color}`;
-                    e.currentTarget.style.borderRight = `1px solid ${cat.color}`;
-                    e.currentTarget.style.borderBottom = `1px solid ${cat.color}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                    e.currentTarget.style.borderTop = '1px solid transparent';
-                    e.currentTarget.style.borderRight = '1px solid transparent';
-                    e.currentTarget.style.borderBottom = '1px solid transparent';
-                  }}
                 >
                   <img
                     src={cat.img}
                     alt={cat.type}
-                    style={{
-                      width: '100px',
-                      height: '65px',
-                      objectFit: 'contain',
-                      marginBottom: '8px',
-                      borderRadius: '4px'
-                    }}
+                    className="w-[100px] h-[65px] object-contain mb-2 rounded"
                   />
-                  <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-main)' }}>{cat.type} Folder</div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+                  <div className="text-lg font-extrabold">{cat.type} Folder</div>
+                  <div className="text-sm text-slate-500">
                     {count} {count === 1 ? 'vehicle' : 'vehicles'} stored
                   </div>
                   <button 
@@ -218,30 +234,7 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                       e.stopPropagation();
                       handleAddWithCategory(cat);
                     }}
-                    style={{ 
-                      marginTop: '15px', 
-                      width: '100%', 
-                      padding: '9px 0', 
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      backgroundColor: '#3b82f6',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.35)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#2563eb';
-                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.5)';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#3b82f6';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.35)';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
+                    className="mt-3.5 w-full py-2.5 text-xs font-bold bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition"
                   >
                     + Add {cat.type}
                   </button>
@@ -252,18 +245,10 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
         </>
       ) : (
         <>
-          {/* Detail View Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '20px',
-            paddingBottom: '15px',
-            borderBottom: '1px solid var(--border-color)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div className="flex justify-between items-center mb-5 pb-4 border-b border-slate-200">
+            <div className="flex items-center gap-3.5">
               <button 
-                className="btn btn-secondary" 
+                className="btn btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 rounded-lg"
                 onClick={() => {
                   if (activeSubModel) {
                     setActiveSubModel(null);
@@ -271,29 +256,16 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                     setActiveCategory(null);
                   }
                 }}
-                style={{ 
-                  padding: '6px 12px', 
-                  fontSize: '13px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px',
-                  borderRadius: '8px'
-                }}
               >
                 ← {activeSubModel ? `Back to ${activeCategory} Folders` : 'Back to Registry'}
               </button>
               <div>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ 
-                    display: 'inline-block', 
-                    width: '12px', 
-                    height: '12px', 
-                    borderRadius: '50%', 
-                    backgroundColor: CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.color || 'var(--color-primary)'
-                  }}></span>
+                <h3 className="m-0 flex items-center gap-2 text-xl font-bold">
+                  <span className="inline-block w-3 h-3 rounded-full"
+                    style={{ backgroundColor: CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.color || '#2563eb' }}></span>
                   {activeSubModel ? `${activeSubModel} Folder` : `${activeCategory} Category Folder`}
                 </h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                <span className="text-xs text-slate-500">
                   {activeSubModel 
                     ? `Showing registered ${activeSubModel} vehicles` 
                     : `Select a car folder (WagonR, Brezza, Aura, Dzire, etc.)`
@@ -302,42 +274,18 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
               </div>
             </div>
             <button 
-              style={{
-                padding: '10px 18px',
-                fontWeight: '700',
-                fontSize: '14px',
-                backgroundColor: '#3b82f6',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#2563eb';
-                e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#3b82f6';
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              onClick={() => handleAddWithCategory(CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase()) || { type: activeCategory, defaultCapacity: 4, defaultRate: 12 })}
+              className="px-4.5 py-2.5 font-bold text-sm bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition"
+              onClick={() => handleAddWithCategory(
+                CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase()) || { type: activeCategory, defaultCapacity: 4, defaultRate: 12 },
+                activeSubModel
+              )}
             >
-              + Add {activeCategory}
+              + Add {activeSubModel ? activeSubModel : activeCategory}
             </button>
           </div>
 
           {!activeSubModel ? (
-            /* Sub-model Folders Grid */
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '20px',
-              marginBottom: '20px'
-            }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
               {(() => {
                 const DEFAULT_SUBMODELS = {
                   Sedan: ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'],
@@ -347,109 +295,31 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                 };
 
                 const categoryVehicles = vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase());
-                
-                // Group existing vehicles
-                const subModelGroups = {};
-                categoryVehicles.forEach(v => {
-                  const key = v.name || v.model || 'Other';
-                  if (!subModelGroups[key]) subModelGroups[key] = [];
-                  subModelGroups[key].push(v);
-                });
+                const allSubModels = DEFAULT_SUBMODELS[activeCategory] || ['General'];
 
-                // Ensure default model folders also appear even if count is 0
-                const defaults = DEFAULT_SUBMODELS[activeCategory] || [];
-                defaults.forEach(defName => {
-                  if (!subModelGroups[defName]) {
-                    subModelGroups[defName] = [];
-                  }
-                });
+                return allSubModels.map(subName => {
+                  const subVehicles = categoryVehicles.filter(v => matchVehicleToSubmodel(v.name, subName));
+                  const count = subVehicles.length;
 
-                const groupKeys = Object.keys(subModelGroups).filter(k => k.toLowerCase() !== activeCategory.toLowerCase());
-
-                return groupKeys.map(modelName => {
-                  const subVehicles = subModelGroups[modelName];
-                  const sampleImg = subVehicles.find(v => v.image)?.image || CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.img;
-                  const catColor = CATEGORIES.find(c => c.type.toLowerCase() === activeCategory.toLowerCase())?.color || '#3b82f6';
+                  const sampleVehicle = subVehicles.find(v => v.image) || categoryVehicles.find(v => v.image);
+                  const subImage = sampleVehicle?.image || getCarImageForModel(subName) || '/cars/sedan/swift_dzire.png';
 
                   return (
                     <div 
-                      key={modelName}
-                      className="glass-panel"
-                      onClick={() => setActiveSubModel(modelName)}
-                      style={{
-                        padding: '25px 20px',
-                        borderRadius: '12px',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        transition: 'all 0.25s ease-in-out',
-                        borderLeft: `4px solid ${catColor}`,
-                        borderTop: '1px solid transparent',
-                        borderRight: '1px solid transparent',
-                        borderBottom: '1px solid transparent',
-                        backgroundColor: 'rgba(255, 255, 255, 0.01)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '10px',
-                        boxSizing: 'border-box'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
-                        e.currentTarget.style.borderTop = `1px solid ${catColor}`;
-                        e.currentTarget.style.borderRight = `1px solid ${catColor}`;
-                        e.currentTarget.style.borderBottom = `1px solid ${catColor}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.01)';
-                        e.currentTarget.style.borderTop = '1px solid transparent';
-                        e.currentTarget.style.borderRight = '1px solid transparent';
-                        e.currentTarget.style.borderBottom = '1px solid transparent';
-                      }}
+                      key={subName}
+                      className="glass-panel p-5 rounded-2xl text-center cursor-pointer transition-all duration-300 flex flex-col items-center gap-2 hover:-translate-y-1 hover:shadow-xl hover:bg-white/10 border-l-4 border-l-blue-600 bg-white/70"
+                      onClick={() => setActiveSubModel(subName)}
                     >
-                      {sampleImg ? (
-                        <img
-                          src={sampleImg}
-                          alt={modelName}
-                          style={{
-                            width: '100px',
-                            height: '65px',
-                            objectFit: 'contain',
-                            marginBottom: '8px',
-                            borderRadius: '4px'
-                          }}
+                      <div className="w-[120px] h-[75px] flex items-center justify-center bg-slate-50 rounded-xl p-1 border border-slate-200/80 shadow-inner mb-1">
+                        <img 
+                          src={subImage} 
+                          alt={subName} 
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => { e.target.onerror = null; e.target.src = '/cars/sedan/swift_dzire.png'; }}
                         />
-                      ) : (
-                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📁</div>
-                      )}
-                      <div style={{ fontSize: '17px', fontWeight: '800', color: 'var(--text-main)' }}>{modelName} Folder</div>
-                      <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                        {subVehicles.length} {subVehicles.length === 1 ? 'vehicle' : 'vehicles'} stored
                       </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveSubModel(modelName);
-                        }}
-                        style={{ 
-                          marginTop: '10px', 
-                          width: '100%', 
-                          padding: '8px 0', 
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                          color: '#60a5fa',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        Open {modelName} Folder
-                      </button>
+                      <div className="text-base font-extrabold text-slate-800">{subName}</div>
+                      <div className="text-xs text-slate-500 font-semibold">{count} {count === 1 ? 'vehicle' : 'vehicles'} registered</div>
                     </div>
                   );
                 });
@@ -461,113 +331,109 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
                 <thead>
                   <tr>
                     <th>Vehicle ID</th>
-                    <th>Vehicle Details</th>
-                    <th>Vehicle Number</th>
-                    <th>Category & Type</th>
-                    <th>Specs & Fuel</th>
-                    <th>Status & Availability</th>
-                    <th>Reg & Ins Details</th>
+                    <th>Car Image</th>
+                    <th>Name / Model</th>
+                    <th>Plate Number</th>
+                    <th>Capacity</th>
+                    <th>Rate / km</th>
+                    <th>Status</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase() && (v.name === activeSubModel || v.model === activeSubModel)).length === 0 ? (
-                    <tr>
-                      <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>
-                        No vehicles found in <strong>{activeSubModel}</strong> folder.
-                      </td>
-                    </tr>
-                  ) : (
-                    vehicles.filter(v => v.type && v.type.toLowerCase() === activeCategory.toLowerCase() && (v.name === activeSubModel || v.model === activeSubModel)).map(v => (
-                    <tr key={`${v.id}-${v.type}`}>
-                      <td><strong>{v.id}</strong></td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          {v.image ? (
-                            <img 
-                              src={v.image} 
-                              alt={v.name} 
-                              style={{ 
-                                width: '45px', 
-                                height: '30px', 
-                                objectFit: 'contain', 
-                                borderRadius: '4px', 
-                                backgroundColor: 'rgba(255,255,255,0.03)',
-                                border: '1px solid rgba(255,255,255,0.08)' 
-                              }} 
-                            />
-                          ) : (
-                            <span style={{ fontSize: '18px' }}>🚗</span>
-                          )}
-                          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                            <span style={{ fontWeight: '700' }}>{v.name}</span>
-                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                              Brand: {v.brand || 'N/A'} | Model: {v.model || 'N/A'}
+                  {(() => {
+                    const subList = vehicles.filter(v => 
+                      v.type && v.type.toLowerCase() === activeCategory.toLowerCase() &&
+                      matchVehicleToSubmodel(v.name, activeSubModel)
+                    );
+
+                    if (subList.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan="8" className="text-center text-slate-400 py-8">
+                            No vehicles found in {activeSubModel} folder.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return subList.map(v => {
+                      const carImg = v.image || (
+                        v.name.toLowerCase().includes('dzire') ? '/cars/sedan/swift_dzire.png' :
+                        v.name.toLowerCase().includes('brezza') ? '/cars/sedan/vitara_brezza.png' :
+                        v.name.toLowerCase().includes('wagon') ? '/cars/sedan/wagonr.png' :
+                        v.name.toLowerCase().includes('baleno') ? '/cars/sedan/suzuki_baleno.png' :
+                        v.name.toLowerCase().includes('aura') ? '/cars/sedan/hyundai_aura.png' :
+                        v.name.toLowerCase().includes('thar') ? '/cars/suv/mahindra_thar.png' :
+                        v.name.toLowerCase().includes('innova') ? '/cars/suv/innova_crysta.png' :
+                        v.name.toLowerCase().includes('scorpio') ? '/cars/suv/mahindra_scorpio.png' :
+                        v.name.toLowerCase().includes('fortuner') ? '/cars/suv/toyota_fortuner.png' :
+                        v.name.toLowerCase().includes('bolero') ? '/cars/suv/bolero.png' :
+                        v.name.toLowerCase().includes('bmw') ? '/cars/luxury/bmw.png' :
+                        v.name.toLowerCase().includes('audi') ? '/cars/luxury/audi.png' :
+                        v.name.toLowerCase().includes('benz') || v.name.toLowerCase().includes('mercedes') ? '/cars/luxury/benz.png' :
+                        v.name.toLowerCase().includes('traveller') ? '/cars/minivan/tempo_traveller.png' :
+                        v.name.toLowerCase().includes('urbania') ? '/cars/minivan/force_urbania.png' :
+                        '/cars/sedan/swift_dzire.png'
+                      );
+
+                      return (
+                        <tr key={v.id}>
+                          <td><strong>{v.id}</strong></td>
+                          <td>
+                            <div className="w-14 h-10 flex items-center justify-center bg-slate-100 rounded-lg p-1 border border-slate-200">
+                              <img 
+                                src={carImg} 
+                                alt={v.name} 
+                                className="max-w-full max-h-full object-contain"
+                                onError={(e) => { e.target.onerror = null; e.target.src = '/cars/sedan/swift_dzire.png'; }}
+                              />
+                            </div>
+                          </td>
+                          <td className="font-bold">{v.name}</td>
+                          <td>{v.plateNumber}</td>
+                          <td>{v.capacity} Seats</td>
+                          <td className="font-bold text-emerald-600">₹{v.ratePerKm}/km</td>
+                          <td>
+                            <span className={`badge badge-${v.status === 'Assigned' ? 'assigned' : v.status === 'On Trip' ? 'ontrip' : 'available'}`}>
+                              {v.status}
                             </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{v.vehicleNumber || v.plateNumber}</td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                          <span>{v.type}</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Type: {v.vehicleType || v.acpreference || 'AC'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                          <span>{v.capacity} Passengers</span>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Fuel: {v.fuelType || 'Petrol'}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-                          <span className={`badge badge-${
-                            v.status === 'Assigned' ? 'assigned' : 
-                            v.status === 'On Trip' ? 'ontrip' :
-                            (v.status === 'Inactive' || v.status === 'Under Maintenance') ? 'inactive' : 'available'
-                          }`}>
-                            {v.status || 'Available'}
-                          </span>
-                          <span style={{ fontSize: '11px', color: v.availability !== false ? '#10b981' : '#f87171' }}>
-                            {v.availability !== false ? '● Active' : '○ Blocked'}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', fontSize: '11px', color: 'var(--text-muted)', maxWidth: '160px' }}>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.registrationDetails || 'No Registration Details'}>
-                            Reg: {v.registrationDetails || 'N/A'}
-                          </div>
-                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.insuranceDetails || 'No Insurance Details'}>
-                            Ins: {v.insuranceDetails || 'N/A'}
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingVehicle(v)}>
-                            View
-                          </button>
-                          <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', backgroundColor: '#3b82f6', borderColor: '#2563eb', color: '#ffffff' }} onClick={() => handleEditClick(v)}>
-                            Edit
-                          </button>
-                          <button className="btn btn-remove" style={{ padding: '5px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleDelete(v.id)} title="Remove">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              <line x1="10" y1="11" x2="10" y2="17"></line>
-                              <line x1="14" y1="11" x2="14" y2="17"></line>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </td>
+                          <td>
+                            <div className="flex gap-1.5 items-center">
+                              <button 
+                                onClick={() => setViewingVehicle(v)}
+                                className="px-2.5 h-7 text-[11px] font-bold rounded-md bg-slate-800 hover:bg-slate-700 text-white border-none cursor-pointer transition inline-flex items-center justify-center"
+                              >
+                                View
+                              </button>
+                              <button 
+                                onClick={() => handleEditClick(v)}
+                                className="px-2.5 h-7 text-[11px] font-bold rounded-md bg-blue-600 hover:bg-blue-700 text-white border-none cursor-pointer transition inline-flex items-center justify-center"
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDelete(v.id)} 
+                                title="Remove"
+                                className="w-7 h-7 rounded-md border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 hover:border-red-300 cursor-pointer transition inline-flex items-center justify-center shrink-0"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}
@@ -575,172 +441,97 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
       {/* Modal: Add/Edit Vehicle */}
       {showModal && createPortal(
         <div className="modal-overlay">
-          <div className="glass-panel modal-content" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-panel modal-content">
             <div className="modal-header">
-              <h3 className="modal-title">{editingVehicle ? 'Update Vehicle' : 'Register Vehicle'}</h3>
+              <h3 className="modal-title">{editingVehicle ? 'Update Vehicle' : `Add ${type} Vehicle`}</h3>
               <button className="modal-close" onClick={handleCloseModal}>×</button>
             </div>
             <form onSubmit={handleSaveVehicle}>
               <div className="form-group">
-                <label className="form-label">Category</label>
+                <label className="form-label">Target Car Folder / Model</label>
                 <select 
                   className="form-select" 
-                  value={type} 
+                  value={name} 
                   onChange={(e) => {
-                    const newType = e.target.value;
-                    setType(newType);
-                    const catInfo = CATEGORIES.find(c => c.type === newType);
-                    if (catInfo) {
-                      setCapacity(catInfo.defaultCapacity);
-                      setRate(catInfo.defaultRate);
-                    }
+                    const chosen = e.target.value;
+                    setName(chosen);
+                    setModel(chosen);
+                    const autoImg = getCarImageForModel(chosen);
+                    if (autoImg) setImage(autoImg);
                   }}
                 >
+                  <option value="">-- Select Target Folder --</option>
+                  {(type === 'Sedan' ? ['Swift Dzire', 'Vitara Brezza', 'WagonR', 'Baleno', 'Aura'] :
+                    type === 'SUV' ? ['Innova Crysta', 'Mahindra Thar', 'Mahindra Scorpio', 'Fortuner', 'Bolero'] :
+                    type === 'Luxury' ? ['BMW 5 Series', 'Audi A6', 'Mercedes E-Class'] :
+                    ['Tempo Traveller', 'Urbania']
+                  ).map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Or Custom Vehicle Name / Variant</label>
+                <input type="text" className="form-input" placeholder="e.g. Maruti Suzuki Dzire VXI" value={name} onChange={(e) => setName(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">License Plate Number</label>
+                <input type="text" className="form-input" placeholder="e.g. TN-01-AB-1234" value={plate} onChange={(e) => setPlate(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Category Class</label>
+                <select className="form-select" value={type} onChange={(e) => setType(e.target.value)}>
                   <option value="Sedan">Sedan</option>
                   <option value="SUV">SUV</option>
                   <option value="Luxury">Luxury</option>
                   <option value="Minivan">Minivan</option>
                 </select>
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div className="form-group">
-                  <label className="form-label">Brand</label>
-                  <input type="text" className="form-input" placeholder="e.g. Maruti Suzuki" value={brand} onChange={(e) => setBrand(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Model</label>
-                  <input type="text" className="form-input" placeholder="e.g. Swift" value={model} onChange={(e) => setModel(e.target.value)} />
-                </div>
-              </div>
-
               <div className="form-group">
-                <label className="form-label">Vehicle Name</label>
-                <input type="text" className="form-input" placeholder="e.g. Swift Dzire" value={name} onChange={(e) => setName(e.target.value)} required />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Vehicle Number (Plate Number)</label>
-                <input type="text" className="form-input" placeholder="e.g. TN-33-CC-1234" value={plate} onChange={(e) => { setPlate(e.target.value); setVehicleNumber(e.target.value); }} required />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div className="form-group">
-                  <label className="form-label">Vehicle Type</label>
-                  <input type="text" className="form-input" placeholder="e.g. AC, Non-AC, Sleeper" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fuel Type</label>
-                  <select className="form-select" value={fuelType} onChange={(e) => setFuelType(e.target.value)}>
-                    <option value="Petrol">Petrol</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="EV">EV</option>
-                    <option value="CNG">CNG</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div className="form-group">
-                  <label className="form-label">Seating Capacity</label>
-                  <input type="number" className="form-input" value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Rate per KM (INR)</label>
-                  <input type="number" className="form-input" value={rate} onChange={(e) => setRate(e.target.value)} required />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Registration Details</label>
-                <input type="text" className="form-input" placeholder="e.g. Reg valid till Dec 2030" value={registrationDetails} onChange={(e) => setRegistrationDetails(e.target.value)} />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Insurance Details</label>
-                <input type="text" className="form-input" placeholder="e.g. Policy #INS-8832, Exp 06/29" value={insuranceDetails} onChange={(e) => setInsuranceDetails(e.target.value)} />
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '15px 0' }}>
-                <input 
-                  type="checkbox" 
-                  id="chk-availability" 
-                  checked={availability} 
-                  onChange={(e) => setAvailability(e.target.checked)} 
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
-                />
-                <label htmlFor="chk-availability" className="form-label" style={{ margin: 0, cursor: 'pointer', fontSize: '13px' }}>Vehicle is Available for Dispatch</label>
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '25px' }}>
-                <label className="form-label">Vehicle Status</label>
-                <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                  <option value="Available">Available</option>
-                  <option value="Assigned">Assigned</option>
-                  <option value="On Trip">On Trip</option>
-                  <option value="Under Maintenance">Under Maintenance</option>
-                  <option value="Inactive">Inactive</option>
+                <label className="form-label">Vehicle AC Preference</label>
+                <select className="form-select" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
+                  <option value="AC">AC Vehicle</option>
+                  <option value="Non-AC">Non-AC Vehicle</option>
                 </select>
               </div>
-
+              <div className="form-group">
+                <label className="form-label">Seating Capacity</label>
+                <input type="number" className="form-input" min="1" max="50" value={capacity} onChange={(e) => setCapacity(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Rate per Kilometer (₹)</label>
+                <input type="number" className="form-input" min="1" step="0.5" value={rate} onChange={(e) => setRate(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Fuel Type</label>
+                <select className="form-select" value={fuelType} onChange={(e) => setFuelType(e.target.value)}>
+                  <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
+                  <option value="CNG">CNG</option>
+                  <option value="Electric">Electric (EV)</option>
+                </select>
+              </div>
               <div className="form-group">
                 <label className="form-label">Car Image URL</label>
-                <input type="text" className="form-input" placeholder="e.g. /cars/swift_dzire.png" value={image || ''} onChange={(e) => setImage(e.target.value)} />
+                <input type="text" className="form-input" placeholder="e.g. /cars/sedan/vitara_brezza.png" value={image} onChange={(e) => setImage(e.target.value)} />
               </div>
-
-              <div className="form-group">
-                <label className="form-label">Or Upload Car Image File</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="form-input" 
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setImage(reader.result);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }} 
-                />
-                {image && (
-                  <div style={{ margin: '15px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <img src={image} alt="Car Preview" style={{ maxWidth: '160px', height: '100px', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', padding: '5px' }} />
-                    <button type="button" className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '11px' }} onClick={() => setImage('')}>Remove Image</button>
-                  </div>
-                )}
-              </div>
-
-
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              {editingVehicle && (
+                <div className="form-group mb-6">
+                  <label className="form-label">Status</label>
+                  <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
+                    <option value="Available">Available</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="On Trip">On Trip</option>
+                    <option value="Maintenance">Maintenance</option>
+                  </select>
+                </div>
+              )}
+              <div className="flex justify-end gap-2.5 mt-5">
                 <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancel</button>
                 <button 
                   type="submit" 
-                  style={{
-                    padding: '10px 20px',
-                    fontWeight: '700',
-                    fontSize: '14px',
-                    backgroundColor: '#3b82f6',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#2563eb';
-                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3b82f6';
-                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
+                  className="px-5 py-2.5 font-bold text-sm bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition"
                 >
                   Save Vehicle
                 </button>
@@ -750,98 +541,77 @@ function AdminVehicles({ token, vehicles, refresh, toast }) {
         </div>,
         document.body
       )}
- 
+
       {/* Modal: View Vehicle Details */}
       {viewingVehicle && createPortal(
         <div className="modal-overlay">
-          <div className="glass-panel modal-content" style={{ textAlign: 'left' }}>
+          <div className="glass-panel modal-content text-left">
             <div className="modal-header">
               <h3 className="modal-title">Vehicle Details</h3>
               <button className="modal-close" onClick={() => setViewingVehicle(null)}>×</button>
             </div>
             
-            {viewingVehicle.image && (
-              <div style={{ textAlign: 'center', marginBottom: '20px', backgroundColor: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <img src={viewingVehicle.image} alt={viewingVehicle.name} style={{ maxWidth: '240px', height: '140px', objectFit: 'contain' }} />
-              </div>
-            )}
+            {/* Vehicle Image Header Preview */}
+            <div className="text-center mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <img 
+                src={viewingVehicle.image || (
+                  viewingVehicle.name.toLowerCase().includes('dzire') ? '/cars/sedan/swift_dzire.png' :
+                  viewingVehicle.name.toLowerCase().includes('brezza') ? '/cars/sedan/vitara_brezza.png' :
+                  viewingVehicle.name.toLowerCase().includes('wagon') ? '/cars/sedan/wagonr.png' :
+                  viewingVehicle.name.toLowerCase().includes('baleno') ? '/cars/sedan/suzuki_baleno.png' :
+                  viewingVehicle.name.toLowerCase().includes('aura') ? '/cars/sedan/hyundai_aura.png' :
+                  viewingVehicle.name.toLowerCase().includes('thar') ? '/cars/suv/mahindra_thar.png' :
+                  viewingVehicle.name.toLowerCase().includes('innova') ? '/cars/suv/innova_crysta.png' :
+                  viewingVehicle.name.toLowerCase().includes('scorpio') ? '/cars/suv/mahindra_scorpio.png' :
+                  viewingVehicle.name.toLowerCase().includes('fortuner') ? '/cars/suv/toyota_fortuner.png' :
+                  viewingVehicle.name.toLowerCase().includes('bolero') ? '/cars/suv/bolero.png' :
+                  viewingVehicle.name.toLowerCase().includes('bmw') ? '/cars/luxury/bmw.png' :
+                  viewingVehicle.name.toLowerCase().includes('audi') ? '/cars/luxury/audi.png' :
+                  viewingVehicle.name.toLowerCase().includes('benz') || viewingVehicle.name.toLowerCase().includes('mercedes') ? '/cars/luxury/benz.png' :
+                  viewingVehicle.name.toLowerCase().includes('traveller') ? '/cars/minivan/tempo_traveller.png' :
+                  viewingVehicle.name.toLowerCase().includes('urbania') ? '/cars/minivan/force_urbania.png' :
+                  '/cars/sedan/swift_dzire.png'
+                )} 
+                alt={viewingVehicle.name} 
+                className="max-h-[140px] max-w-full object-contain mx-auto"
+                onError={(e) => { e.target.onerror = null; e.target.src = '/cars/sedan/swift_dzire.png'; }}
+              />
+            </div>
 
             <div className="details-list">
-              <div className="details-row">
-                <span className="details-label">Vehicle ID</span>
-                <span className="details-value">{viewingVehicle.id}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Vehicle Name</span>
-                <span className="details-value">{viewingVehicle.name}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Brand</span>
-                <span className="details-value">{viewingVehicle.brand || viewingVehicle.name?.split(' ')[0] || 'N/A'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Model</span>
-                <span className="details-value">{viewingVehicle.model || viewingVehicle.name?.split(' ').slice(1).join(' ') || 'N/A'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Vehicle Number</span>
-                <span className="details-value">{viewingVehicle.vehicleNumber || viewingVehicle.plateNumber}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Vehicle Category</span>
-                <span className="details-value">{viewingVehicle.type}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Vehicle Type</span>
-                <span className="details-value">{viewingVehicle.vehicleType || viewingVehicle.acpreference || 'AC'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Seating Capacity</span>
-                <span className="details-value">{viewingVehicle.capacity} Passengers</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Fuel Type</span>
-                <span className="details-value">{viewingVehicle.fuelType || 'Petrol'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Rate Per KM</span>
-                <span className="details-value">₹{viewingVehicle.ratePerKm}/km</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Registration Details</span>
-                <span className="details-value">{viewingVehicle.registrationDetails || 'N/A'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Insurance Details</span>
-                <span className="details-value">{viewingVehicle.insuranceDetails || 'N/A'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Availability</span>
-                <span className="details-value">{viewingVehicle.availability !== false ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Status</span>
-                <span className="details-value">
-                  <span className={`badge badge-${
-                    viewingVehicle.status === 'Assigned' ? 'assigned' : 
-                    viewingVehicle.status === 'On Trip' ? 'ontrip' :
-                    (viewingVehicle.status === 'Inactive' || viewingVehicle.status === 'Under Maintenance') ? 'inactive' : 'available'
-                  }`}>
-                    {viewingVehicle.status || 'Available'}
-                  </span>
-                </span>
-              </div>
+              {[
+                { label: 'Vehicle ID', value: viewingVehicle.id },
+                { label: 'Name / Model', value: viewingVehicle.name },
+                { label: 'Plate Number', value: viewingVehicle.plateNumber },
+                { label: 'Category', value: viewingVehicle.type },
+                { label: 'Vehicle AC Preference', value: viewingVehicle.vehicleType || viewingVehicle.acpreference || 'AC' },
+                { label: 'Capacity', value: `${viewingVehicle.capacity} Seats` },
+                { label: 'Rate Per KM', value: `₹${viewingVehicle.ratePerKm}/km` },
+                { label: 'Fuel Type', value: viewingVehicle.fuelType || 'Petrol' },
+                {
+                  label: 'Status',
+                  value: (
+                    <span className={`badge badge-${viewingVehicle.status === 'Assigned' ? 'assigned' : viewingVehicle.status === 'On Trip' ? 'ontrip' : 'available'}`}>
+                      {viewingVehicle.status}
+                    </span>
+                  )
+                }
+              ].map((row, idx) => (
+                <div key={idx} className="details-row">
+                  <span className="details-label">{row.label}</span>
+                  <span className="details-value">{row.value}</span>
+                </div>
+              ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setViewingVehicle(null)}>Close</button>
+            <div className="flex justify-end mt-5">
+              <button className="btn btn-secondary px-3 py-1.5 text-xs" onClick={() => setViewingVehicle(null)}>Close</button>
             </div>
           </div>
         </div>,
         document.body
       )}
- 
     </div>
   );
 }
- 
+
 export default AdminVehicles;

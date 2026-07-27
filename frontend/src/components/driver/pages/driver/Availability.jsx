@@ -9,26 +9,18 @@ export default function Availability() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
-
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    // Fetch current driver status from profile
-    fetch(`${API_URL}/driver/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch(`${API_URL}/driver/profile`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
-      .then(data => {
-        setStatus(data.status || "Available");
-        setLoading(false);
-      })
+      .then(data => { setStatus(data.status || "Available"); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   const toggleAvailability = async () => {
     const newStatus = status === "Available" ? "Offline" : "Available";
-    setSaving(true);
-    setError("");
+    setSaving(true); setError("");
     try {
       const res = await fetch(`${API_URL}/driver/availability`, {
         method: "PUT",
@@ -48,65 +40,41 @@ export default function Availability() {
   };
 
   const isAvailable = status === "Available";
-  const statusColor = isAvailable ? "var(--status-completed)" : "var(--text-muted)";
-  const iconColor = isAvailable ? "var(--status-completed)" : "var(--text-muted)";
+  const statusColor = isAvailable ? "#10b981" : "#64748b";
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: "30px" }}>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>Availability Status</h2>
-        <p style={{ color: "var(--text-muted)" }}>Set your availability to receive new trip assignments.</p>
+      <div className="mb-8">
+        <h2 className="text-[28px] font-bold mb-2">Availability Status</h2>
+        <p className="text-slate-500">Set your availability to receive new trip assignments.</p>
       </div>
 
-      {toast && (
-        <div style={{
-          padding: "12px 16px", backgroundColor: "var(--status-completed-bg)",
-          color: "var(--status-completed)", borderRadius: "8px", fontSize: "14px",
-          fontWeight: "500", marginBottom: "20px", border: "1px solid var(--status-completed)"
-        }}>
-          {toast}
-        </div>
-      )}
+      {toast && <div className="px-4 py-3 rounded-lg text-sm font-medium mb-5 text-emerald-600 bg-emerald-50 border border-emerald-500">{toast}</div>}
+      {error && <div className="px-4 py-3 rounded-lg text-sm font-medium mb-5 text-red-600 bg-red-50 border border-red-400">{error}</div>}
 
-      {error && (
-        <div style={{
-          padding: "12px 16px", backgroundColor: "var(--status-cancelled-bg)",
-          color: "var(--status-cancelled)", borderRadius: "8px", fontSize: "14px",
-          fontWeight: "500", marginBottom: "20px", border: "1px solid var(--status-cancelled)"
-        }}>
-          {error}
-        </div>
-      )}
-
-      <div className="glass-panel" style={{ maxWidth: "480px" }}>
+      <div className="glass-panel max-w-[480px]">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "30px", color: "var(--text-muted)" }}>Loading...</div>
+          <div className="text-center py-8 text-slate-400">Loading...</div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "10px 0" }}>
-            <div style={{ fontSize: "90px", color: iconColor, marginBottom: "16px", transition: "color 0.3s" }}>
+          <div className="flex flex-col items-center text-center py-2.5">
+            <div className="text-[90px] mb-4 transition-colors" style={{ color: statusColor }}>
               {isAvailable ? <FaToggleOn /> : <FaToggleOff />}
             </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+            <div className="flex items-center gap-2 mb-2">
               <FaCircle size={10} color={statusColor} />
-              <h3 style={{ fontSize: "22px", fontWeight: "600", margin: 0, color: statusColor }}>
+              <h3 className="text-[22px] font-semibold m-0" style={{ color: statusColor }}>
                 {isAvailable ? "You are Available" : "You are Offline"}
               </h3>
             </div>
-
-            <p style={{ color: "var(--text-muted)", marginBottom: "32px", fontSize: "14px" }}>
+            <p className="text-slate-500 mb-8 text-sm">
               {isAvailable
                 ? "You can currently receive new trip assignments from the admin."
                 : "You will not receive any new trip assignments until you go online."}
             </p>
-
             <button
-              className={`btn ${isAvailable ? "btn-danger" : "btn-primary"}`}
-              onClick={toggleAvailability}
-              disabled={saving}
-              style={{ width: "100%", padding: "14px", fontSize: "16px" }}
-            >
-              {saving ? "Updating..." : (isAvailable ? "Go Offline" : "Go Online")}
+              className={`btn ${isAvailable ? "btn-danger" : "btn-primary"} w-full py-3.5 text-base`}
+              onClick={toggleAvailability} disabled={saving}>
+              {saving ? "Updating..." : isAvailable ? "Go Offline" : "Go Online"}
             </button>
           </div>
         )}

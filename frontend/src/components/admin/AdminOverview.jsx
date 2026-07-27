@@ -7,63 +7,28 @@ function StatCard({ title, value, icon, color, subtitle }) {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="bg-white rounded-2xl p-4.5 flex items-center gap-3.5 transition-all duration-300 cursor-default shadow-sm border"
       style={{
-        background: hovered ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
-        border: `1.5px solid ${hovered ? color : 'rgba(15, 23, 42, 0.12)'}`,
-        borderRadius: '16px',
-        padding: '18px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        transition: 'all 0.25s ease',
+        borderColor: hovered ? color : 'rgba(15, 23, 42, 0.12)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
-        boxShadow: hovered 
-          ? `0 10px 25px ${color}33` 
-          : '0 4px 16px rgba(15, 23, 42, 0.05)',
-        cursor: 'default',
+        boxShadow: hovered ? `0 10px 25px ${color}33` : '0 4px 16px rgba(15, 23, 42, 0.05)'
       }}
     >
-      {/* Icon bubble */}
-      <div style={{
-        width: '52px',
-        height: '52px',
-        borderRadius: '14px',
-        backgroundColor: `${color}18`,
-        border: `1px solid ${color}33`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '22px',
-        flexShrink: 0,
-      }}>
+      <div
+        className="w-[52px] h-[52px] rounded-xl flex items-center justify-center text-2xl shrink-0"
+        style={{ backgroundColor: `${color}18`, border: `1px solid ${color}33` }}
+      >
         {icon}
       </div>
-      {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: '11px',
-          fontWeight: '700',
-          textTransform: 'uppercase',
-          letterSpacing: '0.9px',
-          color: 'var(--text-muted)',
-          marginBottom: '4px',
-        }}>
+      <div className="flex-1 min-w-0">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
           {title}
         </div>
-        <div style={{
-          fontSize: '30px',
-          fontWeight: '800',
-          color: color,
-          lineHeight: '1.1',
-        }}>
+        <div className="text-[30px] font-extrabold leading-none" style={{ color }}>
           {value}
         </div>
         {subtitle && (
-          <div style={{
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            marginTop: '4px',
-          }}>
+          <div className="text-[11px] text-slate-500 mt-1">
             {subtitle}
           </div>
         )}
@@ -74,25 +39,9 @@ function StatCard({ title, value, icon, color, subtitle }) {
 
 function SectionLabel({ label }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      marginBottom: '16px',
-    }}>
-      <div style={{
-        width: '4px',
-        height: '18px',
-        borderRadius: '4px',
-        background: 'var(--color-primary)',
-      }} />
-      <span style={{
-        fontSize: '12px',
-        fontWeight: '800',
-        textTransform: 'uppercase',
-        letterSpacing: '1.2px',
-        color: 'var(--text-muted)',
-      }}>
+    <div className="flex items-center gap-2.5 mb-4">
+      <div className="w-1 h-4 rounded bg-blue-600" />
+      <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500">
         {label}
       </span>
     </div>
@@ -133,58 +82,34 @@ function AdminOverview({ token, toast }) {
   }, [fetchStats]);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left', paddingBottom: '48px' }}>
-
-      {/* ─── STANDALONE ADMIN HEADER CARD ─── */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '16px',
-        backgroundColor: '#ffffff',
-        padding: '20px 28px',
-        borderRadius: '16px',
-        boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)',
-        border: '1px solid #e2e8f0',
-        borderLeft: '5px solid #2563eb'
-      }}>
+    <div className="animate-fade-in flex flex-col gap-5 text-left pb-12">
+      {/* STANDALONE ADMIN HEADER CARD */}
+      <div className="flex justify-between items-center flex-wrap gap-4 bg-white px-7 py-5 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-600">
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 4px 0', color: '#1e293b', letterSpacing: '-0.3px' }}>
+          <h2 className="text-2xl font-extrabold m-0 text-slate-800 tracking-tight">
             Administration
           </h2>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0, fontWeight: '500' }}>
+          <p className="text-slate-500 text-sm m-0 font-medium">
             Fleet analytics, trip dispatch logistics, and system health hub
           </p>
         </div>
 
-        <div style={{
-          fontSize: '12.5px',
-          fontWeight: '700',
-          color: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          border: '1px solid rgba(37, 99, 235, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
+        <div className="text-[12.5px] font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full border border-blue-200 flex items-center gap-1.5">
           ⏱️ <span>{currentTime}</span>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: '80px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '15px', fontWeight: '600' }}>
-          <div className="icon-spin" style={{ display: 'inline-block', fontSize: '28px', marginBottom: '12px' }}>🔄</div>
+        <div className="py-20 text-slate-500 text-center text-sm font-semibold">
+          <div className="inline-block text-3xl mb-3 animate-spin">🔄</div>
           <div>Initializing metrics engine...</div>
         </div>
       ) : stats ? (
         <>
-          {/* ─── 1. BOOKING & TRIP LIFECYCLE GRID (FIRST) ─── */}
+          {/* 1. BOOKING & TRIP LIFECYCLE GRID */}
           <div>
             <SectionLabel label="Booking & Trip Lifecycle" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <StatCard title="Total Bookings"     value={stats.counts.bookings}   icon="📊" color="#2563eb" subtitle="All time records" />
               <StatCard title="Pending Bookings"   value={stats.counts.pending}    icon="⏳" color="#d97706" subtitle="Awaiting allocation" />
               <StatCard title="Confirmed Bookings" value={stats.counts.confirmed}  icon="📅" color="#2563eb" subtitle="Driver assigned" />
@@ -194,11 +119,11 @@ function AdminOverview({ token, toast }) {
             </div>
           </div>
 
-          {/* ─── 2. FLEET STATISTICS + DRIVERS & CUSTOMERS ─── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '10px' }}>
+          {/* 2. FLEET STATISTICS + DRIVERS & CUSTOMERS */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2.5">
             <div>
               <SectionLabel label="Fleet Statistics" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="flex flex-col gap-3.5">
                 <StatCard title="Total Vehicles"     value={stats.counts.vehicles}            icon="🚙" color="#8b5cf6" subtitle="Registered cars" />
                 <StatCard title="Available Vehicles" value={stats.counts.availableVehicles}   icon="🟢" color="#16a34a" subtitle={`${stats.utilization?.vehicleRate ?? 0}% utilization rate`} />
                 <StatCard title="Vehicles on Trip"   value={stats.counts.vehiclesOnTrip ?? 0} icon="🟠" color="#f97316" subtitle="Active telemetry" />
@@ -207,7 +132,7 @@ function AdminOverview({ token, toast }) {
 
             <div>
               <SectionLabel label="Drivers & Customers" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="flex flex-col gap-3.5">
                 <StatCard title="Total Drivers"     value={stats.counts.drivers}          icon="👨‍✈️" color="#f97316" subtitle="Registered staff" />
                 <StatCard title="Available Drivers" value={stats.counts.availableDrivers} icon="🛂"   color="#10b981" subtitle={`${stats.utilization?.driverRate ?? 0}% active rate`} />
                 <StatCard title="Total Customers"   value={stats.counts.customers ?? 0}   icon="👥"   color="#06b6d4" subtitle="Registered user profiles" />
@@ -215,18 +140,16 @@ function AdminOverview({ token, toast }) {
             </div>
           </div>
 
-          {/* ─── 3. ANALYTICS & CHARTS ROW ─── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '20px', marginTop: '10px' }}>
-            
-            {/* COLUMN 1: MONTHLY TREND CHART */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass-panel" style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          {/* 3. ANALYTICS & CHARTS ROW */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-5 mt-2.5">
+            <div className="flex flex-col gap-5">
+              <div className="glass-panel p-5">
+                <div className="flex justify-between items-center mb-3.5">
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b' }}>Volume Overview</div>
-                    <div style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b' }}>Monthly Bookings Volume</div>
+                    <div className="text-[11px] font-extrabold uppercase text-slate-500">Volume Overview</div>
+                    <div className="text-base font-extrabold text-slate-800">Monthly Bookings Volume</div>
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: '#10b981', backgroundColor: '#dcfce7', padding: '3px 8px', borderRadius: '12px' }}>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-xl">
                     📈 +18% Growth
                   </span>
                 </div>
@@ -234,99 +157,97 @@ function AdminOverview({ token, toast }) {
               </div>
             </div>
 
-            {/* COLUMN 2: READINESS CIRCULAR GAUGE & ALLOCATION */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="glass-panel" style={{ padding: '22px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b', marginBottom: '12px' }}>
+            <div className="flex flex-col gap-5">
+              <div className="glass-panel p-[22px] text-center flex flex-col items-center">
+                <div className="text-[11px] font-extrabold uppercase text-slate-500 mb-3">
                   Fleet Readiness Index
                 </div>
                 
-                <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="relative w-[120px] h-[120px] flex items-center justify-center">
                   <svg width="120" height="120" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="50" stroke="#e2e8f0" strokeWidth="10" fill="none" />
                     <circle cx="60" cy="60" r="50" stroke="#2563eb" strokeWidth="10" fill="none" strokeDasharray="314" strokeDashoffset="35" strokeLinecap="round" transform="rotate(-90 60 60)" />
                   </svg>
-                  <div style={{ position: 'absolute', textAlign: 'center' }}>
-                    <div style={{ fontSize: '24px', fontWeight: '800', color: '#1e293b' }}>{stats.utilization?.vehicleRate ?? 88}%</div>
-                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>READY</div>
+                  <div className="absolute text-center">
+                    <div className="text-2xl font-extrabold text-slate-800">{stats.utilization?.vehicleRate ?? 88}%</div>
+                    <div className="text-[10px] text-slate-500 font-bold">READY</div>
                   </div>
                 </div>
-                <div style={{ fontSize: '13px', color: '#10b981', fontWeight: '700', marginTop: '10px' }}>
+                <div className="text-xs text-emerald-600 font-bold mt-2.5">
                   ✅ {stats.counts.availableVehicles} Vehicles Available
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '20px' }}>
-                <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b', marginBottom: '14px' }}>
+              <div className="glass-panel p-5">
+                <div className="text-[11px] font-extrabold uppercase text-slate-500 mb-3.5">
                   System Allocation
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '50%', border: '3px solid #2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '12px', color: '#2563eb', margin: '0 auto 6px' }}>
+                <div className="flex justify-around items-center">
+                  <div className="text-center">
+                    <div className="w-[46px] h-[46px] rounded-full border-4 border-blue-600 flex items-center justify-center font-extrabold text-xs text-blue-600 mx-auto mb-1.5">
                       {stats.counts.vehicles}
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#1e293b' }}>Vehicles</div>
+                    <div className="text-[11px] font-bold text-slate-800">Vehicles</div>
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '50%', border: '3px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '12px', color: '#10b981', margin: '0 auto 6px' }}>
+                  <div className="text-center">
+                    <div className="w-[46px] h-[46px] rounded-full border-4 border-emerald-500 flex items-center justify-center font-extrabold text-xs text-emerald-500 mx-auto mb-1.5">
                       {stats.counts.drivers}
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#1e293b' }}>Drivers</div>
+                    <div className="text-[11px] font-bold text-slate-800">Drivers</div>
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '50%', border: '3px solid #f97316', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '12px', color: '#f97316', margin: '0 auto 6px' }}>
+                  <div className="text-center">
+                    <div className="w-[46px] h-[46px] rounded-full border-4 border-orange-500 flex items-center justify-center font-extrabold text-xs text-orange-500 mx-auto mb-1.5">
                       {stats.counts.customers ?? 0}
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#1e293b' }}>Riders</div>
+                    <div className="text-[11px] font-bold text-slate-800">Riders</div>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* SECTION 3: REVENUE & OPERATIONAL CHARTS ROW */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '24px' }}>
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '800' }}>Revenue Overview</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Earnings derived from completed bookings</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+            <div className="glass-panel p-6">
+              <div className="mb-4">
+                <h3 className="m-0 text-base font-extrabold">Revenue Overview</h3>
+                <span className="text-xs text-slate-500">Earnings derived from completed bookings</span>
               </div>
               <AreaChart data={stats.analytics?.monthlyData} dataKey="revenue" labelKey="label" color="#eab308" formatVal={(v) => `₹${v}`} />
             </div>
 
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '800' }}>Daily Booking Load Trends</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Operations volume over last 7 days</span>
+            <div className="glass-panel p-6">
+              <div className="mb-4">
+                <h3 className="m-0 text-base font-extrabold">Daily Booking Load Trends</h3>
+                <span className="text-xs text-slate-500">Operations volume over last 7 days</span>
               </div>
               <AreaChart data={stats.analytics?.dailyTrends} dataKey="count" labelKey="label" color="#f97316" />
             </div>
           </div>
 
           {/* SECTION 4: STATUS ALLOCATION & CLASS USAGE CHARTS */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '800' }}>Trip Status Allocation</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Breakdown share by booking status</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+            <div className="glass-panel p-6">
+              <div className="mb-4">
+                <h3 className="m-0 text-base font-extrabold">Trip Status Allocation</h3>
+                <span className="text-xs text-slate-500">Breakdown share by booking status</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+              <div className="flex items-center justify-center min-h-[200px]">
                 <DoughnutChart data={stats.analytics?.tripStatusBreakdown} />
               </div>
             </div>
 
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '800' }}>Fleet Utilization by Class</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Share of trips by vehicle category</span>
+            <div className="glass-panel p-6">
+              <div className="mb-4">
+                <h3 className="m-0 text-base font-extrabold">Fleet Utilization by Class</h3>
+                <span className="text-xs text-slate-500">Share of trips by vehicle category</span>
               </div>
               <HorizontalBarChart data={stats.analytics?.vehicleTypeUsage || { Sedan: 0, SUV: 0, Luxury: 0, Minivan: 0 }} />
             </div>
           </div>
         </>
       ) : (
-        <div style={{ padding: '80px', color: 'var(--text-muted)', textAlign: 'center', fontSize: '15px' }}>
+        <div className="py-20 text-slate-500 text-center text-sm">
           ⚠️ Unable to load dashboard stats. Please refresh.
         </div>
       )}

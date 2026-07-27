@@ -19,7 +19,7 @@ function AdminDashboard({ token, handleLogout }) {
   const [vehicles, setVehicles] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [stats, setStats] = useState(null);
-  
+
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -62,574 +62,113 @@ function AdminDashboard({ token, handleLogout }) {
 
   useEffect(() => {
     fetchData();
-    // Poll every 3 seconds for instant real-time sync across Admin and Driver portals
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [token]);
 
+  const navItems = [
+    { to: "/admin/overview", label: "Dashboard", icon: "🏠", bg: "rgba(59,130,246,0.12)" },
+    { to: "/admin/bookings", label: "Bookings", icon: "📅", bg: "rgba(99,102,241,0.12)" },
+    { to: "/admin/history", label: "Trip History", icon: "📜", bg: "rgba(245,158,11,0.14)" },
+    { to: "/admin/customers", label: "Customers", icon: "👥", bg: "rgba(236,72,153,0.12)" },
+    { to: "/admin/vehicles", label: "Vehicles", icon: "🚗", bg: "rgba(249,115,22,0.14)" },
+    { to: "/admin/drivers", label: "Drivers", icon: "👨‍✈️", bg: "rgba(16,185,129,0.14)" },
+    { to: "/admin/reports", label: "Reports", icon: "📊", bg: "rgba(139,92,246,0.14)" },
+    { to: "/admin/payments", label: "Payment Reports", icon: "💳", bg: "rgba(16,185,129,0.14)" },
+    { to: "/admin/queries", label: "Feedback", icon: "💬", bg: "rgba(6,182,212,0.14)" },
+  ];
+
   return (
-    <div style={{ position: 'relative' }}>
-      
-      {/* Toast notifications — rendered via portal to escape any stacking context */}
+    <div className="relative">
+      {/* Toast notifications */}
       {successMsg && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: '24px',
-          right: '24px',
-          zIndex: 99999,
-          minWidth: '280px',
-          maxWidth: '400px',
-          padding: '14px 18px',
-          background: 'linear-gradient(135deg, #064e3b, #065f46)',
-          color: '#6ee7b7',
-          borderRadius: '14px',
-          border: '1px solid rgba(16,185,129,0.4)',
-          fontWeight: '600',
-          fontSize: '14px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(16,185,129,0.15)',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          animation: 'slideInRight 0.3s ease',
-          lineHeight: '1.4',
-        }}>
-          <span style={{ fontSize: '20px', flexShrink: 0 }}>✅</span>
-          <span style={{ flex: 1 }}>{successMsg}</span>
-          <button
-            onClick={() => setSuccessMsg('')}
-            style={{
-              background: 'none', border: 'none', color: '#6ee7b7',
-              cursor: 'pointer', fontSize: '16px', padding: '0', flexShrink: 0, opacity: 0.7,
-            }}
-          >✕</button>
+        <div className="fixed top-6 right-6 z-[99999] min-w-[280px] max-w-[400px] p-4 bg-gradient-to-br from-emerald-900 to-emerald-800 text-emerald-300 rounded-2xl border border-emerald-500/40 font-semibold text-sm shadow-2xl flex items-start gap-3 animate-slide-in-right leading-snug">
+          <span className="text-xl shrink-0">✅</span>
+          <span className="flex-1">{successMsg}</span>
+          <button onClick={() => setSuccessMsg('')} className="bg-transparent border-none text-emerald-300 cursor-pointer text-base p-0 shrink-0 opacity-70 hover:opacity-100">✕</button>
         </div>,
         document.body
       )}
       {errorMsg && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: successMsg ? '100px' : '24px',
-          right: '24px',
-          zIndex: 99999,
-          minWidth: '280px',
-          maxWidth: '400px',
-          padding: '14px 18px',
-          background: 'linear-gradient(135deg, #450a0a, #7f1d1d)',
-          color: '#fca5a5',
-          borderRadius: '14px',
-          border: '1px solid rgba(239,68,68,0.4)',
-          fontWeight: '600',
-          fontSize: '14px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.15)',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          animation: 'slideInRight 0.3s ease',
-          lineHeight: '1.4',
-        }}>
-          <span style={{ fontSize: '20px', flexShrink: 0 }}>❌</span>
-          <span style={{ flex: 1 }}>{errorMsg}</span>
-          <button
-            onClick={() => setErrorMsg('')}
-            style={{
-              background: 'none', border: 'none', color: '#fca5a5',
-              cursor: 'pointer', fontSize: '16px', padding: '0', flexShrink: 0, opacity: 0.7,
-            }}
-          >✕</button>
+        <div className="fixed top-6 right-6 z-[99999] min-w-[280px] max-w-[400px] p-4 bg-gradient-to-br from-red-950 to-red-900 text-red-300 rounded-2xl border border-red-500/40 font-semibold text-sm shadow-2xl flex items-start gap-3 animate-slide-in-right leading-snug">
+          <span className="text-xl shrink-0">❌</span>
+          <span className="flex-1">{errorMsg}</span>
+          <button onClick={() => setErrorMsg('')} className="bg-transparent border-none text-red-300 cursor-pointer text-base p-0 shrink-0 opacity-70 hover:opacity-100">✕</button>
         </div>,
         document.body
       )}
 
-      {/* Main Grid Wrapper (Left Sidebar, Right Content) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '240px minmax(0, 1fr)',
-        gap: '24px',
-        alignItems: 'start',
-        marginTop: '10px'
-      }}>
-        
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-[240px_minmax(0,1fr)] gap-6 items-start mt-2.5">
         {/* Left Side Sidebar Menu */}
-        <div className="glass-panel" style={{
-          width: '240px',
-          minWidth: '240px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          padding: '20px 12px',
-          position: 'sticky',
-          top: '90px',
-          minHeight: 'calc(100vh - 120px)',
-          borderLeft: '4px solid #f59e0b',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* ── Brand / Header ── */}
-          <div style={{ padding: '16px 8px 20px', textAlign: 'center', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
-            <div style={{
-              fontSize: '24px',
-              fontWeight: '800',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '0.5px'
-            }}>
-              Administration
+        <div className="glass-panel w-[240px] min-w-[240px] flex flex-col gap-2 p-5 sticky top-[90px] min-h-[calc(100vh-120px)] border-l-4 border-l-amber-500 box-border">
+          <div className="flex flex-col gap-2">
+            <div className="py-4 px-2 text-center border-b border-slate-200 mb-4">
+              <div className="text-2xl font-extrabold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent tracking-wide">
+                Administration
+              </div>
             </div>
-          </div>    </div>
+          </div>
 
-          <div style={{
-            fontSize: '11px',
-            fontWeight: '800',
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '1.5px',
-            padding: '4px 12px 10px 12px',
-            textAlign: 'left'
-          }}>
+          <div className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest px-3 py-1 text-left">
             Admin Menu
           </div>
 
-          <NavLink 
-            to="/admin/overview" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(59, 130, 246, 0.12)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>🏠</span>
-                <span>Dashboard</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/bookings" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(99, 102, 241, 0.12)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>📅</span>
-                <span>Bookings</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/history" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(245, 158, 11, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>📜</span>
-                <span>Trip History</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/customers" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(236, 72, 153, 0.12)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>👥</span>
-                <span>Customers</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/vehicles" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(249, 115, 22, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>🚗</span>
-                <span>Vehicles</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/drivers" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 185, 129, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>👨‍✈️</span>
-                <span>Drivers</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/reports" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(139, 92, 246, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>📊</span>
-                <span>Reports</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/payments" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 185, 129, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>💳</span>
-                <span>Payment Reports</span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/admin/queries" 
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              fontSize: '14.5px',
-              fontWeight: '800',
-              transition: 'all 0.25s ease-in-out',
-              color: isActive ? '#ffffff' : '#0f172a',
-              backgroundColor: isActive ? '#3b82f6' : 'transparent',
-              boxShadow: isActive ? '0 4px 15px rgba(59, 130, 246, 0.35)' : 'none'
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? 'rgba(255, 255, 255, 0.22)' : 'rgba(6, 182, 212, 0.14)',
-                  fontSize: '17px',
-                  flexShrink: 0
-                }}>💬</span>
-                <span>Feedback</span>
-              </>
-            )}
-          </NavLink>
-
-          {/* Logout Section at the bottom */}
-          <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-            <button 
-              onClick={handleLogout} 
-              style={{ 
-                width: '100%', 
-                padding: '12px 16px', 
-                fontSize: '14.5px', 
-                fontWeight: '800', 
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                backgroundColor: '#ef4444',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc2626';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ef4444';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+          {navItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl no-underline text-[14.5px] font-extrabold transition-all ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-slate-900 bg-transparent hover:bg-slate-100'
+                }`
+              }
             >
-              <span style={{ fontSize: '16px' }}>🔑</span>
+              {({ isActive }) => (
+                <>
+                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg text-lg shrink-0 ${
+                    isActive ? 'bg-white/25' : ''
+                  }`} style={{ backgroundColor: isActive ? undefined : item.bg }}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          {/* Logout Section */}
+          <div className="mt-auto pt-4 border-t border-slate-200">
+            <button
+              onClick={handleLogout}
+              className="w-full py-3 px-4 text-[14.5px] font-extrabold rounded-xl flex items-center justify-center gap-2 bg-red-500 text-white border-none cursor-pointer shadow-md hover:bg-red-600 hover:-translate-y-0.5 transition"
+            >
+              <span className="text-base">🔑</span>
               <span>Logout</span>
             </button>
           </div>
         </div>
 
-        {/* Right Side Main Content Area */}
-        <div className="animate-fade-in" style={{ minWidth: 0, width: '100%', overflow: 'hidden' }}>
+        {/* Right Side Content */}
+        <div className="animate-fade-in min-w-0 w-full overflow-hidden">
           <Routes>
-             <Route path="bookings" element={
-              <AdminBookings 
-                token={token} 
-                bookings={bookings} 
-                vehicles={vehicles} 
-                drivers={drivers} 
-                refresh={fetchData} 
-                toast={triggerToast} 
-                onlyActive={true}
-              />
-            } />
-            <Route path="history" element={
-              <AdminBookings 
-                token={token} 
-                bookings={bookings} 
-                vehicles={vehicles} 
-                drivers={drivers} 
-                refresh={fetchData} 
-                toast={triggerToast} 
-                onlyHistory={true}
-              />
-            } />
-            <Route path="vehicles" element={
-              <AdminVehicles 
-                token={token} 
-                vehicles={vehicles} 
-                refresh={fetchData} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="drivers" element={
-              <AdminDrivers 
-                token={token} 
-                drivers={drivers} 
-                refresh={fetchData} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="customers" element={
-              <AdminCustomers 
-                token={token} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="reports" element={
-              <AdminReports 
-                token={token}
-                stats={stats} 
-                bookings={bookings}
-                vehicles={vehicles}
-                drivers={drivers}
-                refresh={fetchData}
-                toast={triggerToast}
-              />
-            } />
+            <Route path="bookings" element={<AdminBookings token={token} bookings={bookings} vehicles={vehicles} drivers={drivers} refresh={fetchData} toast={triggerToast} onlyActive={true} />} />
+            <Route path="history" element={<AdminBookings token={token} bookings={bookings} vehicles={vehicles} drivers={drivers} refresh={fetchData} toast={triggerToast} onlyHistory={true} />} />
+            <Route path="vehicles" element={<AdminVehicles token={token} vehicles={vehicles} refresh={fetchData} toast={triggerToast} />} />
+            <Route path="drivers" element={<AdminDrivers token={token} drivers={drivers} refresh={fetchData} toast={triggerToast} />} />
+            <Route path="customers" element={<AdminCustomers token={token} toast={triggerToast} />} />
+            <Route path="reports" element={<AdminReports token={token} stats={stats} bookings={bookings} vehicles={vehicles} drivers={drivers} refresh={fetchData} toast={triggerToast} />} />
             <Route path="payments" element={<AdminPayments />} />
-            <Route path="feedbacks" element={
-              <AdminFeedbacks 
-                token={token} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="queries" element={
-              <AdminQueries 
-                token={token} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="overview" element={
-              <AdminOverview 
-                token={token} 
-                toast={triggerToast} 
-              />
-            } />
-            <Route path="profile" element={
-              <AdminProfile 
-                token={token} 
-                toast={triggerToast} 
-              />
-            } />
+            <Route path="feedbacks" element={<AdminFeedbacks token={token} toast={triggerToast} />} />
+            <Route path="queries" element={<AdminQueries token={token} toast={triggerToast} />} />
+            <Route path="overview" element={<AdminOverview token={token} toast={triggerToast} />} />
+            <Route path="profile" element={<AdminProfile token={token} toast={triggerToast} />} />
             <Route path="*" element={<Navigate to="overview" replace />} />
           </Routes>
         </div>
-
       </div>
-
     </div>
   );
 }

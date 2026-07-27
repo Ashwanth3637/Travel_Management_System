@@ -29,7 +29,6 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
   const [license, setLicense] = useState('');
   const [photo, setPhoto] = useState(null);
   const [gender, setGender] = useState('Male');
-  const [preview, setPreview] = useState("");
   const [status, setStatus] = useState('Available');
   const [viewingDriver, setViewingDriver] = useState(null);
 
@@ -101,31 +100,10 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
 
   return (
     <div className="glass-panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ margin: 0 }}>Drivers Registry</h3>
+      <div className="flex justify-between items-center mb-5">
+        <h3 className="m-0 text-xl font-bold">Drivers Registry</h3>
         <button 
-          style={{
-            padding: '10px 18px',
-            fontWeight: '700',
-            fontSize: '14px',
-            backgroundColor: '#3b82f6',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#2563eb';
-            e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#3b82f6';
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
+          className="px-4 py-2.5 font-bold text-sm bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition"
           onClick={() => { handleCloseModal(); setShowModal(true); }}
         >
           + Add Driver
@@ -147,7 +125,7 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
           <tbody>
             {drivers.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No drivers registered.</td>
+                <td colSpan="6" className="text-center text-slate-400">No drivers registered.</td>
               </tr>
             ) : (
               drivers.map((d, idx) => {
@@ -158,34 +136,21 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                 return (
                   <tr key={d.id}>
                     <td><strong>{d.id}</strong></td>
-                    <td style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <td className="font-semibold flex items-center gap-2.5">
+                      <div className="relative inline-block">
                         <img
                           src={photoSrc}
                           alt={d.name}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: `2px solid ${bgColor}`,
-                            display: 'block'
-                          }}
+                          className="w-8 h-8 rounded-full object-cover border-2 block"
+                          style={{ borderColor: bgColor }}
                           onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                         />
-                        <div style={{
-                          display: 'none',
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: bgColor,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px',
-                          fontWeight: '700',
-                          color: '#fff',
-                          border: `2px solid ${bgColor}`
-                        }}>{initial}</div>
+                        <div
+                          className="hidden w-8 h-8 rounded-full items-center justify-center text-sm font-bold text-white border-2"
+                          style={{ backgroundColor: bgColor, borderColor: bgColor }}
+                        >
+                          {initial}
+                        </div>
                       </div>
                       <span>{d.name}</span>
                     </td>
@@ -197,15 +162,25 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button className="btn btn-view" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }} onClick={() => setViewingDriver(d)}>
+                      <div className="flex gap-1.5 items-center">
+                        <button 
+                          onClick={() => setViewingDriver(d)}
+                          className="px-2.5 h-7 text-[11px] font-bold rounded-md bg-slate-800 hover:bg-slate-700 text-white border-none cursor-pointer transition inline-flex items-center justify-center"
+                        >
                           View
                         </button>
-                        <button className="btn btn-edit" style={{ padding: '4px 8px', fontSize: '11px', borderRadius: '6px', backgroundColor: '#3b82f6', borderColor: '#2563eb', color: '#ffffff' }} onClick={() => handleEditClick(d)}>
+                        <button 
+                          onClick={() => handleEditClick(d)}
+                          className="px-2.5 h-7 text-[11px] font-bold rounded-md bg-blue-600 hover:bg-blue-700 text-white border-none cursor-pointer transition inline-flex items-center justify-center"
+                        >
                           Edit
                         </button>
-                        <button className="btn btn-remove" style={{ padding: '5px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => handleDelete(d.id)} title="Remove">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <button 
+                          onClick={() => handleDelete(d.id)} 
+                          title="Remove"
+                          className="w-7 h-7 rounded-md border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 hover:border-red-300 cursor-pointer transition inline-flex items-center justify-center shrink-0"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -272,14 +247,14 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                   }}
                 />
                 {photo && (
-                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <img src={photo} alt="Driver preview" style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-primary)' }} />
-                    <button type="button" className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: '11px' }} onClick={() => setPhoto('')}>Remove Photo</button>
+                  <div className="mt-2.5 flex items-center gap-2.5">
+                    <img src={photo} alt="Driver preview" className="w-[50px] h-[50px] rounded-full object-cover border-2 border-blue-600" />
+                    <button type="button" className="btn btn-secondary px-2 py-1 text-[11px]" onClick={() => setPhoto('')}>Remove Photo</button>
                   </div>
                 )}
               </div>
               {editingDriver && (
-                <div className="form-group" style={{ marginBottom: '25px' }}>
+                <div className="form-group mb-6">
                   <label className="form-label">Status</label>
                   <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
                     <option value="Available">Available</option>
@@ -289,32 +264,11 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
                   </select>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <div className="flex justify-end gap-2.5 mt-5">
                 <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>Cancel</button>
                 <button 
                   type="submit" 
-                  style={{
-                    padding: '10px 20px',
-                    fontWeight: '700',
-                    fontSize: '14px',
-                    backgroundColor: '#3b82f6',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#2563eb';
-                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.55)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3b82f6';
-                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(59, 130, 246, 0.4)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
+                  className="px-5 py-2.5 font-bold text-sm bg-blue-600 text-white border-none rounded-lg cursor-pointer shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition"
                 >
                   Save Driver
                 </button>
@@ -328,57 +282,42 @@ function AdminDrivers({ token, drivers, refresh, toast }) {
       {/* Modal: View Driver Details */}
       {viewingDriver && createPortal(
         <div className="modal-overlay">
-          <div className="glass-panel modal-content" style={{ textAlign: 'left' }}>
+          <div className="glass-panel modal-content text-left">
             <div className="modal-header">
               <h3 className="modal-title">Driver Details</h3>
               <button className="modal-close" onClick={() => setViewingDriver(null)}>×</button>
             </div>
             <div className="details-list">
-              <div className="details-row">
-                <span className="details-label">Driver ID</span>
-                <span className="details-value">{viewingDriver.id}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Full Name</span>
-                <span className="details-value">{viewingDriver.name}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Phone Number</span>
-                <span className="details-value">{viewingDriver.phone}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">License Number</span>
-                <span className="details-value">{viewingDriver.licenseNumber}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Email Address</span>
-                <span className="details-value">{viewingDriver.email || '—'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Gender</span>
-                <span className="details-value">{viewingDriver.gender || 'Male'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Account Role</span>
-                <span className="details-value">{viewingDriver.role ? viewingDriver.role.toUpperCase() : 'DRIVER'}</span>
-              </div>
-              <div className="details-row">
-                <span className="details-label">Status</span>
-                <span className="details-value">
-                  <span className={`badge badge-${viewingDriver.status === 'Assigned' ? 'assigned' : viewingDriver.status === 'On Trip' ? 'ontrip' : viewingDriver.status === 'Inactive' ? 'inactive' : 'available'}`}>
-                    {viewingDriver.status}
-                  </span>
-                </span>
-              </div>
+              {[
+                { label: 'Driver ID', value: viewingDriver.id },
+                { label: 'Full Name', value: viewingDriver.name },
+                { label: 'Phone Number', value: viewingDriver.phone },
+                { label: 'License Number', value: viewingDriver.licenseNumber },
+                { label: 'Email Address', value: viewingDriver.email || '—' },
+                { label: 'Gender', value: viewingDriver.gender || 'Male' },
+                { label: 'Account Role', value: viewingDriver.role ? viewingDriver.role.toUpperCase() : 'DRIVER' },
+                {
+                  label: 'Status',
+                  value: (
+                    <span className={`badge badge-${viewingDriver.status === 'Assigned' ? 'assigned' : viewingDriver.status === 'On Trip' ? 'ontrip' : viewingDriver.status === 'Inactive' ? 'inactive' : 'available'}`}>
+                      {viewingDriver.status}
+                    </span>
+                  )
+                }
+              ].map((row, idx) => (
+                <div key={idx} className="details-row">
+                  <span className="details-label">{row.label}</span>
+                  <span className="details-value">{row.value}</span>
+                </div>
+              ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => setViewingDriver(null)}>Close</button>
+            <div className="flex justify-end mt-5">
+              <button className="btn btn-secondary px-3 py-1.5 text-xs" onClick={() => setViewingDriver(null)}>Close</button>
             </div>
           </div>
         </div>,
         document.body
       )}
-
     </div>
   );
 }
