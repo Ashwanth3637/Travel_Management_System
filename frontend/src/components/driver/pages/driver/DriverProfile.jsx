@@ -7,20 +7,13 @@ export default function DriverProfile() {
   const [driver, setDriver] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetch(`${API_URL}/driver/profile`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch(`${API_URL}/driver/profile`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
-      .then(data => {
-        setDriver(data);
-        setLoading(false);
-      })
+      .then(data => { setDriver(data); setLoading(false); })
       .catch(() => {
-        // Fallback to localStorage if API fails
         const cached = JSON.parse(localStorage.getItem("driver"));
         if (cached) setDriver(cached);
         setError("Could not refresh profile from server.");
@@ -28,11 +21,9 @@ export default function DriverProfile() {
       });
   }, []);
 
-  const statusColor = driver?.status === "Available"
-    ? "var(--status-completed)"
-    : driver?.status === "On Trip"
-    ? "var(--status-pending)"
-    : "var(--text-muted)";
+  const statusColor =
+    driver?.status === "Available" ? "#10b981" :
+    driver?.status === "On Trip" ? "#d97706" : "#64748b";
 
   const fields = [
     { icon: <FaUser />, label: "Full Name", value: driver?.name },
@@ -43,46 +34,31 @@ export default function DriverProfile() {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: "30px" }}>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>My Profile</h2>
-        <p style={{ color: "var(--text-muted)" }}>Your personal information and account details.</p>
+      <div className="mb-8">
+        <h2 className="text-[28px] font-bold mb-2">My Profile</h2>
+        <p className="text-slate-500">Your personal information and account details.</p>
       </div>
 
       {error && (
-        <div style={{
-          padding: "10px 16px", backgroundColor: "var(--status-pending-bg)",
-          color: "var(--status-pending)", borderRadius: "8px", fontSize: "13px",
-          marginBottom: "20px", border: "1px solid var(--status-pending)"
-        }}>
-          {error}
-        </div>
+        <div className="px-4 py-2.5 rounded-lg text-[13px] mb-5 text-amber-700 bg-amber-50 border border-amber-500">{error}</div>
       )}
 
       {loading ? (
-        <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-          Loading profile...
-        </div>
+        <div className="glass-panel text-center py-10 text-slate-400">Loading profile...</div>
       ) : (
-        <div className="glass-panel" style={{ maxWidth: "600px" }}>
-
-          {/* Status badge */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", paddingBottom: "20px", borderBottom: "1px solid var(--border-color)" }}>
-            <div style={{ fontSize: "22px", fontWeight: "700" }}>{driver?.name}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", fontWeight: "600" }}>
+        <div className="glass-panel max-w-[600px]">
+          <div className="flex justify-between items-center mb-6 pb-5 border-b border-slate-200">
+            <div className="text-[22px] font-bold">{driver?.name}</div>
+            <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: statusColor }}>
               <FaCircle size={10} color={statusColor} />
-              <span style={{ color: statusColor }}>{driver?.status || "Unknown"}</span>
+              <span>{driver?.status || "Unknown"}</span>
             </div>
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div className="flex flex-col gap-5">
             {fields.map(f => (
-              <div key={f.label} className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {f.icon} {f.label}
-                </label>
-                <div className="form-input" style={{ backgroundColor: "rgba(255,255,255,0.04)", color: "var(--text-main)" }}>
-                  {f.value || "N/A"}
-                </div>
+              <div key={f.label} className="form-group mb-0">
+                <label className="form-label flex items-center gap-2">{f.icon} {f.label}</label>
+                <div className="form-input bg-white/5">{f.value || "N/A"}</div>
               </div>
             ))}
           </div>

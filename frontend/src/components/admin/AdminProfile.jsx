@@ -7,12 +7,8 @@ function AdminProfile({ token, toast }) {
   useEffect(() => {
     try {
       const savedUser = sessionStorage.getItem('travel_user');
-      if (savedUser) {
-        setAdminUser(JSON.parse(savedUser));
-      }
-    } catch (e) {
-      console.error("Failed to parse admin user profile", e);
-    }
+      if (savedUser) setAdminUser(JSON.parse(savedUser));
+    } catch (e) { console.error("Failed to parse admin user profile", e); }
   }, []);
 
   const handleSave = (e) => {
@@ -21,103 +17,33 @@ function AdminProfile({ token, toast }) {
     if (toast) toast('Profile updated!', null);
   };
 
-  if (!adminUser) {
-    return <div style={{ padding: '30px', color: 'var(--text-muted)' }}>Loading Admin Profile...</div>;
-  }
+  if (!adminUser) return <div className="p-8 text-slate-400">Loading Admin Profile...</div>;
+
+  const readonlyFields = [
+    { label: 'Admin User ID', value: adminUser.id || '—', type: 'text' },
+    { label: 'Full Name', value: adminUser.name || 'Admin', type: 'text' },
+    { label: 'Email Address', value: adminUser.email || 'admin@travels.com', type: 'email' },
+    { label: 'Account Role', value: adminUser.role ? adminUser.role.toUpperCase() : 'ADMINISTRATOR', type: 'text', highlight: true },
+  ];
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '20px', textAlign: 'left' }}>
-        Admin Settings & Profile
-      </h2>
-
-      <div className="glass-panel" style={{ padding: '30px' }}>
+    <div className="animate-fade-in max-w-[600px] mx-auto">
+      <h2 className="text-2xl font-bold mb-5 text-left">Admin Settings & Profile</h2>
+      <div className="glass-panel p-8">
         {success && (
-          <div style={{
-            padding: '12px 16px',
-            backgroundColor: 'var(--status-completed-bg)',
-            color: 'var(--status-completed)',
-            borderRadius: '8px',
-            fontSize: '14px',
-            marginBottom: '20px',
-            border: '1px solid var(--status-completed)',
-            textAlign: 'left'
-          }}>
-            {success}
-          </div>
+          <div className="px-4 py-3 rounded-lg text-sm mb-5 text-emerald-600 bg-emerald-50 border border-emerald-500 text-left">{success}</div>
         )}
-
-        <form onSubmit={handleSave}>
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
-            <label className="form-label">Admin User ID</label>
-            <input
-              type="text"
-              className="form-input"
-              value={adminUser.id || '—'}
-              disabled
-              style={{ opacity: 0.6, cursor: 'not-allowed' }}
-            />
-          </div>
-
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
-            <label className="form-label">Full Name</label>
-            <input
-              type="text"
-              className="form-input"
-              value={adminUser.name || 'Admin'}
-              disabled
-              style={{ opacity: 0.6, cursor: 'not-allowed' }}
-            />
-          </div>
-
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '20px' }}>
-            <label className="form-label">Email Address</label>
-            <input
-              type="email"
-              className="form-input"
-              value={adminUser.email || 'admin@travels.com'}
-              disabled
-              style={{ opacity: 0.6, cursor: 'not-allowed' }}
-            />
-          </div>
-
-          <div className="form-group" style={{ textAlign: 'left', marginBottom: '30px' }}>
-            <label className="form-label">Account Role</label>
-            <input
-              type="text"
-              className="form-input"
-              value={adminUser.role ? adminUser.role.toUpperCase() : 'ADMINISTRATOR'}
-              disabled
-              style={{ opacity: 0.6, cursor: 'not-allowed', color: 'var(--color-primary)', fontWeight: 'bold' }}
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            style={{ 
-              width: '100%', 
-              padding: '14px', 
-              fontWeight: '700',
-              fontSize: '15px',
-              backgroundColor: '#3b82f6',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(59, 130, 246, 0.4)',
-              transition: 'all 0.25s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.55)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3b82f6';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(59, 130, 246, 0.4)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
+        <form onSubmit={handleSave} className="flex flex-col gap-5">
+          {readonlyFields.map(f => (
+            <div key={f.label} className="form-group text-left mb-0">
+              <label className="form-label">{f.label}</label>
+              <input type={f.type} className={`form-input opacity-60 cursor-not-allowed ${f.highlight ? 'text-blue-600 font-bold' : ''}`}
+                value={f.value} disabled />
+            </div>
+          ))}
+          <button type="submit"
+            className="w-full py-3.5 font-bold text-[15px] bg-blue-500 text-white border-none rounded-[10px] cursor-pointer hover:bg-blue-600 hover:-translate-y-0.5 transition-all mt-2"
+            style={{ boxShadow: '0 4px 16px rgba(59,130,246,0.4)' }}>
             Save Profile Settings
           </button>
         </form>

@@ -13,17 +13,11 @@ export default function DriverDashboard() {
     if (isInitial) setLoading(true);
     const token = localStorage.getItem("token");
     if (!token) return;
-
-    fetch(`${API_URL}/driver/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch(`${API_URL}/driver/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => {
         setStats(data);
-        const recent = (data.trips || [])
-          .filter(t => t.status !== "Completed" && t.status !== "Cancelled")
-          .slice(0, 5);
-        setRecentTrips(recent);
+        setRecentTrips((data.trips || []).filter(t => t.status !== "Completed" && t.status !== "Cancelled").slice(0, 5));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -31,15 +25,9 @@ export default function DriverDashboard() {
 
   useEffect(() => {
     const driver = JSON.parse(localStorage.getItem("driver"));
-    if (driver && driver.name) setDriverName(driver.name);
-
+    if (driver?.name) setDriverName(driver.name);
     fetchDashboardData(true);
-
-    // Auto-refresh every 3 seconds for real-time updates when Admin assigns trips
-    const interval = setInterval(() => {
-      fetchDashboardData(false);
-    }, 3000);
-
+    const interval = setInterval(() => fetchDashboardData(false), 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -48,132 +36,75 @@ export default function DriverDashboard() {
     .reduce((sum, t) => sum + Math.round((t.fareEstimated || 0) * 0.85), 0);
 
   const statCards = [
-    {
-      label: "Total Earnings",
-      value: `₹${totalEarnings.toLocaleString("en-IN")}`,
-      icon: "💰",
-      color: "#10b981",
-      bg: "rgba(16, 185, 129, 0.15)"
-    },
-    {
-      label: "Total Trips",
-      value: stats?.totalTrips ?? 0,
-      icon: <FaCarSide />,
-      color: "var(--color-secondary)",
-      bg: "var(--color-secondary-glow)"
-    },
-    {
-      label: "Completed",
-      value: stats?.completedTrips ?? 0,
-      icon: <FaCheckCircle />,
-      color: "var(--status-completed)",
-      bg: "var(--status-completed-bg)"
-    },
-    {
-      label: "Ongoing",
-      value: stats?.ongoingTrips ?? 0,
-      icon: <FaSpinner />,
-      color: "var(--status-inprogress)",
-      bg: "var(--status-inprogress-bg)"
-    },
-    {
-      label: "Upcoming",
-      value: stats?.upcomingTrips ?? 0,
-      icon: <FaCalendarCheck />,
-      color: "var(--status-pending)",
-      bg: "var(--status-pending-bg)"
-    }
+    { label: "Total Earnings", value: `₹${totalEarnings.toLocaleString("en-IN")}`, icon: "💰", color: "#10b981", bg: "rgba(16,185,129,0.15)" },
+    { label: "Total Trips", value: stats?.totalTrips ?? 0, icon: <FaCarSide />, color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
+    { label: "Completed", value: stats?.completedTrips ?? 0, icon: <FaCheckCircle />, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+    { label: "Ongoing", value: stats?.ongoingTrips ?? 0, icon: <FaSpinner />, color: "#2563eb", bg: "rgba(37,99,235,0.15)" },
+    { label: "Upcoming", value: stats?.upcomingTrips ?? 0, icon: <FaCalendarCheck />, color: "#d97706", bg: "rgba(217,119,6,0.15)" },
   ];
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: "30px" }}>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "8px" }}>
-          Welcome back, {driverName}!
-        </h2>
-        <p style={{ color: "var(--text-muted)" }}>Here is your dashboard overview and ride earnings payout for today.</p>
+      <div className="mb-8">
+        <h2 className="text-[28px] font-bold mb-2">Welcome back, {driverName}!</h2>
+        <p className="text-slate-500">Here is your dashboard overview and ride earnings payout for today.</p>
       </div>
 
       {loading ? (
-        <div className="glass-panel" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-          Loading dashboard...
-        </div>
+        <div className="glass-panel text-center py-10 text-slate-400">Loading dashboard...</div>
       ) : (
         <>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: "16px",
-            marginBottom: "35px"
-          }}>
+          {/* Stat Cards */}
+          <div className="grid gap-4 mb-9" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
             {statCards.map(card => (
-              <div key={card.label} className="glass-panel" style={{ display: "flex", alignItems: "center", gap: "16px", padding: "18px 20px" }}>
-                <div style={{
-                  width: "50px", height: "50px", borderRadius: "50%",
-                  backgroundColor: card.bg,
-                  color: card.color,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "20px", flexShrink: 0
-                }}>
+              <div key={card.label} className="glass-panel flex items-center gap-4 px-5 py-[18px]">
+                <div className="w-[50px] h-[50px] rounded-full flex items-center justify-center text-xl shrink-0"
+                  style={{ backgroundColor: card.bg, color: card.color }}>
                   {card.icon}
                 </div>
                 <div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "12px", fontWeight: '700', textTransform: 'uppercase', marginBottom: "2px" }}>{card.label}</div>
-                  <div style={{ fontSize: "22px", fontWeight: "800", color: card.label === "Total Earnings" ? "#10b981" : "#1e293b" }}>{card.value}</div>
+                  <div className="text-slate-500 text-xs font-bold uppercase mb-0.5">{card.label}</div>
+                  <div className="text-[22px] font-extrabold" style={{ color: card.label === "Total Earnings" ? "#10b981" : "#1e293b" }}>
+                    {card.value}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
+          {/* Recent Trips */}
           <div className="glass-panel">
-            <h3 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "20px", borderBottom: "1px solid var(--border-color)", paddingBottom: "15px" }}>
-              Active & Assigned Ride Earnings Payout
-            </h3>
+            <h3 className="text-lg font-bold mb-5 pb-4 border-b border-slate-200">Active & Assigned Ride Earnings Payout</h3>
             {recentTrips.length > 0 ? recentTrips.map(trip => {
               const driverEarn = Math.round((trip.fareEstimated || 0) * 0.85);
+              const isInProgress = trip.status === "In Progress";
               return (
-                <div key={trip.id} style={{
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  padding: "16px 0", borderBottom: "1px solid var(--border-color)", flexWrap: "wrap", gap: "12px"
-                }}>
+                <div key={trip.id} className="flex justify-between items-center py-4 border-b border-slate-200 flex-wrap gap-3">
                   <div>
-                    <div style={{ fontWeight: "800", fontSize: "16px", marginBottom: "4px" }}>{trip.customerName}</div>
-                    <div style={{ color: "var(--text-muted)", fontSize: "13px" }}>
-                      📍 {trip.pickupLocation} → {trip.dropLocation}
-                    </div>
+                    <div className="font-extrabold text-base mb-1">{trip.customerName}</div>
+                    <div className="text-slate-500 text-[13px]">📍 {trip.pickupLocation} → {trip.dropLocation}</div>
                   </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "11px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>RIDE FARE</div>
-                      <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>₹{trip.fareEstimated?.toLocaleString("en-IN")}</div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-[11px] font-extrabold text-slate-500 uppercase">Ride Fare</div>
+                      <div className="text-[15px] font-bold text-slate-800">₹{trip.fareEstimated?.toLocaleString("en-IN")}</div>
                     </div>
-
-                    <div style={{
-                      backgroundColor: "#dcfce7",
-                      border: "1px solid #86efac",
-                      padding: "6px 14px",
-                      borderRadius: "12px",
-                      textAlign: "right"
-                    }}>
-                      <div style={{ fontSize: "10px", fontWeight: "800", color: "#15803d", textTransform: "uppercase" }}>YOUR EARNING (85%)</div>
-                      <div style={{ fontSize: "17px", fontWeight: "800", color: "#166534" }}>💰 ₹{driverEarn.toLocaleString("en-IN")}</div>
+                    <div className="bg-green-100 border border-green-300 px-3.5 py-1.5 rounded-xl text-right">
+                      <div className="text-[10px] font-extrabold text-green-700 uppercase">Your Earning (85%)</div>
+                      <div className="text-[17px] font-extrabold text-green-800">💰 ₹{driverEarn.toLocaleString("en-IN")}</div>
                     </div>
-
-                    <div style={{
-                      padding: "5px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700",
-                      backgroundColor: trip.status === "In Progress" ? "var(--status-inprogress-bg)" : "var(--status-confirmed-bg)",
-                      color: trip.status === "In Progress" ? "var(--status-inprogress)" : "var(--status-confirmed)"
-                    }}>
+                    <div className="px-3 py-1.5 rounded-full text-xs font-bold"
+                      style={{
+                        backgroundColor: isInProgress ? 'rgba(37,99,235,0.15)' : 'rgba(59,130,246,0.15)',
+                        color: isInProgress ? '#2563eb' : '#3b82f6'
+                      }}>
                       {trip.status}
                     </div>
                   </div>
                 </div>
               );
             }) : (
-              <div style={{ color: "var(--text-muted)", textAlign: "center", padding: "30px 0" }}>
-                No active or upcoming trips.
-              </div>
+              <div className="text-slate-400 text-center py-8">No active or upcoming trips.</div>
             )}
           </div>
         </>

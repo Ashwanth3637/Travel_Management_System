@@ -14,169 +14,75 @@ function CustomerRegister() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
+    setError(""); setSuccess("");
     try {
       const res = await fetch(`${API_URL}/customers/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, phone, password }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Registration Failed");
-      }
-
+      if (!res.ok) throw new Error(data.error || "Registration Failed");
       setSuccess("Account created successfully! Redirecting to login...");
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      padding: '20px',
-    }}>
-      <div className="glass-panel animate-fade-in" style={{
-        width: '100%',
-        maxWidth: '450px',
-        padding: '40px',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: '28px',
-            fontWeight: '800',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            margin: '0 0 8px 0'
-          }}>
+    <div className="flex items-center justify-center min-h-screen p-5 bg-slate-50">
+      <div className="glass-panel animate-fade-in w-full max-w-[450px] p-10">
+        <div className="text-center mb-8">
+          <h2 className="text-[28px] font-extrabold mb-2"
+            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Create Rider Account
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+          <p className="text-slate-500 text-sm m-0">
             Join Travel Booking Management System to book rides instantly
           </p>
         </div>
 
         {error && (
-          <div style={{
-            padding: '12px 16px',
-            backgroundColor: 'var(--status-cancelled-bg)',
-            color: 'var(--status-cancelled)',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '20px',
-            border: '1px solid var(--status-cancelled)',
-            textAlign: 'left'
-          }}>
+          <div className="px-4 py-3 rounded-lg text-[14px] font-medium mb-5 text-red-600 bg-red-50 border border-red-400 text-left">
             {error}
           </div>
         )}
-
         {success && (
-          <div style={{
-            padding: '12px 16px',
-            backgroundColor: 'var(--status-completed-bg)',
-            color: 'var(--status-completed)',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            marginBottom: '20px',
-            border: '1px solid var(--status-completed)',
-            textAlign: 'left'
-          }}>
+          <div className="px-4 py-3 rounded-lg text-[14px] font-medium mb-5 text-emerald-600 bg-emerald-50 border border-emerald-500 text-left">
             {success}
           </div>
         )}
 
-        <form onSubmit={handleRegister}>
+        <form onSubmit={handleRegister} className="flex flex-col gap-4">
           <div className="form-group">
             <label className="form-label">Full Name</label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+            <input type="text" className="form-input" placeholder="John Doe"
+              value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-
           <div className="form-group">
             <label className="form-label">Email Address</label>
-            <input
-              type="email"
-              className="form-input"
-              placeholder="rider@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" className="form-input" placeholder="rider@example.com"
+              value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-
           <div className="form-group">
             <label className="form-label">Phone Number</label>
-            <input
-              type="tel"
-              className="form-input"
-              placeholder="9876543210"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
+            <input type="tel" className="form-input" placeholder="9876543210"
+              value={phone} onChange={(e) => setPhone(e.target.value)} required />
           </div>
-
-          <div className="form-group" style={{ marginBottom: '30px' }}>
+          <div className="form-group mb-2">
             <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <input type="password" className="form-input" placeholder="••••••••"
+              value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            style={{
-              width: "100%",
-              fontSize: '15px',
-              padding: '14px'
-            }}
-          >
+          <button type="submit" className="btn btn-primary w-full text-[15px] py-3.5 mt-2">
             Create Rider Account
           </button>
         </form>
 
-        <div style={{ textAlign: "center", marginTop: "24px", fontSize: "14px" }}>
+        <div className="text-center mt-6 text-sm text-slate-600">
           Already have a rider account?
-          <Link
-            to="/login"
-            style={{
-              color: "var(--color-primary)",
-              marginLeft: "6px",
-              textDecoration: "none",
-              fontWeight: "600"
-            }}
-          >
-            Login
-          </Link>
+          <Link to="/login" className="text-blue-600 ml-1.5 no-underline font-semibold hover:underline">Login</Link>
         </div>
       </div>
     </div>
