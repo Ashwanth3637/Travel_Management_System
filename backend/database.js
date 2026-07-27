@@ -116,12 +116,14 @@ const PaymentSchema = new mongoose.Schema({
   amount:         { type: Number, required: true },
   driverEarnings: { type: Number, default: 0 },
   adminCommission:{ type: Number, default: 0 },
-  paymentMethod:  { type: String, default: 'GPay' },
-  bankName:       { type: String, default: '' },
-  paymentStatus:  { type: String, default: 'Paid' },
-  transactionId:  { type: String, required: true },
-  paymentDate:    { type: String, default: () => new Date().toLocaleDateString('en-GB') },
-  createdAt:      { type: String, default: () => new Date().toISOString() }
+  paymentMethod:      { type: String, default: 'GPay' },
+  bankName:           { type: String, default: '' },
+  paymentStatus:      { type: String, default: 'Paid' },
+  transactionId:      { type: String, required: true },
+  razorpayOrderId:   { type: String, default: '' },
+  razorpayPaymentId: { type: String, default: '' },
+  paymentDate:        { type: String, default: () => new Date().toLocaleDateString('en-GB') },
+  createdAt:          { type: String, default: () => new Date().toISOString() }
 }, { timestamps: true });
 
 // ─── Models (guard re-compile) ────────────────────────────────────────────────
