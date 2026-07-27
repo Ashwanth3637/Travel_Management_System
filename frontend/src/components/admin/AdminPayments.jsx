@@ -435,7 +435,7 @@ export default function AdminPayments() {
                         border: (row.paymentMethod || '').toUpperCase().includes('CASH') ? '1px solid #ffedd5' : '1px solid #6ee7b7'
                       }}>
                         {(row.paymentMethod || '').toUpperCase().includes('CASH')
-                          ? `💵 Cash Kept by Driver (100%: ₹${row.amount.toLocaleString('en-IN')}) — 15% Admin Share (₹${adminComm.toLocaleString('en-IN')}) Auto-Deducted ✅`
+                          ? `💵 Driver Cash Collection — 15% Admin Share (₹${adminComm.toLocaleString('en-IN')}) Auto-Deducted from Driver Wallet ✅`
                           : `⚡ 85% Auto Transferred to Driver Bank (₹${driverEarn.toLocaleString('en-IN')}) ✅`}
                       </span>
                     </td>
