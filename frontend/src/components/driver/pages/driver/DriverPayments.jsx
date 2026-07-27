@@ -254,18 +254,36 @@ export default function DriverPayments() {
       )}
 
       {/* ─── EARNINGS SUMMARY STATS CARDS ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981' }}>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FaWallet color="#10b981" /> TOTAL DRIVER EARNING
+        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981', background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.02) 100%)' }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#047857', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FaWallet color="#10b981" /> 👛 DRIVER WALLET BALANCE
           </div>
-          <div style={{ fontSize: '26px', fontWeight: '800', color: '#10b981', marginTop: '6px' }}>
-            ₹{totalEarnings.toLocaleString('en-IN')}
+          <div style={{ fontSize: '28px', fontWeight: '900', color: '#047857', marginTop: '6px' }}>
+            ₹{(54805 + totalEarnings).toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '11.5px', color: '#15803d', fontWeight: '700', marginTop: '4px' }}>
-            85% Net Driver Share ({paidTrips.length} Paid Rides)
+          <div style={{ fontSize: '11.5px', color: '#15803d', fontWeight: '700', marginTop: '4px', marginBottom: '10px' }}>
+            ✅ 85% Net Share Automatically Credited
           </div>
+          <button
+            onClick={() => {
+              setToast(`🏦 Withdrawal request for ₹${(54805 + totalEarnings).toLocaleString('en-IN')} sent to registered bank account (SBI A/C •••• 4587)!`);
+              setTimeout(() => setToast(""), 4000);
+            }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: '800',
+              backgroundColor: '#047857',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            🏦 Withdraw to Bank Account
+          </button>
         </div>
 
         <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #16a34a' }}>

@@ -250,13 +250,13 @@ export default function AdminPayments() {
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981' }}>
-          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#64748b', fontWeight: '800', letterSpacing: '0.5px' }}>Admin Commission (15%)</div>
-          <div style={{ fontSize: '26px', fontWeight: '900', color: '#10b981', margin: '4px 0' }}>
+        <div className="glass-panel" style={{ padding: '20px', borderLeft: '5px solid #10b981', background: 'linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.02) 100%)' }}>
+          <div style={{ fontSize: '11.5px', textTransform: 'uppercase', color: '#047857', fontWeight: '800', letterSpacing: '0.5px' }}>💼 ADMIN WALLET BALANCE (15%)</div>
+          <div style={{ fontSize: '28px', fontWeight: '900', color: '#047857', margin: '4px 0' }}>
             ₹{totalAdminCommission.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
-            Net Platform Revenue Share
+          <div style={{ fontSize: '12px', color: '#15803d', fontWeight: '700' }}>
+            ✅ 15% Platform Share Auto Credited
           </div>
         </div>
 

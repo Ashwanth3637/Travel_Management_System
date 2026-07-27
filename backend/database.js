@@ -23,7 +23,8 @@ const UserSchema = new mongoose.Schema({
   name:                 { type: String, required: true },
   defaultPaymentMethod: { type: String, default: 'Saved Card (HDFC Visa •••• 4587)' },
   savedCardDetails:     { type: String, default: 'HDFC Visa •••• 4587' },
-  savedUpiId:           { type: String, default: 'sam@okaxis' }
+  savedUpiId:           { type: String, default: 'sam@okaxis' },
+  walletBalance:        { type: Number, default: 9672 }
 }, { timestamps: true });
 
 const VehicleSchema = new mongoose.Schema({
@@ -55,7 +56,9 @@ const DriverSchema = new mongoose.Schema({
   password:      { type: String },
   photo:         { type: String, default: '' },
   gender:        { type: String, default: 'Male' },
-  status:        { type: String, default: 'Available' }
+  status:        { type: String, default: 'Available' },
+  walletBalance: { type: Number, default: 54805 },
+  bankAccount:   { type: String, default: 'SBI A/C •••• 4587 | SBIN0001234' }
 }, { timestamps: true });
 
 const BookingSchema = new mongoose.Schema({
